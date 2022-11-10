@@ -1,6 +1,6 @@
-from admin import AdminFilter
+from .admin import AdminFilter
 
 
 filters = (
-    AdminFilter
+    AdminFilter,
 )

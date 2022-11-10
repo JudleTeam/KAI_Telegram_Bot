@@ -4,6 +4,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
+from aioredis import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
@@ -39,7 +40,8 @@ async def main():
     config = load_config('.env')
 
     engine = create_async_engine(
-        f'postgresql+asyncpg://{config.database.user}:{config.database.password}@{config.database.host}/{config.database.db_name}',
+        f'postgresql+asyncpg://{config.database.user}:{config.database.password}@'
+        f'{config.database.host}:{config.database.port}/{config.database.database}',
         future=True
     )
     async with engine.begin() as conn:
@@ -49,10 +51,12 @@ async def main():
     )
 
     storage = RedisStorage2() if config.bot.use_redis else MemoryStorage()
+    redis = Redis()
     bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
     bot['config'] = config
+    bot['redis'] = redis
     bot['database'] = async_sessionmaker
 
     register_all_middlewares(dp, config)

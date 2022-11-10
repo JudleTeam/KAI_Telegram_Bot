@@ -1,1 +1,1 @@
-from environment import EnvironmentMiddleware
+from .environment import EnvironmentMiddleware
