@@ -8,29 +8,26 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from tgbot.config import load_config
-from tgbot.filters.admin import AdminFilter
-from tgbot.handlers.admin import register_admin
-from tgbot.handlers.echo import register_echo
-from tgbot.handlers.user import register_user
-from tgbot.middlewares.environment import EnvironmentMiddleware
+from tgbot import handlers
+from tgbot import filters
+from tgbot import middlewares
 from tgbot.services.database.base import Base
 
 logger = logging.getLogger(__name__)
 
 
 def register_all_middlewares(dp, config):
-    dp.setup_middleware(EnvironmentMiddleware(config=config))
+    dp.setup_middleware(middlewares.EnvironmentMiddleware(config=config))
 
 
 def register_all_filters(dp):
-    dp.filters_factory.bind(AdminFilter)
+    for aiogram_filter in filters.filters:
+        dp.filters_factory.bind(aiogram_filter)
 
 
 def register_all_handlers(dp):
-    register_admin(dp)
-    register_user(dp)
-
-    register_echo(dp)
+    for register in handlers.register_functions:
+        register(dp)
 
 
 async def main():
@@ -38,11 +35,11 @@ async def main():
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
     )
-    logger.info("Starting bot")
-    config = load_config(".env")
+    logger.info('Starting bot')
+    config = load_config('.env')
 
     engine = create_async_engine(
-        f"postgresql+asyncpg://{config.database.user}:{config.database.password}@{config.database.host}/{config.database.db_name}",
+        f'postgresql+asyncpg://{config.database.user}:{config.database.password}@{config.database.host}/{config.database.db_name}',
         future=True
     )
     async with engine.begin() as conn:
