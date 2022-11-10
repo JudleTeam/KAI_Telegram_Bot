@@ -7,6 +7,8 @@ name = "pypi"
 aiogram = "*"
 aioredis = "*"
 environs = "*"
+sqlalchemy = "*"
+asyncpg = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
