@@ -13,8 +13,8 @@ class User(Base):
     role_id = Column(Integer, ForeignKey('role.id'))
     created_at = Column(DateTime(), server_default=text('NOW()'))
 
-    language = relationship('Language', backref='users')
-    role = relationship('Role', backref='users')
+    language = relationship('Language', backref='user')
+    role = relationship('Role', backref='user')
 
 
 class Language(Base):
@@ -22,8 +22,7 @@ class Language(Base):
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     title = Column(String(20), nullable=False)
-
-    users = relationship('User', backref='language')
+    code = Column(String(2), unique=True, nullable=False)
 
 
 class Role(Base):
@@ -31,4 +30,3 @@ class Role(Base):
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     title = Column(String(40), nullable=False)
-    users = relationship('User', backref='role')

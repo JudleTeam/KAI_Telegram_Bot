@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 def register_all_middlewares(dp, config):
     dp.setup_middleware(middlewares.EnvironmentMiddleware(config=config))
 
+    i18n = middlewares.ACLMiddleware(config.i18n.domain, config.i18n.locales_dir)
+    dp.bot['_'] = i18n
+    dp.setup_middleware(i18n)
+
 
 def register_all_filters(dp):
     for aiogram_filter in filters.filters:
@@ -63,7 +67,6 @@ async def main():
     register_all_filters(dp)
     register_all_handlers(dp)
 
-    # start
     try:
         await dp.start_polling()
     finally:

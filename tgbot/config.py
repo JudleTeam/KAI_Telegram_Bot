@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 from environs import Env
 
@@ -20,6 +21,13 @@ class TelegramBot:
 
 
 @dataclass
+class I18N:
+    domain: str
+    base_dir: Path
+    locales_dir: Path
+
+
+@dataclass
 class Miscellaneous:
     other_params: str = None
 
@@ -29,6 +37,7 @@ class Config:
     bot: TelegramBot
     database: DatabaseConfig
     misc: Miscellaneous
+    i18n: I18N
 
 
 def load_config(path: str = None):
@@ -47,6 +56,11 @@ def load_config(path: str = None):
             user=env.str('DB_USER'),
             database=env.str('DB_NAME'),
             port=env.int('DB_PORT')
+        ),
+        i18n=I18N(
+            domain=env.str('I18N_DOMAIN'),
+            base_dir=Path(__file__).parent,
+            locales_dir=Path(__file__).parent / 'locales'
         ),
         misc=Miscellaneous()
     )

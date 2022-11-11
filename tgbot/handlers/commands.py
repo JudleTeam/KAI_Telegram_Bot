@@ -1,9 +1,13 @@
 from aiogram import Dispatcher
 from aiogram.types import Message
 
+from tgbot.misc import messages
+
 
 async def command_start(message: Message):
-    await message.reply('Hello, user!')
+    _ = message.bot.get('_')
+
+    await message.reply(_(messages.hello).format(name=message.from_user.first_name))
 
 
 def register_commands(dp: Dispatcher):
