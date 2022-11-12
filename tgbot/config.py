@@ -29,7 +29,8 @@ class I18N:
 
 @dataclass
 class Miscellaneous:
-    other_params: str = None
+    rate_limit: float
+    block_time: int
 
 
 @dataclass
@@ -62,5 +63,8 @@ def load_config(path: str = None):
             base_dir=Path(__file__).parent,
             locales_dir=Path(__file__).parent / 'locales'
         ),
-        misc=Miscellaneous()
+        misc=Miscellaneous(
+            rate_limit=env.float('RATE_LIMIT'),
+            block_time=env.int('BLOCK_TIME')
+        )
     )

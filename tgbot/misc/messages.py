@@ -8,3 +8,5 @@ def _(text):
 
 
 hello = _('Hello, {name}!')
+spam_block = _('You have been blocked for spam!')
+spam_unblock = _('Unlocked, you can continue to use the bot.')
