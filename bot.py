@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 def register_all_middlewares(dp, config):
     dp.setup_middleware(middlewares.EnvironmentMiddleware(config=config))
     dp.setup_middleware(middlewares.ThrottlingMiddleware(limit=config.misc.rate_limit))
+    dp.setup_middleware(middlewares.UserCheckerMiddleware())
 
     i18n = middlewares.ACLMiddleware(config.i18n.domain, config.i18n.locales_dir)
     dp.bot['_'] = i18n

@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+test.py
+logs.log
+
 # Distribution / packaging
 .Python
 build/
@@ -34,6 +37,7 @@ pip-delete-this-directory.txt
 # Translations
 *.mo
 *.pot
+*.po
 
 
 # pyenv
