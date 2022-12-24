@@ -40,6 +40,8 @@ class UserCheckerMiddleware(BaseMiddleware):
                 await message.answer(_(messages.user_blocked))
                 raise CancelHandler()
 
+            return
+
         if not database_user:
             await message.answer(_(messages.user_unregistered))
             raise CancelHandler()
