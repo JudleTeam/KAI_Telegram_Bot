@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+import datetime
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -13,6 +15,7 @@ from tgbot import handlers
 from tgbot import filters
 from tgbot import middlewares
 from tgbot.services.database.base import Base
+from tgbot.services.database.models import Language
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +41,12 @@ def register_all_handlers(dp):
 
 
 async def main():
+    log_file = rf'logs/{datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")}.log'
+    if not os.path.exists('logs'): os.mkdir('logs')
     logging.basicConfig(
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
+        handlers=(logging.FileHandler(log_file), logging.StreamHandler())
     )
     logger.info('Starting bot')
     config = load_config('.env')
@@ -61,6 +67,9 @@ async def main():
     bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
+    bot_info = await bot.me
+    logger.info(f'Bot: {bot_info.username} [{bot_info.mention}]')
+
     bot['config'] = config
     bot['redis'] = redis
     bot['database'] = async_sessionmaker
@@ -69,12 +78,16 @@ async def main():
     register_all_filters(dp)
     register_all_handlers(dp)
 
+    await Language.check_languages(async_sessionmaker, bot['_'].available_locales)
+
     try:
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
-        await bot.session.close()
+
+        bot_session = await bot.get_session()
+        await bot_session.close()
 
 
 if __name__ == '__main__':

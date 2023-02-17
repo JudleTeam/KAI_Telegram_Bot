@@ -1,6 +1,7 @@
 from aiogram import Dispatcher
 from aiogram.types import Message
 
+from tgbot.keyboards import inline_keyboards
 from tgbot.misc import messages
 from tgbot.services.database.models import User
 
@@ -13,12 +14,13 @@ async def command_start(message: Message):
         user = await session.get(User, message.from_id)
         if not user:
             redis = message.bot.get('redis')
-            user = User(telegram_id=message.from_id, language_id=1, role_id=1)
+            user = User(telegram_id=message.from_id)
             session.add(user)
+
             await redis.set(name=f'{message.from_id}:exists', value='1')
-
-
-    await message.reply(_(messages.hello).format(name=message.from_user.first_name))
+            await message.answer(_(messages.welcome), reply_markup=inline_keyboards.get_start_keyboard(_))
+        else:
+            await message.answer(_(messages.main_menu))
 
 
 def register_commands(dp: Dispatcher):
