@@ -61,7 +61,7 @@ class KaiParser:
 
     @classmethod
     def _parse_schedule(cls, response) -> list:
-        res = [0] * 7
+        res = [0] * 6
         for key in sorted(response):
             day = response[key]
             day_res = []
@@ -79,7 +79,7 @@ class KaiParser:
                     'disciplType': para["disciplType"][:4].rstrip()
                 }
                 day_res.append(para_structure)
-            res[int(key)-1] = day_res
+            res[int(key) - 1] = day_res
         return res
 
     @classmethod
@@ -103,9 +103,8 @@ async def main():
     k = KaiParser()
 
     response = await k.get_group_schedule(23325)
-    print(response)
-    print(await k.get_group_teachers(23325))
-    await k.get_group_id(6110)
+    if response:
+        print(response[4])
 
 
 if __name__ == '__main__':
