@@ -13,6 +13,7 @@ from tgbot import handlers
 from tgbot import filters
 from tgbot import middlewares
 from tgbot.services.database.base import Base
+from tgbot.services.database.models import Language
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ async def main():
     logging.basicConfig(
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
+        handlers=(logging.FileHandler(r'logs.log'), logging.StreamHandler())
     )
     logger.info('Starting bot')
     config = load_config('.env')
@@ -69,12 +71,16 @@ async def main():
     register_all_filters(dp)
     register_all_handlers(dp)
 
+    await Language.check_languages(async_sessionmaker, bot['_'].available_locales)
+
     try:
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
-        await bot.session.close()
+
+        bot_session = await bot.get_session()
+        await bot_session.close()
 
 
 if __name__ == '__main__':

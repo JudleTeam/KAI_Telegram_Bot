@@ -2,9 +2,10 @@ from typing import Tuple, Any, Optional
 
 from aiogram.contrib.middlewares.i18n import I18nMiddleware
 from aiogram import types
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from aiogram.dispatcher.handler import CancelHandler
 
+from tgbot.keyboards import inline_keyboards
+from tgbot.misc import messages
 from tgbot.services.database.models import User
 
 
@@ -16,16 +17,25 @@ class ACLMiddleware(I18nMiddleware):
         redis = telegram_user.bot.get('redis')
 
         cached_lang = await redis.get(name=f'{telegram_user.id}:lang')
-        if cached_lang: return cached_lang
 
-        async with db_session() as session:
-            stmt = select(User).where(User.telegram_id == telegram_user.id).options(selectinload(User.language))
-            database_user = (await session.execute(stmt)).scalar()
-
-        if database_user:
-            lang = database_user.language.code
+        lang = 'en'
+        if cached_lang:
+            lang = cached_lang.decode()
         else:
-            lang = 'en'
+            async with db_session() as session:
+                database_user = await session.get(User, telegram_user.id)
 
-        await redis.set(name=f'{telegram_user.id}:lang', value=lang)
+            if database_user:
+                lang = database_user.language.code
+
+            await redis.set(name=f'{telegram_user.id}:lang', value=lang)
+
+        if lang not in self.available_locales:
+            await telegram_user.bot.send_message(
+                chat_id=telegram_user.id,
+                text=messages.language_not_available,
+                reply_markup=inline_keyboards.get_start_keyboard(messages._)
+            )
+            raise CancelHandler()
+
         return lang

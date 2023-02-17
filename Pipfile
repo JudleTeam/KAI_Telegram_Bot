@@ -9,6 +9,7 @@ aioredis = "*"
 environs = "*"
 asyncpg = "*"
 sqlalchemy = {extras = ["asyncio"], version = "*"}
+iso-language-codes = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
