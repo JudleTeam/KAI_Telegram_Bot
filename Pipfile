@@ -10,6 +10,7 @@ environs = "*"
 asyncpg = "*"
 sqlalchemy = {extras = ["asyncio"], version = "*"}
 iso-language-codes = "*"
+aiohttp = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"

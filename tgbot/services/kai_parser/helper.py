@@ -1,7 +1,7 @@
 import asyncio
 import datetime
-from kai_parser import KaiParser
-from tgbot.services.database import Schedule
+from parser import KaiParser
+from tgbot.services.database.models import Schedule
 
 
 class KaiApiError(Exception):

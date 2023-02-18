@@ -2,7 +2,7 @@ from aiogram import Dispatcher
 from aiogram.types import Message
 
 from tgbot.keyboards import inline_keyboards
-from tgbot.misc import messages
+from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 
 

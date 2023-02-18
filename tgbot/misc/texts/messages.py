@@ -1,11 +1,4 @@
-def _(text: str):
-    """
-    Use this function to initialize strings so pybabel can find them
-    :param text:
-    :return:
-    """
-    return text
-
+from tgbot.misc.texts import _
 
 welcome = _(f'Welcome to KAI bot! Tap button below to choose your language')
 main_menu = _('Main menu')
@@ -21,6 +14,3 @@ user_blocked = _('You are blocked in the bot! If this is an error, contact the a
 language_not_available = _('The language you are using is no longer available. '
                            'Contact the administrator or change the language.')
 language_choose = _('Please select your language.')
-
-back_button = _('Back')
-choose_language_button = _('Choose language')

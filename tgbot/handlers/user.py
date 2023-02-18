@@ -2,7 +2,8 @@ from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 
 from tgbot.keyboards import inline_keyboards
-from tgbot.misc import messages, callbacks
+from tgbot.misc import callbacks
+from tgbot.misc.texts import messages
 from tgbot.services.database.models import Language, User
 
 

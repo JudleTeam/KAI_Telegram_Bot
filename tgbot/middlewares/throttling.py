@@ -6,7 +6,7 @@ from aiogram.dispatcher.handler import CancelHandler, current_handler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.utils.exceptions import Throttled
 
-from tgbot.misc import messages
+from tgbot.misc.texts import messages
 
 
 class ThrottlingMiddleware(BaseMiddleware):
