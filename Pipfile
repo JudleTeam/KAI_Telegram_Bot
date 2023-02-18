@@ -11,6 +11,7 @@ asyncpg = "*"
 sqlalchemy = {extras = ["asyncio"], version = "*"}
 iso-language-codes = "*"
 aiohttp = "*"
+redis = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"

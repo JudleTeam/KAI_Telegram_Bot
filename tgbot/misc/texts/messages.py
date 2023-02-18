@@ -14,3 +14,8 @@ user_blocked = _('You are blocked in the bot! If this is an error, contact the a
 language_not_available = _('The language you are using is no longer available. '
                            'Contact the administrator or change the language.')
 language_choose = _('Please select your language.')
+
+schedule_menu = _('Schedule menu')
+profile_menu = _('Profile menu')
+
+in_development = _('Functionality in development')
