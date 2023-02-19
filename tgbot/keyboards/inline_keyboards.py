@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+import datetime
 from tgbot.misc import callbacks
 from tgbot.misc.texts import buttons
 from tgbot.services.database.models import Language
@@ -39,9 +40,9 @@ def get_main_schedule_keyboard(_):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.today), callback_data=callbacks.schedule.new(action='today', payload='')),
-        InlineKeyboardButton(_(buttons.tomorrow), callback_data=callbacks.schedule.new(action='tomorrow', payload='')),
-        InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='day_after_tomorrow', payload='')),
+        InlineKeyboardButton(_(buttons.today), callback_data=callbacks.schedule.new(action='show_day', payload=(datetime.datetime.now()).date())),
+        InlineKeyboardButton(_(buttons.tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload=(datetime.datetime.now() + datetime.timedelta(days=1)).date())),
+        InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload=(datetime.datetime.now() + datetime.timedelta(days=2)).date())),
         InlineKeyboardButton(_(buttons.full_schedule), callback_data=callbacks.schedule.new(action='full_schedule', payload='')),
         InlineKeyboardButton(_(buttons.teachers), callback_data=callbacks.schedule.new(action='teachers', payload='')),
         InlineKeyboardButton(_(buttons.exams), callback_data=callbacks.schedule.new(action='exams', payload=''))
@@ -50,10 +51,24 @@ def get_main_schedule_keyboard(_):
     return keyboard
 
 
-def get_schedule_day_keyboard(_):
+def get_schedule_day_keyboard(_, parity, today):
     keyboard = InlineKeyboardMarkup()
 
+    if parity == 1:
+        week_button = buttons.odd_week
+    else:
+        week_button = buttons.even_week
     keyboard.add(
-        InlineKeyboardButton(_())
+        InlineKeyboardButton(_(week_button), callback_data=callbacks.schedule.new(action='change_week', payload='day'))
     )
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.prev_day), callback_data=callbacks.schedule.new(action='show_day', payload=(today - datetime.timedelta(days=1)).date())),
+        InlineKeyboardButton(_(buttons.next_day), callback_data=callbacks.schedule.new(action='show_day', payload=(today + datetime.timedelta(days=1)).date()))
+    )
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.group), callback_data=callbacks.schedule.new(action='change_group', payload='')),
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
+    )
+
+    return keyboard
 
