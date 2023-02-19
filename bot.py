@@ -57,6 +57,7 @@ async def main():
         future=True
     )
     async with engine.begin() as conn:
+        # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     async_sessionmaker = sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
