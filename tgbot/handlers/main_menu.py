@@ -2,11 +2,13 @@ from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message
 
+import tgbot.keyboards.inline_keyboards as inline
 from tgbot.misc.texts import reply_commands, messages
 
 
 async def send_schedule_menu(message: Message):
-    await message.answer(messages.schedule_menu)
+    _ = message.bot.get('_')
+    await message.answer(messages.schedule_menu, reply_markup=inline.get_main_schedule_keyboard(_))
 
 
 async def send_profile_menu(message: Message):

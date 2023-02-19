@@ -14,6 +14,8 @@ class User(Base):
     created_at = Column(DateTime(), nullable=False, server_default=text('NOW()'))
     is_blocked_bot = Column(Boolean, nullable=False, server_default=text('false'))
     is_blocked = Column(Boolean, nullable=False, server_default=text('false'))
+    group_id = Column(BigInteger, ForeignKey('group.group_id'), nullable=True)
 
     language = relationship('Language', lazy='selectin', backref='user')
     role = relationship('Role', lazy='selectin', backref='user')
+    group = relationship('Group', lazy='selectin', backref='user')

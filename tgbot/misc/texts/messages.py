@@ -19,3 +19,14 @@ schedule_menu = _('Schedule menu')
 profile_menu = _('Profile menu')
 
 in_development = _('Functionality in development')
+
+schedule_day_template = _(
+    '               {day_of_week}\n'
+    '————————————————\n'
+    '{lessons}'
+    '————————————————\n\n'
+)
+
+lesson_template = _(
+    '● ⌛️{start_time} - {end_time}  | {lesson_type} {lesson_name}  |  {building} {auditory}'
+)
