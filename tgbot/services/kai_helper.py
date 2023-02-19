@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from kai_parser import KaiParser
+from tgbot.services.kai_parser import KaiParser
 from tgbot.services.database.models import Schedule, GroupTeacher
 
 
@@ -24,6 +24,17 @@ def get_duration(lesson_type: str):
             return datetime.timedelta(hours=1, minutes=30)
         case 'л.р.':
             return datetime.timedelta(hours=3)
+
+
+def lesson_type_order(lesson_type: str):
+    res = []
+    if 'лек' in lesson_type:
+        res.append('лек')
+    if 'пр' in lesson_type:
+        res.append('пр')
+    if 'л.р.' in lesson_type:
+        res.append('л.р.')
+    return ', '.join(res)
 
 
 async def add_group_schedule(group_id: int, async_session):
@@ -57,19 +68,14 @@ async def add_group_teachers(group_id: int, async_session):
     if response:
         for teacher in response:
             async with async_session.begin() as session:
+                teacher['type'] = lesson_type_order(teacher['type'])
+
                 new_teacher = GroupTeacher(
                     group_id=group_id,
                     teacher_name=teacher['teacher_name'],
-                    lesson_type=teacher['type']
+                    lesson_type=teacher['type'],
+                    lesson_name=teacher['lesson_name']
                 )
                 session.add(new_teacher)
     else:
         raise KaiApiError
-
-
-async def main():
-    await add_group_schedule(6110, '1111')
-
-
-if __name__ == '__main__':
-    asyncio.run(main())

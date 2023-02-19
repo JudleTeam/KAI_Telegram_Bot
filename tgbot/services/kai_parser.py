@@ -52,11 +52,22 @@ class KaiParser:
         res = []
         for key in response:  # дни недели от 1 до 6
             for el in response[key]:
-                res.append(
-                    {'type': el['disciplType'].strip(),
-                     'lesson_name': el['disciplName'].strip(),
-                     'teacher_name': el['prepodName'].strip()}
-                )
+                lesson_type = el['disciplType'].strip()
+                lesson_name = el['disciplName'].strip()
+                teacher_name = el['prepodName'].strip()
+                if not teacher_name:
+                    teacher_name = 'Не задан'
+                for i in res:
+                    if i['lesson_name'] == lesson_name and i['teacher_name'] == teacher_name:
+                        if lesson_type not in i['type']:
+                            i['type'] += f', {lesson_type}'
+                        break
+                else:
+                    res.append(
+                        {'type': lesson_type,
+                         'lesson_name': lesson_name,
+                         'teacher_name': teacher_name}
+                    )
         return res
 
     @classmethod
