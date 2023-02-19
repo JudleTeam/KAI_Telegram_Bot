@@ -1,8 +1,9 @@
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 
-from tgbot.keyboards import inline_keyboards
-from tgbot.misc import messages, callbacks
+from tgbot.keyboards import inline_keyboards, reply_keyboards
+from tgbot.misc import callbacks
+from tgbot.misc.texts import messages
 from tgbot.services.database.models import Language, User
 
 
@@ -28,14 +29,16 @@ async def choose_language(call: CallbackQuery, callback_data: dict):
         user.language_id = int(callback_data['lang_id'])
 
     await redis.set(name=f'{user.telegram_id}:lang', value=callback_data['code'])
-    await call.answer(_(messages.language_changed, locale=callback_data['code']))
-    await show_main_menu(call, {'payload': callback_data['code']})
+    _.ctx_locale.set(callback_data['code'])
+
+    await call.answer(_(messages.language_changed))
+    await call.message.delete()
+    await call.message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
-async def show_main_menu(call: CallbackQuery, callback_data: dict):
+async def show_main_menu(call: CallbackQuery):
     _ = call.bot.get('_')
-    locale = callback_data['payload'] or None
-    await call.message.edit_text(_(messages.main_menu, locale=locale))
+    await call.message.edit_text(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
     await call.answer()
 
 

@@ -1,10 +1,9 @@
 from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
-from sqlalchemy import select
 
 from tgbot.services.database.models import User
-from tgbot.misc import messages
+from tgbot.misc.texts import messages
 
 
 class UserCheckerMiddleware(BaseMiddleware):

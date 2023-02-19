@@ -5,7 +5,7 @@ from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 
 from tgbot.keyboards import inline_keyboards
-from tgbot.misc import messages
+from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 
 
