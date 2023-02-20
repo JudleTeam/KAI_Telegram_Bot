@@ -1,64 +1,99 @@
 import asyncio
 import logging
+import os
+import datetime
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
+from aioredis import Redis
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 from tgbot.config import load_config
-from tgbot.filters.admin import AdminFilter
-from tgbot.handlers.admin import register_admin
-from tgbot.handlers.echo import register_echo
-from tgbot.handlers.user import register_user
-from tgbot.middlewares.environment import EnvironmentMiddleware
+from tgbot import handlers
+from tgbot import filters
+from tgbot import middlewares
+from tgbot.services.database.base import Base
+from tgbot.services.database.models import Language
 
 logger = logging.getLogger(__name__)
 
 
 def register_all_middlewares(dp, config):
-    dp.setup_middleware(EnvironmentMiddleware(config=config))
+    dp.setup_middleware(middlewares.EnvironmentMiddleware(config=config))
+    dp.setup_middleware(middlewares.ThrottlingMiddleware(limit=config.misc.rate_limit))
+    dp.setup_middleware(middlewares.UserCheckerMiddleware())
+
+    i18n = middlewares.ACLMiddleware(config.i18n.domain, config.i18n.locales_dir)
+    dp.bot['_'] = i18n
+    dp.setup_middleware(i18n)
 
 
 def register_all_filters(dp):
-    dp.filters_factory.bind(AdminFilter)
+    for aiogram_filter in filters.filters:
+        dp.filters_factory.bind(aiogram_filter)
 
 
 def register_all_handlers(dp):
-    register_admin(dp)
-    register_user(dp)
-
-    register_echo(dp)
+    for register in handlers.register_functions:
+        register(dp)
 
 
 async def main():
+    log_file = rf'logs/{datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")}.log'
+    if not os.path.exists('logs'): os.mkdir('logs')
     logging.basicConfig(
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
+        handlers=(logging.FileHandler(log_file), logging.StreamHandler())
     )
-    logger.info("Starting bot")
-    config = load_config(".env")
+    logger.info('Starting bot')
+    config = load_config('.env')
 
-    storage = RedisStorage2() if config.tg_bot.use_redis else MemoryStorage()
-    bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
+    engine = create_async_engine(
+        f'postgresql+asyncpg://{config.database.user}:{config.database.password}@'
+        f'{config.database.host}:{config.database.port}/{config.database.database}',
+        future=True
+    )
+    async with engine.begin() as conn:
+        # await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    async_sessionmaker = sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
+
+    storage = RedisStorage2() if config.bot.use_redis else MemoryStorage()
+    redis = Redis()
+    bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
+    bot_info = await bot.me
+    logger.info(f'Bot: {bot_info.username} [{bot_info.mention}]')
+
     bot['config'] = config
+    bot['redis'] = redis
+    bot['database'] = async_sessionmaker
 
     register_all_middlewares(dp, config)
     register_all_filters(dp)
     register_all_handlers(dp)
 
-    # start
+    await Language.check_languages(async_sessionmaker, bot['_'].available_locales)
+
     try:
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
-        await bot.session.close()
+
+        bot_session = await bot.get_session()
+        await bot_session.close()
 
 
 if __name__ == '__main__':
     try:
         asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logger.error("Bot stopped!")
+    except (KeyboardInterrupt, SystemExit) as e:
+        logger.error('Bot stopped!')
+        raise e
