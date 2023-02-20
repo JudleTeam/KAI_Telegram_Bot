@@ -52,10 +52,8 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
         lessons = form_lessons(schedule_list)
     msg = messages.schedule_day_template.format(
         day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
-                    (
-                    _('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'), _('Sunday'),)[
-                        today.weekday()] +
-                    (f'({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
+                    (_('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'), _('Sunday'),)[today.weekday()] +
+                    (f' ({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
         lessons=lessons
     )
 
@@ -79,37 +77,38 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
-            await call.answer(messages.select_group, show_alert=True)
+            await call.answer(_(messages.select_group), show_alert=True)
             return
-        else:
-            today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
-            week_num = int(today.strftime("%V"))
+
+        today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
+        week_num = int(today.strftime("%V"))
+
+        state_data = await state.get_data()
+
+        flag = state_data.get('change_week', False)
+
+        if flag and week_num != int(convert_day((await state.get_data())['today'])):
 
             try:
-                flag = (await state.get_data())['change_week']
-            except:
-                flag = False
+                msg = await form_day(_, db, user, today, False, False)
+            except Exception as e:
+                print(e)
+                await call.answer(_(messages.kai_error), show_alert=True)
+                return
 
-            if flag and week_num != int(convert_day((await state.get_data())['today']).strftime("%V")):
-                try:
-                    msg = await form_day(_, db, user, today, False, False)
-                except Exception as e:
-                    print(e)
-                    await call.answer(messages.kai_error, show_alert=True)
-                    return
+            await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today, user.group.group_name))
+        else:
+            try:
+                msg = await form_day(_, db, user, today, True)
+            except Exception as e:
+                print(e)
+                await call.answer(_(messages.kai_error), show_alert=True)
+                return
 
-                await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
-            else:
-                try:
-                    msg = await form_day(_, db, user, today, True)
-                except Exception as e:
-                    print(e)
-                    await call.answer(messages.kai_error, show_alert=True)
-                    return
+            await states.ScheduleState.today.set()
+            await state.update_data(today=str(today))
+            await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today, user.group.group_name))
 
-                await states.ScheduleState.today.set()
-                await state.update_data(today=str(today))
-                await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
     await call.answer()
 
 
@@ -119,7 +118,7 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
-            await call.answer(messages.select_group, show_alert=True)
+            await call.answer(_(messages.select_group), show_alert=True)
             return
         else:
             today = datetime.datetime.now()
@@ -137,9 +136,9 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
                     all_lessons += msg
                 except Exception as e:
                     print(e)
-                    await call.answer(messages.kai_error, show_alert=True)
+                    await call.answer(_(messages.kai_error), show_alert=True)
                     return
-            await call.message.edit_text(all_lessons, reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2))
+            await call.message.edit_text(all_lessons, reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2, user.group.group_name))
     await call.answer()
 
 

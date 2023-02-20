@@ -18,9 +18,9 @@ language_choose = _('Please select your language.')
 schedule_menu = _(
     'Schedule menu\n'
     'Now {week} week\n\n'
-    '🧪 - laboratory work\n'
-    '📝 - seminar\n'
-    '📢 - lecture\n'
+    '🧪 - Laboratory work\n'
+    '📝 - Seminar\n'
+    '📢 - Lecture\n'
 )
 profile_menu = _('Profile menu')
 
@@ -48,7 +48,7 @@ lesson_template = _(
 full_schedule_pointer = '➤'
 
 teachers_template = _(
-    'Список преподавателей:\n\n'
+    'List of teachers:\n\n'
     '————————————————\n'
     '{teachers}'
 )
@@ -59,6 +59,6 @@ teacher = (
     '————————————————\n'
 )
 
-kai_error = _('An error occurred on the kai side. Try later')
+kai_error = _('An error occurred on the KAI side. Try later')
 
 select_group = _('Select group')
