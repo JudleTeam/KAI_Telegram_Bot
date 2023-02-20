@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 import aiohttp
 
+from tgbot.services.database.models import Group
+
 
 @dataclass
 class Teacher:
@@ -37,6 +39,16 @@ class KaiParser:
                             "p_p_resource_id": "schedule"}, timeout=8) as response:
                 response = await response.json(content_type='text/html')
                 return response
+
+    @classmethod
+    async def parse_groups(cls, response, db):
+        async with db.begin() as session:
+            for i in response:
+                new_group = Group(
+                    group_id=i['id'],
+                    group_name=int(i['group'])
+                )
+                session.add(new_group)
 
     @classmethod
     async def get_group_id(cls, group_name: int) -> int | None:
@@ -113,7 +125,7 @@ class KaiParser:
 async def main():
     k = KaiParser()
 
-    print(await k.get_group_id(6110))
+    print(await k.get_group_ids())
 
 
 if __name__ == '__main__':
