@@ -15,7 +15,12 @@ language_not_available = _('The language you are using is no longer available. '
                            'Contact the administrator or change the language.')
 language_choose = _('Please select your language.')
 
-schedule_menu = _('Schedule menu')
+schedule_menu = _(
+    'Schedule menu\n'
+    '🧪 - laboratory work\n'
+    '📝 - seminar\n'
+    '📢 - lecture\n'
+)
 profile_menu = _('Profile menu')
 
 in_development = _('Functionality in development')
@@ -29,4 +34,18 @@ schedule_day_template = _(
 
 lesson_template = _(
     '● ⌛️{start_time} - {end_time}  | {lesson_type} {lesson_name}  |  {building} {auditory}'
+)
+
+full_schedule_pointer = '➤'
+
+teachers_template = _(
+    'Список преподавателей:\n\n'
+    '————————————————\n'
+    '{teachers}'
+)
+
+teacher = (
+    '{lesson_name} [{lesson_types}]\n'
+    '{full_name}\n'
+    '————————————————\n'
 )

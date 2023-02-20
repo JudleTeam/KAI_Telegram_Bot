@@ -31,6 +31,19 @@ def lesson_type_order(lesson_type: str):
     return ', '.join(res)
 
 
+def lesson_type_to_emoji(lesson_type):
+    res = []
+    for i in lesson_type.split(', '):
+        match i:
+            case 'лек':
+                res.append('📢')
+            case 'пр':
+                res.append('📝')
+            case 'л.р.':
+                res.append('🧪')
+    return res
+
+
 schedule_time = (
     (datetime.time(8, 00), datetime.time(9, 30)),
     (datetime.time(9, 40), datetime.time(11, 10)),
@@ -107,10 +120,27 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
         stm = select(Schedule).where(Schedule.group_id == group_id, Schedule.number_of_day == day_of_week)
         schedule = (await session.execute(stm)).scalars().all()
         if not schedule:
-            await add_group_schedule(group_id, db)
+            try:
+                await add_group_schedule(group_id, db)
+            except KaiApiError:
+                return None
             schedule = (await session.execute(stm)).scalars().all()
             if not schedule:
                 return None
         schedule = [i for i in schedule if i.parity_of_week in (0, parity)]
         return schedule
+
+
+async def get_group_teachers(group_id: int, db):
+    async with db.begin() as session:
+        stm = select(GroupTeacher).where(GroupTeacher.group_id == group_id)
+        teachers = (await session.execute(stm)).scalars().all()
+        if not teachers:
+            try:
+                await add_group_teachers(group_id, db)
+            except KaiApiError:
+                return None
+            teachers = (await session.execute(stm)).scalars().all()
+        return teachers
+
 
