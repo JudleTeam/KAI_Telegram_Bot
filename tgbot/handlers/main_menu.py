@@ -14,7 +14,7 @@ from tgbot.misc.texts import reply_commands, messages, buttons
 async def send_schedule_menu(message: Message):
     _ = message.bot.get('_')
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
-    week_parity = buttons.odd_week if week_parity else buttons.even_week
+    week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
     await message.answer(_(messages.schedule_menu).format(week=md.hunderline(week_parity)), reply_markup=inline_keyboards.get_main_schedule_keyboard(_))
 
 

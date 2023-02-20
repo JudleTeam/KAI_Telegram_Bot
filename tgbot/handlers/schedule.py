@@ -64,8 +64,8 @@ async def send_schedule_menu(call: CallbackQuery, state: FSMContext):
     await state.finish()
     _ = call.bot.get('_')
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
-    week_parity = buttons.odd_week if week_parity else buttons.even_week
-    await call.message.edit_text(messages.schedule_menu.format(week=md.hunderline(week_parity)),
+    week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
+    await call.message.edit_text(_(messages.schedule_menu).format(week=md.hunderline(week_parity)),
                                  reply_markup=inline.get_main_schedule_keyboard(_))
     await call.answer()
 
