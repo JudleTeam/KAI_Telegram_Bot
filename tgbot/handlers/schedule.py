@@ -13,6 +13,10 @@ from tgbot.services.database.models import User
 from tgbot.services.kai_parser.helper import get_schedule_by_week_day, lesson_type_to_emoji
 
 
+def convert_day(today: str):
+    return datetime.datetime.strptime(today, '%Y-%m-%d %H:%M:%S')
+
+
 def form_lessons(schedule_list):
     lessons = []
     for i in schedule_list:
@@ -48,7 +52,9 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
         lessons = form_lessons(schedule_list)
     msg = messages.schedule_day_template.format(
         day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
-                    (_('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'), _('Sunday'),)[today.weekday()] +
+                    (
+                    _('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'), _('Sunday'),)[
+                        today.weekday()] +
                     (f'({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
         lessons=lessons
     )
@@ -61,7 +67,8 @@ async def send_schedule_menu(call: CallbackQuery, state: FSMContext):
     _ = call.bot.get('_')
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = buttons.odd_week if week_parity else buttons.even_week
-    await call.message.edit_text(messages.schedule_menu.format(week=md.hunderline(week_parity)), reply_markup=inline.get_main_schedule_keyboard(_))
+    await call.message.edit_text(messages.schedule_menu.format(week=md.hunderline(week_parity)),
+                                 reply_markup=inline.get_main_schedule_keyboard(_))
     await call.answer()
 
 
@@ -83,8 +90,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
             except:
                 flag = False
 
-            if flag and week_num != int((await state.get_data())['today'].strftime("%V")):
-
+            if flag and week_num != int(convert_day((await state.get_data())['today']).strftime("%V")):
                 try:
                     msg = await form_day(_, db, user, today, False, False)
                 except Exception as e:
@@ -102,7 +108,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
                     return
 
                 await states.ScheduleState.today.set()
-                await state.update_data(today=today)
+                await state.update_data(today=str(today))
                 await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
     await call.answer()
 
@@ -139,14 +145,15 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
 
 async def change_week_parity(call: CallbackQuery, callback_data: dict, state: FSMContext):
     if callback_data['action'] == 'day':
-        today = (await state.get_data())['today']
+        today = convert_day((await state.get_data())['today'])
         if int(today.strftime("%V")) % 2 != int(callback_data['payload']):
             await state.update_data(change_week=False)
             await send_today_schedule(call, dict(action='change_week', payload=str(today.date())), state)
             return
         await state.update_data(change_week=True)
         if callback_data['payload'] == '0':
-            await send_today_schedule(call, dict(action='change_week', payload=str((datetime.datetime.now() + datetime.timedelta(days=21)).date())), state)
+            await send_today_schedule(call, dict(action='change_week', payload=str(
+                (datetime.datetime.now() + datetime.timedelta(days=21)).date())), state)
         else:
             await send_today_schedule(call, dict(action='change_week', payload=str(
                 (datetime.datetime.now() + datetime.timedelta(days=14)).date())), state)
