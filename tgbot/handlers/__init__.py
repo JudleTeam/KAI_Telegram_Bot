@@ -13,7 +13,7 @@ register_functions = (
     register_user,
     register_main_menu,
     register_schedule,
-    register_teachers
+    register_teachers,
     register_profile,
     register_group_choose
 )
