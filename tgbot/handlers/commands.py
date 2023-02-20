@@ -1,4 +1,5 @@
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
 from tgbot.keyboards import inline_keyboards, reply_keyboards
@@ -23,5 +24,13 @@ async def command_start(message: Message):
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
+async def command_menu(message: Message, state: FSMContext):
+    _ = message.bot.get('_')
+
+    await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
+    await state.finish()
+
+
 def register_commands(dp: Dispatcher):
-    dp.register_message_handler(command_start, commands=['start'], state='*')
+    dp.register_message_handler(command_start, commands=['start'])
+    dp.register_message_handler(command_menu, commands=['menu'], state='*')

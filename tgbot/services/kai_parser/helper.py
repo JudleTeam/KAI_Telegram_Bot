@@ -1,6 +1,5 @@
-import asyncio
 import datetime
-from tgbot.services.kai_parser import KaiParser
+from tgbot.services.kai_parser.parser import KaiParser
 from tgbot.services.database.models import Schedule, GroupTeacher
 
 

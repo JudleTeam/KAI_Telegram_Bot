@@ -11,7 +11,9 @@
 `pybabel init -i tgbot/locales/kai_bot.pot -d tgbot/locales -D kai_bot -l en`
 3. То же, на русский\
 `pybabel init -i tgbot/locales/kai_bot.pot -d tgbot/locales -D kai_bot -l ru`
-4. Переводим, а потом компилируем переводы\
+4. То же, на татарский\
+`pybabel init -i tgbot/locales/kai_bot.pot -d tgbot/locales -D kai_bot -l tt`
+5. Переводим, а потом компилируем переводы\
 `pybabel compile -d tgbot/locales -D kai_bot`
 
 ### Обновляем переводы
