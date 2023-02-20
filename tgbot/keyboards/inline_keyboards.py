@@ -95,7 +95,7 @@ def get_main_schedule_keyboard(_):
         InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload=(datetime.datetime.now() + datetime.timedelta(days=2)).date())),
         InlineKeyboardButton(_(buttons.full_schedule), callback_data=callbacks.schedule.new(action='full_schedule', payload='')),
         InlineKeyboardButton(_(buttons.teachers), callback_data=callbacks.schedule.new(action='teachers', payload='')),
-        InlineKeyboardButton(_(buttons.exams), callback_data=callbacks.schedule.new(action='exams', payload=''))
+        InlineKeyboardButton(_(buttons.exams), callback_data='pass')
     )
 
     return keyboard

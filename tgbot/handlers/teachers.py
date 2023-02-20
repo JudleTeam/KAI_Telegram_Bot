@@ -29,27 +29,22 @@ async def show_teachers(call: CallbackQuery):
         if not user.group_id:
             await call.answer('Выберите группу в профиле', show_alert=True)
             return
-        else:
-            stm = select(GroupTeacher).where(GroupTeacher.group_id == user.group_id)
-            teachers = (await session.execute(stm)).scalars().all()
+
+        stm = select(GroupTeacher).where(GroupTeacher.group_id == user.group_id)
+        teachers = (await session.execute(stm)).scalars().all()
+        if not teachers:
+            teachers = await get_group_teachers(user.group_id, db)
             if not teachers:
-                teachers = await get_group_teachers(user.group_id, db)
-                if not teachers:
-                    await call.answer('Произошла ошибка', show_alert=True)
-                    return
-            a = ''
-            for teacher in teachers:
-                a += form_teacher(teacher)
-            msg = messages.teachers_template.format(
-                teachers=a
-            )
-            await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(_))
-
-
-async def show_exam_menu(call: CallbackQuery):
-    await call.answer('In developing')
+                await call.answer('Произошла ошибка', show_alert=True)
+                return
+        a = ''
+        for teacher in teachers:
+            a += form_teacher(teacher)
+        msg = messages.teachers_template.format(
+            teachers=a
+        )
+        await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(_))
 
 
 def register_teachers(dp: Dispatcher):
     dp.register_callback_query_handler(show_teachers, callbacks.schedule.filter(action='teachers'))
-    dp.register_callback_query_handler(show_exam_menu, callbacks.schedule.filter(action='exams'))
