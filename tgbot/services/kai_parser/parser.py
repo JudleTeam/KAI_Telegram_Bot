@@ -58,7 +58,7 @@ class KaiParser:
                 if not teacher_name:
                     teacher_name = 'Не задан'
                 for i in res:
-                    if i['lesson_name'] == lesson_name and i['teacher_name'] == teacher_name:
+                    if i['lesson_name'] == lesson_name and i['teacher_name'] == teacher_name.title():
                         if lesson_type not in i['type']:
                             i['type'] += f', {lesson_type}'
                         break
@@ -66,7 +66,7 @@ class KaiParser:
                     res.append(
                         {'type': lesson_type,
                          'lesson_name': lesson_name,
-                         'teacher_name': teacher_name}
+                         'teacher_name': teacher_name.title()}
                     )
         return res
 
@@ -113,9 +113,7 @@ class KaiParser:
 async def main():
     k = KaiParser()
 
-    response = await k.get_group_schedule(23325)
-    if response:
-        print(response[4])
+    await k.get_group_teachers(23325)
 
 
 if __name__ == '__main__':

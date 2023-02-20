@@ -1,10 +1,12 @@
 import datetime
 
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
+from tgbot.misc import states
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 from tgbot.services.kai_parser.helper import get_schedule_by_week_day
@@ -52,13 +54,14 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
     return msg
 
 
-async def send_schedule_menu(call: CallbackQuery):
+async def send_schedule_menu(call: CallbackQuery, state: FSMContext):
+    await state.finish()
     _ = call.bot.get('_')
     await call.message.edit_text(messages.schedule_menu, reply_markup=inline.get_main_schedule_keyboard(_))
     await call.answer()
 
 
-async def send_today_schedule(call: CallbackQuery, callback_data: dict):
+async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: FSMContext):
     db = call.bot.get('database')
     _ = call.bot.get('_')
 
@@ -70,16 +73,22 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict):
         else:
             today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
             week_num = int(today.strftime("%V"))
-            print(week_num)
-            if callback_data['action'] == 'change_week':
+
+            try:
+                flag = (await state.get_data())['change_week']
+            except:
+                flag = False
+
+            if flag and week_num != int((await state.get_data())['today'].strftime("%V")):
+
                 try:
-                    msg = await form_day(_, db, user, today, False)
+                    msg = await form_day(_, db, user, today, False, False)
                 except Exception as e:
                     print(e)
                     await call.answer('Произошла ошибка', show_alert=True)
                     return
-                await call.message.delete()
-                await call.message.answer(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
+
+                await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
             else:
                 try:
                     msg = await form_day(_, db, user, today, True)
@@ -87,11 +96,14 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict):
                     print(e)
                     await call.answer('Произошла ошибка', show_alert=True)
                     return
-            await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
+
+                await states.ScheduleState.today.set()
+                await state.update_data(today=today)
+                await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
     await call.answer()
 
 
-async def send_full_schedule(call: CallbackQuery):
+async def send_full_schedule(call: CallbackQuery, callback_data: dict):
     db = call.bot.get('database')
     _ = call.bot.get('_')
     async with db.begin() as session:
@@ -101,12 +113,17 @@ async def send_full_schedule(call: CallbackQuery):
             return
         else:
             today = datetime.datetime.now()
+            if callback_data['payload'] == 'change':
+                today += datetime.timedelta(days=7)
             today -= datetime.timedelta(days=today.weekday())
             week_num = int(today.strftime("%V"))
             all_lessons = ''
             for i in range(6):
                 try:
-                    msg = await form_day(_, db, user, today + datetime.timedelta(days=i), True, True)
+                    if callback_data['payload'] == 'change':
+                        msg = await form_day(_, db, user, today + datetime.timedelta(days=i), False, True)
+                    else:
+                        msg = await form_day(_, db, user, today + datetime.timedelta(days=i), True, True)
                     all_lessons += msg
                 except Exception as e:
                     print(e)
@@ -116,20 +133,30 @@ async def send_full_schedule(call: CallbackQuery):
     await call.answer()
 
 
-async def change_week_parity(call: CallbackQuery, callback_data: dict):
+async def change_week_parity(call: CallbackQuery, callback_data: dict, state: FSMContext):
     if callback_data['action'] == 'day':
+        today = (await state.get_data())['today']
+        if int(today.strftime("%V")) % 2 != int(callback_data['payload']):
+            await state.update_data(change_week=False)
+            await send_today_schedule(call, dict(action='change_week', payload=str(today.date())), state)
+            return
+        await state.update_data(change_week=True)
         if callback_data['payload'] == '0':
-            await send_today_schedule(call, dict(action='change_week', payload=str((datetime.datetime.now() + datetime.timedelta(days=7)).date())))
+            await send_today_schedule(call, dict(action='change_week', payload=str((datetime.datetime.now() + datetime.timedelta(days=21)).date())), state)
         else:
             await send_today_schedule(call, dict(action='change_week', payload=str(
-                (datetime.datetime.now() + datetime.timedelta(days=14)).date())))
+                (datetime.datetime.now() + datetime.timedelta(days=14)).date())), state)
     else:
-        pass
+        week_parity = int(datetime.datetime.now().strftime("%V")) % 2
+        if week_parity != int(callback_data['payload']):
+            await send_full_schedule(call, dict(action='', payload=''))
+        else:
+            await send_full_schedule(call, dict(action='', payload='change'))
     await call.answer()
 
 
 def register_schedule(dp: Dispatcher):
-    dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'))
-    dp.register_callback_query_handler(send_schedule_menu, callbacks.schedule.filter(action='main_menu'))
-    dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'))
-    dp.register_callback_query_handler(change_week_parity, callbacks.change_schedule_week.filter())
+    dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'), state='*')
+    dp.register_callback_query_handler(send_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
+    dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
+    dp.register_callback_query_handler(change_week_parity, callbacks.change_schedule_week.filter(), state='*')
