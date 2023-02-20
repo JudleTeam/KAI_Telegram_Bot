@@ -1,6 +1,7 @@
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 
+from tgbot.handlers.main_menu import show_profile_menu
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import callbacks
 from tgbot.misc.texts import messages
@@ -43,6 +44,7 @@ async def show_main_menu(call: CallbackQuery):
 
 
 def register_user(dp: Dispatcher):
-    dp.register_callback_query_handler(show_language_choose, callbacks.navigation.filter(to='lang_choose'))
     dp.register_callback_query_handler(show_main_menu, callbacks.navigation.filter(to='main_menu'))
+
+    dp.register_callback_query_handler(show_language_choose, callbacks.navigation.filter(to='lang_choose'))
     dp.register_callback_query_handler(choose_language, callbacks.language_choose.filter())

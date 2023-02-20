@@ -24,6 +24,14 @@ schedule_menu = _(
 )
 profile_menu = _('Profile menu')
 
+group_choose = _('Current group: {group_name}\n\n'
+                 'Enter a group number or select from your favorites')
+group_removed = _('Group removed from favorites!')
+group_added = _('Group added to favorites!')
+group_changed = _('Current group changed!')
+group_already_selected = _('This group is already selected!')
+group_not_exist = _('❌ No such group exists!')
+
 in_development = _('Functionality in development')
 
 schedule_day_template = _(
