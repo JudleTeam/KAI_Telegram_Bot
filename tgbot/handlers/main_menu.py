@@ -18,9 +18,10 @@ async def send_schedule_menu(message: Message):
     await message.answer(_(messages.schedule_menu).format(week=md.hunderline(week_parity)), reply_markup=inline_keyboards.get_main_schedule_keyboard(_))
 
 
-async def send_profile_menu(message: Message):
+async def send_profile_menu(message: Message, state: FSMContext):
     _ = message.bot.get('_')
 
+    await state.finish()
     await message.answer(_(messages.profile_menu), reply_markup=inline_keyboards.get_profile_keyboard(_))
 
 
@@ -33,15 +34,17 @@ async def show_profile_menu(call: CallbackQuery, callback_data: dict, state: FSM
     await call.message.edit_text(_(messages.profile_menu), reply_markup=inline_keyboards.get_profile_keyboard(_))
 
 
-async def send_shop_menu(message: Message):
+async def send_shop_menu(message: Message, state: FSMContext):
     _ = message.bot.get('_')
 
+    await state.finish()
     await message.answer(_(messages.in_development))
 
 
-async def send_education_menu(message: Message):
+async def send_education_menu(message: Message, state: FSMContext):
     _ = message.bot.get('_')
 
+    await state.finish()
     await message.answer(_(messages.in_development))
 
 
