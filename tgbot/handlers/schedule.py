@@ -87,7 +87,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
 
         flag = state_data.get('change_week', False)
 
-        if flag and week_num != int(convert_day((await state.get_data())['today'])):
+        if flag and week_num != int(convert_day((await state.get_data())['today']).strftime("%V")):
 
             try:
                 msg = await form_day(_, db, user, today, False, False)
