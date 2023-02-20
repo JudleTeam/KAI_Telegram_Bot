@@ -46,5 +46,10 @@ async def show_teachers(call: CallbackQuery):
             await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(_))
 
 
+async def show_exam_menu(call: CallbackQuery):
+    await call.answer('In developing')
+
+
 def register_teachers(dp: Dispatcher):
     dp.register_callback_query_handler(show_teachers, callbacks.schedule.filter(action='teachers'))
+    dp.register_callback_query_handler(show_exam_menu, callbacks.schedule.filter(action='exams'))
