@@ -41,6 +41,8 @@ def lesson_type_to_emoji(lesson_type):
                 res.append('📝')
             case 'л.р.':
                 res.append('🧪')
+            case 'физ':
+                res.append('🏆')
     return res
 
 

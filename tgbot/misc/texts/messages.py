@@ -17,6 +17,7 @@ language_choose = _('Please select your language.')
 
 schedule_menu = _(
     'Schedule menu\n'
+    'Now {week} week\n\n'
     '🧪 - laboratory work\n'
     '📝 - seminar\n'
     '📢 - lecture\n'
@@ -33,7 +34,7 @@ schedule_day_template = _(
 )
 
 lesson_template = _(
-    '● ⌛️{start_time} - {end_time}  | {lesson_type} {lesson_name}  |  {building} {auditory}'
+    '● {lesson_type} {start_time} - {end_time}  |  {lesson_name}  |  {building} {auditory}'
 )
 
 full_schedule_pointer = '➤'
@@ -49,3 +50,7 @@ teacher = (
     '{full_name}\n'
     '————————————————\n'
 )
+
+kai_error = _('An error occurred on the kai side. Try later')
+
+select_group = _('Select group')

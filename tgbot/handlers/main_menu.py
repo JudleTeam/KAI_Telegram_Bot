@@ -1,14 +1,19 @@
+import datetime
+
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message
+from aiogram.utils import markdown as md
 
 import tgbot.keyboards.inline_keyboards as inline
-from tgbot.misc.texts import reply_commands, messages
+from tgbot.misc.texts import reply_commands, messages, buttons
 
 
 async def send_schedule_menu(message: Message):
     _ = message.bot.get('_')
-    await message.answer(messages.schedule_menu, reply_markup=inline.get_main_schedule_keyboard(_))
+    week_parity = int(datetime.datetime.now().strftime("%V")) % 2
+    week_parity = buttons.odd_week if week_parity else buttons.even_week
+    await message.answer(messages.schedule_menu.format(week=md.hunderline(week_parity)), reply_markup=inline.get_main_schedule_keyboard(_))
 
 
 async def send_profile_menu(message: Message):

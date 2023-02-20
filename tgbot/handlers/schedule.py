@@ -3,13 +3,14 @@ import datetime
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
+from aiogram.utils import markdown as md
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc import states
-from tgbot.misc.texts import messages
+from tgbot.misc.texts import messages, buttons
 from tgbot.services.database.models import User
-from tgbot.services.kai_parser.helper import get_schedule_by_week_day
+from tgbot.services.kai_parser.helper import get_schedule_by_week_day, lesson_type_to_emoji
 
 
 def form_lessons(schedule_list):
@@ -18,12 +19,13 @@ def form_lessons(schedule_list):
         if i.auditory_number == 'КСК КАИ ОЛИМП':
             i.building_number = 'ОЛИМП'
             i.auditory_number = ''
+            i.lesson_type = 'физ'
         else:
             i.building_number += ' зд.'
         lessons.append(messages.lesson_template.format(
             start_time=i.start_time.strftime('%H:%M'),
             end_time=i.end_time.strftime('%H:%M'),
-            lesson_type=i.lesson_type,
+            lesson_type=lesson_type_to_emoji(i.lesson_type)[0],
             lesson_name=i.lesson_name,
             building=i.building_number,
             auditory=i.auditory_number
@@ -57,7 +59,9 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
 async def send_schedule_menu(call: CallbackQuery, state: FSMContext):
     await state.finish()
     _ = call.bot.get('_')
-    await call.message.edit_text(messages.schedule_menu, reply_markup=inline.get_main_schedule_keyboard(_))
+    week_parity = int(datetime.datetime.now().strftime("%V")) % 2
+    week_parity = buttons.odd_week if week_parity else buttons.even_week
+    await call.message.edit_text(messages.schedule_menu.format(week=md.hunderline(week_parity)), reply_markup=inline.get_main_schedule_keyboard(_))
     await call.answer()
 
 
@@ -68,7 +72,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
-            await call.answer('Выберите группу в профиле', show_alert=True)
+            await call.answer(messages.select_group, show_alert=True)
             return
         else:
             today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
@@ -85,7 +89,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
                     msg = await form_day(_, db, user, today, False, False)
                 except Exception as e:
                     print(e)
-                    await call.answer('Произошла ошибка', show_alert=True)
+                    await call.answer(messages.kai_error, show_alert=True)
                     return
 
                 await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today))
@@ -94,7 +98,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
                     msg = await form_day(_, db, user, today, True)
                 except Exception as e:
                     print(e)
-                    await call.answer('Произошла ошибка', show_alert=True)
+                    await call.answer(messages.kai_error, show_alert=True)
                     return
 
                 await states.ScheduleState.today.set()
@@ -109,7 +113,7 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
-            await call.answer('Выберите группу в профиле', show_alert=True)
+            await call.answer(messages.select_group, show_alert=True)
             return
         else:
             today = datetime.datetime.now()
@@ -127,7 +131,7 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
                     all_lessons += msg
                 except Exception as e:
                     print(e)
-                    await call.answer('Произошла ошибка', show_alert=True)
+                    await call.answer(messages.kai_error, show_alert=True)
                     return
             await call.message.edit_text(all_lessons, reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2))
     await call.answer()

@@ -1,18 +1,18 @@
-import datetime
 from aiogram import Dispatcher
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
 from sqlalchemy import select
 
-import tgbot.misc.callbacks as callbacks
-
 import tgbot.keyboards.inline_keyboards as inline
-from tgbot.misc.texts import reply_commands, messages
+import tgbot.misc.callbacks as callbacks
+from tgbot.misc.texts import messages
 from tgbot.services.database.models import User, GroupTeacher
 from tgbot.services.kai_parser.helper import lesson_type_to_emoji, get_group_teachers
 
 
 def form_teacher(teacher):
+    if teacher.lesson_name == 'Физическая культура и спорт (элективная дисциплина)':
+        teacher.lesson_type = 'физ'
     return messages.teacher.format(
         lesson_name=md.hbold(teacher.lesson_name),
         lesson_types=' '.join(lesson_type_to_emoji(teacher.lesson_type)),
