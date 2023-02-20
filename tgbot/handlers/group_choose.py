@@ -8,7 +8,7 @@ from tgbot.misc.texts import messages
 from tgbot.services.database.models import User, Group
 
 
-async def add_to_favorites(call: CallbackQuery, state: FSMContext):
+async def add_to_favorites(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     db_session = call.bot.get('database')
 
@@ -17,10 +17,10 @@ async def add_to_favorites(call: CallbackQuery, state: FSMContext):
         user.selected_groups.append(user.group)
 
     await call.answer(_(messages.group_added))
-    await show_group_choose(call, state)
+    await show_group_choose(call, callback_data, state)
 
 
-async def remove_from_favorites(call: CallbackQuery, state: FSMContext):
+async def remove_from_favorites(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     db_session = call.bot.get('database')
 
@@ -29,7 +29,7 @@ async def remove_from_favorites(call: CallbackQuery, state: FSMContext):
         user.selected_groups.remove(user.group)
 
     await call.answer(_(messages.group_removed))
-    await show_group_choose(call, state)
+    await show_group_choose(call, callback_data, state)
 
 
 async def select_group(call: CallbackQuery, callback_data: dict, state: FSMContext):
@@ -45,7 +45,7 @@ async def select_group(call: CallbackQuery, callback_data: dict, state: FSMConte
         user.group_id = int(callback_data['id'])
 
     await call.answer(_(messages.group_changed))
-    await show_group_choose(call, state)
+    await show_group_choose(call, callback_data, state)
 
 
 async def get_group_name(message: Message, state: FSMContext):
@@ -78,7 +78,7 @@ async def get_group_name(message: Message, state: FSMContext):
         user = await session.get(User, message.from_id)
         user.group = group
 
-    await show_group_choose(call, state)
+    await show_group_choose(call, {'payload': data['payload']}, state)
 
 
 def register_group_choose(dp: Dispatcher):

@@ -46,11 +46,11 @@ async def send_education_menu(message: Message):
 
 
 def register_main_menu(dp: Dispatcher):
-    dp.register_message_handler(send_schedule_menu, Text(startswith=reply_commands.schedule_symbol))
+    dp.register_message_handler(send_schedule_menu, Text(startswith=reply_commands.schedule_symbol), state='*')
 
-    dp.register_message_handler(send_profile_menu, Text(startswith=reply_commands.profile_symbol))
+    dp.register_message_handler(send_profile_menu, Text(startswith=reply_commands.profile_symbol), state='*')
     dp.register_callback_query_handler(show_profile_menu, callbacks.navigation.filter(to='profile'), state='*')
 
-    dp.register_message_handler(send_shop_menu, Text(startswith=reply_commands.shop_symbol))
+    dp.register_message_handler(send_shop_menu, Text(startswith=reply_commands.shop_symbol), state='*')
 
-    dp.register_message_handler(send_education_menu, Text(startswith=reply_commands.education_symbol))
+    dp.register_message_handler(send_education_menu, Text(startswith=reply_commands.education_symbol), state='*')

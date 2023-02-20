@@ -113,7 +113,7 @@ class KaiParser:
 async def main():
     k = KaiParser()
 
-    await k.get_group_teachers(23325)
+    print(await k.get_group_id(6110))
 
 
 if __name__ == '__main__':
