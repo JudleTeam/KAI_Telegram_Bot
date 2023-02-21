@@ -10,6 +10,9 @@ class Group(Base):
 
     @classmethod
     async def get_group_by_name(cls, group_name, db_session):
+        if isinstance(group_name, str) and not group_name.isdigit():
+            return None
+
         async with db_session() as session:
             record = await session.execute(select(Group).where(Group.group_name == int(group_name)))
             return record.scalar()
