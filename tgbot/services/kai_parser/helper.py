@@ -139,4 +139,4 @@ async def get_group_teachers(group_id: int, db_session):
     except KaiApiError:
         return None
     else:
-        return get_group_teachers(group_id, db_session)
+        return await get_group_teachers(group_id, db_session)
