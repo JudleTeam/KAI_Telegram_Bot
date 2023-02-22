@@ -26,8 +26,7 @@ async def show_group_choose(call: CallbackQuery, callback_data: dict, state: FSM
         pass
 
     await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data['payload'])
-    if (await state.get_state()) is None:
-        await states.GroupChoose.waiting_for_group.set()
+    await states.GroupChoose.waiting_for_group.set()
 
 
 def register_profile(dp: Dispatcher):

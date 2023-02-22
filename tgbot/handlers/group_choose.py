@@ -72,7 +72,7 @@ async def get_group_name(message: Message, state: FSMContext):
         if user.group_id == group.group_id:
             return
 
-        user.group = group
+        user.group_id = group.group_id
 
     await show_group_choose(call, {'payload': data['payload']}, state)
 
