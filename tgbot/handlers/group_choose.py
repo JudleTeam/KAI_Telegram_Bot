@@ -52,6 +52,7 @@ async def get_group_name(message: Message, state: FSMContext):
     _ = message.bot.get('_')
     group_name = message.text
 
+    await message.delete()
     async with state.proxy() as data:
         main_mess = Message(**data['main_message'])
         call = CallbackQuery(**data['call'])
@@ -68,6 +69,9 @@ async def get_group_name(message: Message, state: FSMContext):
 
     async with db_session.begin() as session:
         user = await session.get(User, message.from_id)
+        if user.group_id == group.group_id:
+            return
+
         user.group = group
 
     await show_group_choose(call, {'payload': data['payload']}, state)
