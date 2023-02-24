@@ -9,13 +9,19 @@ from aiogram.utils import markdown as md
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks
 from tgbot.misc.texts import reply_commands, messages, buttons
+from tgbot.services.database.models import User
 
 
 async def send_schedule_menu(message: Message):
     _ = message.bot.get('_')
+    db_session = message.bot.get('database')
+    async with db_session() as session:
+        user = await session.get(User, message.from_id)
+    group_name = user.group.group_name if user.group else '????'
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
-    await message.answer(_(messages.schedule_menu).format(week=md.hunderline(week_parity)), reply_markup=inline_keyboards.get_main_schedule_keyboard(_))
+    await message.answer(_(messages.schedule_menu).format(week=md.hunderline(week_parity)),
+                         reply_markup=inline_keyboards.get_main_schedule_keyboard(_, group_name))
 
 
 async def send_profile_menu(message: Message, state: FSMContext):
