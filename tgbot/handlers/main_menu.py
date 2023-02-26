@@ -6,8 +6,8 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils import markdown as md
 
-from tgbot.keyboards import inline_keyboards
-from tgbot.misc import callbacks
+from tgbot.keyboards import inline_keyboards, reply_keyboards
+from tgbot.misc import callbacks, states
 from tgbot.misc.texts import reply_commands, messages, buttons
 from tgbot.services.database.models import User
 
@@ -54,8 +54,20 @@ async def send_education_menu(message: Message, state: FSMContext):
     await message.answer(_(messages.in_development))
 
 
+async def send_main_menu(call: CallbackQuery, state: FSMContext):
+    _ = call.bot.get('_')
+
+    await call.message.delete()
+    await call.message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
+    await call.answer()
+    await state.finish()
+
+
 def register_main_menu(dp: Dispatcher):
     dp.register_message_handler(send_schedule_menu, Text(startswith=reply_commands.schedule_symbol), state='*')
+
+    dp.register_callback_query_handler(send_main_menu, callbacks.navigation.filter(to='main_menu'),
+                                       state=states.GroupChoose.waiting_for_group)
 
     dp.register_message_handler(send_profile_menu, Text(startswith=reply_commands.profile_symbol), state='*')
     dp.register_callback_query_handler(show_profile_menu, callbacks.navigation.filter(to='profile'), state='*')

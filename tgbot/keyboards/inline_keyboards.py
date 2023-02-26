@@ -35,8 +35,9 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
 
     k_buttons = list()
     for group in user.selected_groups:
+        btn_text = f'● {group.group_name} ●' if user.group_id == group.group_id else group.group_name
         k_buttons.append(
-            InlineKeyboardButton(group.group_name, callback_data=callbacks.group_choose.new(id=group.group_id, action='select', payload=payload))
+            InlineKeyboardButton(btn_text, callback_data=callbacks.group_choose.new(id=group.group_id, action='select', payload=payload))
         )
     keyboard.add(*k_buttons)
 
@@ -52,6 +53,10 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
         )
+    elif payload == 'at_start':
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.next_), callback_data=callbacks.navigation.new(to='main_menu', payload=payload))
+        )
     else:
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='show_day', payload=payload))
@@ -63,9 +68,10 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
 def get_language_choose_keyboard(_, languages: list[Language], at_start=False):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
+    payload = 'at_start' if at_start else ''
     k_buttons = []
     for language in languages:
-        callback = callbacks.language_choose.new(lang_id=language.id, code=language.code)
+        callback = callbacks.language_choose.new(lang_id=language.id, code=language.code, payload=payload)
         k_buttons.append(
             InlineKeyboardButton(language.title, callback_data=callback)
         )
@@ -103,7 +109,7 @@ def get_main_schedule_keyboard(_, group_name):
     keyboard.add(
         InlineKeyboardButton(_(buttons.full_schedule), callback_data=callbacks.schedule.new(action='full_schedule', payload='')),
         InlineKeyboardButton(_(buttons.teachers), callback_data=callbacks.schedule.new(action='teachers', payload='')),
-        InlineKeyboardButton(_(buttons.exams), callback_data='pass'),
+        # InlineKeyboardButton(_(buttons.exams), callback_data='pass'),
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='main_schedule'))
     )
 
