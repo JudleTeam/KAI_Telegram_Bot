@@ -105,7 +105,7 @@ async def add_group_schedule(group_id: int, async_session):
                         Schedule.building_number == lesson['buildNum']
                     ))).scalars().all()
                     if ex:
-                        session.delete(ex)
+                        await session.delete(ex)
 
                     new_lesson = Schedule(
                         group_id=group_id,
