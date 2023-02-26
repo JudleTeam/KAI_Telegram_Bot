@@ -2,6 +2,8 @@ from tgbot.misc.texts import _
 
 
 back = _('Back')
+skip = _('Skip')
+next_ = _('Next')
 choose_language = _('Choose language')
 choose_group = _('Choose group')
 remove_favorite = _('Remove from favorites')

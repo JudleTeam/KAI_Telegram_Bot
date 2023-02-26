@@ -1,7 +1,9 @@
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 from tgbot.handlers.main_menu import show_profile_menu
+from tgbot.handlers.profile import show_group_choose
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import callbacks
 from tgbot.misc.texts import messages
@@ -20,7 +22,7 @@ async def show_language_choose(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
-async def choose_language(call: CallbackQuery, callback_data: dict):
+async def choose_language(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     redis = call.bot.get('redis')
     db_session = call.bot.get('database')
@@ -33,6 +35,10 @@ async def choose_language(call: CallbackQuery, callback_data: dict):
     _.ctx_locale.set(callback_data['code'])
 
     await call.answer(_(messages.language_changed))
+    if callback_data['payload'] == 'at_start':
+        await show_group_choose(call, callback_data, state)
+        return
+
     await call.message.delete()
     await call.message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
 
