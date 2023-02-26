@@ -32,17 +32,14 @@ def lesson_type_order(lesson_type: str):
 
 
 def lesson_type_to_emoji(lesson_type):
-    res = []
-    for i in lesson_type.split(', '):
-        match i:
-            case 'лек':
-                res.append('📢')
-            case 'пр':
-                res.append('📝')
-            case 'л.р.':
-                res.append('🧪')
-            case 'физ':
-                res.append('🏆')
+    lessons_emoji = {
+        'лек': '📢',
+        'пр': '📝',
+        'л.р.': '🧪',
+        'физ': '🏆'
+    }
+
+    res = [lessons_emoji[el] for el in lesson_type.split(', ')]
     return res
 
 
@@ -59,7 +56,6 @@ schedule_time = (
 
 
 def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
-    print(start_time)
     match lesson_type:
         case 'лек' | 'пр':
             for i in schedule_time:
@@ -68,18 +64,49 @@ def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
         case 'л.р.':
             for k, i in enumerate(schedule_time):
                 if i[0] == start_time:
-                    return schedule_time[k+1][1]
+                    return schedule_time[k + 1][1]
 
 
 async def add_group_schedule(group_id: int, async_session):
     k = KaiParser()
     response = await k.get_group_schedule(group_id)
+    prev_parity = 1
     if response:
         for num, day in enumerate(response):
-            for lesson in day:
-                print(lesson)
-                start_time = datetime.datetime.strptime(lesson['dayTime'], '%H:%M')
+            if not day:
                 async with async_session.begin() as session:
+                    empty_lesson = Schedule(
+                        group_id=group_id,
+                        number_of_day=num + 1,
+                        parity_of_week=prev_parity,
+                        lesson_name='',
+                        auditory_number='',
+                        building_number='',
+                        lesson_type='',
+                        start_time=datetime.datetime.now().time()
+                    )
+                    session.add(empty_lesson)
+                continue
+            for lesson in day:
+                start_time = datetime.datetime.strptime(lesson['dayTime'], '%H:%M')
+                if num != 6:
+                    prev_parity = get_parity(lesson['dayDate'])
+                else:
+                    if lesson['dayDate'] == 'неч':
+                        prev_parity = 2
+                    elif lesson['dayDate'] == 'чет':
+                        prev_parity = 1
+                async with async_session.begin() as session:
+                    ex = (await session.execute(select(Schedule).where(
+                        Schedule.number_of_day == num + 1,
+                        Schedule.parity_of_week == get_parity(lesson['dayDate']),
+                        Schedule.lesson_name == lesson['disciplName'],
+                        Schedule.auditory_number == lesson['audNum'],
+                        Schedule.building_number == lesson['buildNum']
+                    ))).scalars().all()
+                    if ex:
+                        session.delete(ex)
+
                     new_lesson = Schedule(
                         group_id=group_id,
                         number_of_day=num + 1,
@@ -97,22 +124,22 @@ async def add_group_schedule(group_id: int, async_session):
 
 
 async def add_group_teachers(group_id: int, async_session):
-    k = KaiParser()
-    response = await k.get_group_teachers(group_id)
-    if response:
-        for teacher in response:
-            async with async_session.begin() as session:
-                teacher['type'] = lesson_type_order(teacher['type'])
-
-                new_teacher = GroupTeacher(
-                    group_id=group_id,
-                    teacher_name=teacher['teacher_name'],
-                    lesson_type=teacher['type'],
-                    lesson_name=teacher['lesson_name']
-                )
-                session.add(new_teacher)
-    else:
+    kai_parser = KaiParser()
+    response = await kai_parser.get_group_teachers(group_id)
+    if not response:
         raise KaiApiError
+
+    async with async_session.begin() as session:
+        for teacher in response:
+            teacher['type'] = lesson_type_order(teacher['type'])
+
+            new_teacher = GroupTeacher(
+                group_id=group_id,
+                teacher_name=teacher['teacher_name'],
+                lesson_type=teacher['type'],
+                lesson_name=teacher['lesson_name']
+            )
+            session.add(new_teacher)
 
 
 async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
@@ -133,16 +160,13 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
         return schedule
 
 
-async def get_group_teachers(group_id: int, db):
-    async with db.begin() as session:
-        stm = select(GroupTeacher).where(GroupTeacher.group_id == group_id)
-        teachers = (await session.execute(stm)).scalars().all()
-        if not teachers:
-            try:
-                await add_group_teachers(group_id, db)
-            except KaiApiError:
-                return None
-            teachers = (await session.execute(stm)).scalars().all()
-        return teachers
+async def get_group_teachers(group_id: int, db_session):
+    teachers = await GroupTeacher.get_group_teachers(group_id, db_session)
+    if teachers: return teachers
 
-
+    try:
+        await add_group_teachers(group_id, db_session)
+    except KaiApiError:
+        return None
+    else:
+        return await get_group_teachers(group_id, db_session)

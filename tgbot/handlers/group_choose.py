@@ -52,17 +52,10 @@ async def get_group_name(message: Message, state: FSMContext):
     _ = message.bot.get('_')
     group_name = message.text
 
+    await message.delete()
     async with state.proxy() as data:
         main_mess = Message(**data['main_message'])
         call = CallbackQuery(**data['call'])
-
-    await message.delete()
-    if not group_name.isdigit() or len(group_name) != 4:
-        if _(messages.group_not_exist) not in main_mess.text:
-            main_mess = await main_mess.edit_text(main_mess.text + '\n\n' + _(messages.group_not_exist),
-                                                  reply_markup=main_mess.reply_markup)
-            await state.update_data(main_message=main_mess.to_python())
-        return
 
     db_session = message.bot.get('database')
     group_name = int(group_name)
@@ -76,7 +69,10 @@ async def get_group_name(message: Message, state: FSMContext):
 
     async with db_session.begin() as session:
         user = await session.get(User, message.from_id)
-        user.group = group
+        if user.group_id == group.group_id:
+            return
+
+        user.group_id = group.group_id
 
     await show_group_choose(call, {'payload': data['payload']}, state)
 
