@@ -46,7 +46,7 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
         with_pointer = False
     schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(),
                                                    2 if not week_num % 2 else 1, db)
-    if not schedule_list:
+    if not schedule_list or not schedule_list[0].lesson_name:
         lessons = _('Day off\n')
     else:
         lessons = form_lessons(schedule_list)
@@ -96,7 +96,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
             try:
                 msg = await form_day(_, db, user, today, False, False)
             except Exception as e:
-                print(e)
+                print(send_today_schedule, e)
                 await call.answer(_(messages.kai_error), show_alert=True)
                 return
 
@@ -105,7 +105,7 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
             try:
                 msg = await form_day(_, db, user, today, True)
             except Exception as e:
-                print(e)
+                print(send_today_schedule, e)
                 await call.answer(_(messages.kai_error), show_alert=True)
                 return
 
@@ -139,7 +139,7 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
                         msg = await form_day(_, db, user, today + datetime.timedelta(days=i), True, True)
                     all_lessons += msg
                 except Exception as e:
-                    print(e)
+                    print(send_full_schedule, e)
                     await call.answer(_(messages.kai_error), show_alert=True)
                     return
             await call.message.edit_text(all_lessons, reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2, user.group.group_name))
