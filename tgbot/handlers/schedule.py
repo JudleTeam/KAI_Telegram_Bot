@@ -60,13 +60,17 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
     return msg
 
 
-async def send_schedule_menu(call: CallbackQuery, state: FSMContext):
+async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     await state.finish()
     _ = call.bot.get('_')
+    db_session = call.bot.get('database')
+    async with db_session() as session:
+        user = await session.get(User, call.from_user.id)
+    group_name = user.group.group_name if user.group else '????'
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
     await call.message.edit_text(_(messages.schedule_menu).format(week=md.hunderline(week_parity)),
-                                 reply_markup=inline.get_main_schedule_keyboard(_))
+                                 reply_markup=inline.get_main_schedule_keyboard(_, group_name))
     await call.answer()
 
 
@@ -167,6 +171,6 @@ async def change_week_parity(call: CallbackQuery, callback_data: dict, state: FS
 
 def register_schedule(dp: Dispatcher):
     dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'), state='*')
-    dp.register_callback_query_handler(send_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
+    dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
     dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
     dp.register_callback_query_handler(change_week_parity, callbacks.change_schedule_week.filter(), state='*')
