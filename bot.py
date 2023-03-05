@@ -15,7 +15,8 @@ from tgbot import handlers
 from tgbot import filters
 from tgbot import middlewares
 from tgbot.services.database.base import Base
-from tgbot.services.database.models import Language
+from tgbot.services.database.models import Language, Role
+from tgbot.services.database.models.right import Right
 from tgbot.services.kai_parser.parser import KaiParser
 
 logger = logging.getLogger(__name__)
@@ -81,7 +82,9 @@ async def main():
     register_all_handlers(dp)
 
     await Language.check_languages(async_sessionmaker, bot['_'].available_locales)
-    # await KaiParser.parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
+    await Right.insert_default_rights(async_sessionmaker)
+    await Role.insert_default_roles(async_sessionmaker)
+    await KaiParser.parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
 
     try:
         await dp.start_polling()
