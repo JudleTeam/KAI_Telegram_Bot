@@ -97,16 +97,20 @@ async def add_group_schedule(group_id: int, async_session):
                     elif lesson['dayDate'] == 'чет':
                         prev_parity = 1
                 async with async_session.begin() as session:
-                    ex = (await session.execute(select(Schedule).where(
-                        Schedule.number_of_day == num + 1,
-                        Schedule.parity_of_week == get_parity(lesson['dayDate']),
-                        Schedule.lesson_name == lesson['disciplName'],
-                        Schedule.auditory_number == lesson['audNum'],
-                        Schedule.building_number == lesson['buildNum']
-                    ))).scalars().all()
-                    if ex:
-                        session.delete(ex)
-
+                    # ex = (await session.execute(select(Schedule).where(
+                    #     Schedule.group_id == group_id,
+                    #     Schedule.number_of_day == num + 1,
+                    #     Schedule.parity_of_week == get_parity(lesson['dayDate']),
+                    #     Schedule.lesson_name == lesson['disciplName'],
+                    #     Schedule.auditory_number == lesson['audNum'],
+                    #     Schedule.building_number == lesson['buildNum'],
+                    #     Schedule.lesson_type == lesson['disciplType']
+                    # ))).scalars().all()
+                    # if ex:
+                    #     ex = ex[0]
+                    #     print(ex.group_id, ex.number_of_day, ex.parity_of_week, ex.lesson_name)
+                    #     await session.delete(ex)
+                    # print(num+1, get_parity(lesson['dayDate']), lesson['disciplName'])
                     new_lesson = Schedule(
                         group_id=group_id,
                         number_of_day=num + 1,
