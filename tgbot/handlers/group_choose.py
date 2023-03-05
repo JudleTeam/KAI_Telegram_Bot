@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -16,6 +18,7 @@ async def add_to_favorites(call: CallbackQuery, callback_data: dict, state: FSMC
         user = await session.get(User, call.from_user.id)
         user.selected_groups.append(user.group)
 
+    logging.info(f'[{call.from_user.id}]: Add group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_added))
     await show_group_choose(call, callback_data, state)
 
@@ -28,6 +31,7 @@ async def remove_from_favorites(call: CallbackQuery, callback_data: dict, state:
         user = await session.get(User, call.from_user.id)
         user.selected_groups.remove(user.group)
 
+    logging.info(f'[{call.from_user.id}]: Remove group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_removed))
     await show_group_choose(call, callback_data, state)
 
@@ -37,13 +41,17 @@ async def select_group(call: CallbackQuery, callback_data: dict, state: FSMConte
     db_session = call.bot.get('database')
 
     select_group_id = int(callback_data['id'])
-    async with db_session.begin() as session:
+    async with db_session() as session:
         user = await session.get(User, call.from_user.id)
         if user.group_id == select_group_id:
             await call.answer(_(messages.group_already_selected))
             return
         user.group_id = int(callback_data['id'])
 
+        await session.commit()
+        await session.refresh(user)
+
+    logging.info(f'[{call.from_user.id}]: Changed group to {user.group.group_name} with favorite groups')
     await call.answer(_(messages.group_changed))
     await show_group_choose(call, callback_data, state)
 
@@ -74,6 +82,7 @@ async def get_group_name(message: Message, state: FSMContext):
 
         user.group_id = group.group_id
 
+    logging.info(f'[{message.from_id}]: Changed group to {group_name} with input')
     await show_group_choose(call, {'payload': data['payload']}, state)
 
 

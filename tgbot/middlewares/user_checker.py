@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
@@ -34,10 +36,12 @@ class UserCheckerMiddleware(BaseMiddleware):
                 else:
                     await redis.set(name=f'{message.from_id}:exists', value='')
 
+                    logging.error(f'[{message.from_id}]: Unregistered')
                     await message.answer(messages.user_unregistered)
                     raise CancelHandler()
         else:
             if not cached_is_user_exists:
+                logging.error(f'[{message.from_id}]: Unregistered')
                 await message.answer(messages.user_unregistered)
                 raise CancelHandler()
 

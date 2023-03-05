@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
@@ -21,6 +23,7 @@ async def command_start(message: Message):
 
             await redis.set(name=f'{message.from_id}:exists', value='1')
             await message.answer(_(messages.welcome), reply_markup=inline_keyboards.get_start_keyboard(_))
+            logging.info(f'New user: {message.from_user.mention} {message.from_user.full_name} [{message.from_id}]')
         else:
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
 

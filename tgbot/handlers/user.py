@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
@@ -33,6 +35,8 @@ async def choose_language(call: CallbackQuery, callback_data: dict, state: FSMCo
 
     await redis.set(name=f'{user.telegram_id}:lang', value=callback_data['code'])
     _.ctx_locale.set(callback_data['code'])
+
+    logging.info(f'[{call.from_user.id}]: Changed language to {callback_data["code"]}')
 
     await call.answer(_(messages.language_changed))
     if callback_data['payload'] == 'at_start':
