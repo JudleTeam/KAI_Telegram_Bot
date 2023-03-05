@@ -2,6 +2,7 @@ import asyncio
 from dataclasses import dataclass
 
 import aiohttp
+from sqlalchemy.exc import IntegrityError
 
 from tgbot.services.database.models import Group
 
@@ -42,13 +43,18 @@ class KaiParser:
 
     @classmethod
     async def parse_groups(cls, response, db):
-        async with db.begin() as session:
+        async with db() as session:
             for i in response:
                 new_group = Group(
                     group_id=i['id'],
                     group_name=int(i['group'])
                 )
                 session.add(new_group)
+                try:
+                    await session.commit()
+                except IntegrityError:
+                    await session.rollback()
+                    await session.flush()
 
     @classmethod
     async def get_group_id(cls, group_name: int) -> int | None:

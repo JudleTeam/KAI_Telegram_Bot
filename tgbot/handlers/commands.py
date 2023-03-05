@@ -3,8 +3,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
 from tgbot.keyboards import inline_keyboards, reply_keyboards
-from tgbot.misc.texts import messages
-from tgbot.services.database.models import User
+from tgbot.misc.texts import messages, roles
+from tgbot.services.database.models import User, Role
 
 
 async def command_start(message: Message):
@@ -15,7 +15,8 @@ async def command_start(message: Message):
         user = await session.get(User, message.from_id)
         if not user:
             redis = message.bot.get('redis')
-            user = User(telegram_id=message.from_id)
+            roles_dict = await Role.get_roles_dict(db)
+            user = User(telegram_id=message.from_id, roles=[roles_dict[roles.student]])
             session.add(user)
 
             await redis.set(name=f'{message.from_id}:exists', value='1')
