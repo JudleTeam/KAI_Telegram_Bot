@@ -21,6 +21,7 @@ schedule_menu = _(
     '🧪 - Laboratory work\n'
     '📝 - Seminar\n'
     '📢 - Lecture\n'
+    '❓ - Consultation\n'
 )
 profile_menu = _('Profile menu')
 
