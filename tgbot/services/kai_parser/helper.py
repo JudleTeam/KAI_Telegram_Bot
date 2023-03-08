@@ -6,10 +6,6 @@ from tgbot.services.kai_parser.parser import KaiParser
 from tgbot.services.database.models import Schedule, GroupTeacher
 
 
-class KaiApiError(Exception):
-    """Can't get data from Kai site"""
-
-
 def get_parity(week: str):
     match week:
         case 'неч':
