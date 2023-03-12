@@ -12,6 +12,9 @@ sqlalchemy = {extras = ["asyncio"], version = "*"}
 iso-language-codes = "*"
 aiohttp = "*"
 redis = "*"
+lxml = "*"
+bs4 = "*"
+phonenumbers = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
