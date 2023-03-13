@@ -4,10 +4,7 @@ from sqlalchemy import select
 
 from tgbot.services.kai_parser.parser import KaiParser
 from tgbot.services.database.models import Schedule, GroupTeacher
-
-
-class KaiApiError(Exception):
-    """Can't get data from Kai site"""
+from tgbot.services.kai_parser.schemas import KaiApiError
 
 
 def get_parity(week: str):

@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -78,38 +79,39 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
     db = call.bot.get('database')
     _ = call.bot.get('_')
 
-    async with db.begin() as session:
+    async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
             await call.answer(_(messages.select_group), show_alert=True)
             return
 
-        today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
-        week_num = int(today.strftime("%V"))
+    today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
+    week_num = int(today.strftime("%V"))
 
-        state_data = await state.get_data()
+    state_data = await state.get_data()
 
-        flag = state_data.get('change_week', False)
+    flag = state_data.get('change_week', False)
 
-        if flag and week_num != int(convert_day((await state.get_data())['today']).strftime("%V")):
+    if flag and week_num != int(convert_day(state_data['today']).strftime("%V")):
+        try:
+            msg = await form_day(_, db, user, today, False, False)
+        except Exception as e:
+            logging.error(f'[{call.from_user.id}]: Error with group {user.group.group_name} day schedule ({today}) - {e}')
+            await call.answer(_(messages.kai_error), show_alert=True)
+            return
 
-            try:
-                msg = await form_day(_, db, user, today, False, False)
-            except Exception as e:
-                await call.answer(_(messages.kai_error), show_alert=True)
-                return
+        await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today, user.group.group_name))
+    else:
+        try:
+            msg = await form_day(_, db, user, today, True)
+        except Exception as e:
+            logging.error(f'[{call.from_user.id}]: Error with group {user.group.group_name} day schedule ({today}) - {e}')
+            await call.answer(_(messages.kai_error), show_alert=True)
+            return
 
-            await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today, user.group.group_name))
-        else:
-            try:
-                msg = await form_day(_, db, user, today, True)
-            except Exception as e:
-                await call.answer(_(messages.kai_error), show_alert=True)
-                return
-
-            await states.ScheduleState.today.set()
-            await state.update_data(today=str(today))
-            await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today, user.group.group_name))
+        await states.ScheduleState.today.set()
+        await state.update_data(today=str(today))
+        await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today, user.group.group_name))
 
     await call.answer()
 
@@ -122,24 +124,26 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
         if not user.group_id:
             await call.answer(_(messages.select_group), show_alert=True)
             return
-        else:
-            today = datetime.datetime.now()
+
+    today = datetime.datetime.now()
+    if callback_data['payload'] == 'change':
+        today += datetime.timedelta(days=7)
+    today -= datetime.timedelta(days=today.weekday())
+    week_num = int(today.strftime("%V"))
+    all_lessons = ''
+    for i in range(6):
+        try:
             if callback_data['payload'] == 'change':
-                today += datetime.timedelta(days=7)
-            today -= datetime.timedelta(days=today.weekday())
-            week_num = int(today.strftime("%V"))
-            all_lessons = ''
-            for i in range(6):
-                try:
-                    if callback_data['payload'] == 'change':
-                        msg = await form_day(_, db, user, today + datetime.timedelta(days=i), False, True)
-                    else:
-                        msg = await form_day(_, db, user, today + datetime.timedelta(days=i), True, True)
-                    all_lessons += msg
-                except Exception as e:
-                    await call.answer(_(messages.kai_error), show_alert=True)
-                    return
-            await call.message.edit_text(all_lessons, reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2, user.group.group_name))
+                msg = await form_day(_, db, user, today + datetime.timedelta(days=i), False, True)
+            else:
+                msg = await form_day(_, db, user, today + datetime.timedelta(days=i), True, True)
+            all_lessons += msg
+        except Exception as e:
+            logging.error(f'[{call.from_user.id}]: Error with group {user.group.group_name} full schedule - {e}')
+            await call.answer(_(messages.kai_error), show_alert=True)
+            return
+    await call.message.edit_text(all_lessons, reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2, user.group.group_name))
+
     await call.answer()
 
 

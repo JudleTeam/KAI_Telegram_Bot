@@ -1,5 +1,5 @@
-from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table, select
+from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql.expression import text
 
 from tgbot.services.database.base import Base
@@ -43,3 +43,11 @@ class User(Base):
                 return True
 
         return False
+
+    @classmethod
+    async def get_all(cls, db: Session) -> list:
+        async with db() as session:
+            records = await session.execute(select(User))
+            users = records.scalars().all()
+
+        return users
