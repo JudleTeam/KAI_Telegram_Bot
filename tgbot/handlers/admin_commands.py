@@ -1,5 +1,3 @@
-import logging
-
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery, Message
 
@@ -33,7 +31,6 @@ async def update_user_block(message: Message, is_blocked: bool) -> User | None:
 
     redis_value = '1' if is_blocked else ''
     await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value)
-    logging.info(f'Admin {message.from_id} {args[0][1:]} user {user_to_update.telegram_id}')
 
     return user_to_update
 
@@ -78,7 +75,6 @@ async def send_users(message: Message):
         formatted_users.append(f'[{tg_user.id}] {user_tag}')
 
     await message.answer('\n'.join(formatted_users))
-    logging.info(f'Admin {message.from_id} used "/users"')
 
 
 def register_admin_commands(dp: Dispatcher):
