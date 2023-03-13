@@ -3,6 +3,8 @@ import datetime
 import json
 import logging
 from json import JSONDecodeError
+import pickle
+from dataclasses import dataclass
 
 import aiohttp
 from aiohttp.abc import AbstractCookieJar
@@ -411,9 +413,51 @@ class KaiParser:
         return cls._parse_teachers(response)
 
 
+def pretty_schedule(group_schedule):
+    a = {'dayDate': set(), 'buildNum': set(), 'dayTime': set(), 'disciplType': set()}
+
+    for day in group_schedule:
+        # print(day)
+        if day:
+            for i in day:
+                lesson = ''
+                for j in i.keys():
+                    lesson += f'{j}: {i[j]} '
+                    if j in a.keys():
+                        a[j].add(i[j])
+            # print(lesson)
+    # print(a)
+    return a
+
+
 async def main():
     k = KaiParser()
+    with open('data.pickle', 'rb') as f:
+        group_ids = pickle.load(f)
+    ids = []
+    for j, el in enumerate(group_ids):
+        if j > 1000:
+            break
+        ids.append(el['id'])
+    a = {'dayDate': set(), 'buildNum': set(), 'dayTime': set(), 'disciplType': set()}
+    for h, i in enumerate(ids):
+        print(h)
+        group_schedule = await k.get_group_schedule(i)
+        if not group_schedule:
+            print('no group_schedule')
+            continue
+        b = pretty_schedule(group_schedule)
+        for j in b.keys():
+            a[j].update(b[j])
+        with open('temp_data.pickle', 'wb') as f:
+            pickle.dump(a, f)
 
+    data_day_date = a['dayDate']
+    with open('data_day_date.pickle', 'wb') as f:
+        pickle.dump(data_day_date, f)
+    with open('data_day_date.pickle', 'rb') as f:
+        data_1 = pickle.load(f)
+    print("\n".join(data_1))
     full_data = await k.get_full_user_data('KitaevGA', 'pass')
     for user in full_data.group_members:
         print(user)

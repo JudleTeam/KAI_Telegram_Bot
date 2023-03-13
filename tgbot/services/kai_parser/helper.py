@@ -163,8 +163,8 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
 
 async def get_group_teachers(group_id: int, db_session):
     teachers = await GroupTeacher.get_group_teachers(group_id, db_session)
-    if teachers: return teachers
-
+    if teachers:
+        return teachers
     try:
         await add_group_teachers(group_id, db_session)
     except KaiApiError:
