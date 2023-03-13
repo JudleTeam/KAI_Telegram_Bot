@@ -46,7 +46,7 @@ class KaiParser:
     @classmethod
     async def _get_login_cookies(cls, login, password, retries=1) -> AbstractCookieJar | None:
         login_headers = {
-            'User-Agent': 'KAI_PUP',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
             'Host': 'kai.ru',
             'Origin': 'https://kai.ru',
             'Referer': 'https://kai.ru/',
