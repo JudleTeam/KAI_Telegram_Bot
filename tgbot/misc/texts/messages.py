@@ -62,15 +62,3 @@ teacher = (
 kai_error = _('An error occurred on the KAI side. Try later')
 
 select_group = _('Select group')
-
-ban_unban_invalid_format = _(
-    'Invalid {command} command format. After the command, there should be a user\'s Telegram ID. '
-    'Example: "{command} 393867797"'
-)
-
-user_not_exist = _('User {user_id} does not exist')
-user_has_been_blocked = _('User {user_id} has been blocked')
-user_has_been_unblocked = _('User {user_id} has been unblocked')
-
-admin_block = _('You have been blocked by the administrator!')
-admin_unblock = _('You have been unblocked by the administrator!')

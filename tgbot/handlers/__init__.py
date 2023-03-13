@@ -6,7 +6,6 @@ from .schedule import register_schedule
 from .teachers import register_teachers
 from .profile import register_profile
 from .group_choose import register_group_choose
-from .admin_commands import register_admin_commands
 
 register_functions = (
     register_commands,
@@ -16,6 +15,5 @@ register_functions = (
     register_schedule,
     register_teachers,
     register_profile,
-    register_group_choose,
-    register_admin_commands
+    register_group_choose
 )
