@@ -1,5 +1,5 @@
-from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table, select
+from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql.expression import text
 
 from tgbot.services.database.base import Base
@@ -28,14 +28,12 @@ class User(Base):
     telegram_id = Column(BigInteger, primary_key=True, unique=True, autoincrement=False)
     language_id = Column(Integer, ForeignKey('language.id'), nullable=True)
     group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_user_group'), nullable=True)
-    native_group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_native_user_group'), nullable=True)
     created_at = Column(DateTime(), nullable=False, server_default=text('NOW()'))
     is_blocked_bot = Column(Boolean, nullable=False, server_default=text('false'))
     is_blocked = Column(Boolean, nullable=False, server_default=text('false'))
 
     language = relationship('Language', lazy='selectin')
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
-    native_group = relationship('Group', lazy='selectin', foreign_keys=[native_group_id])
     selected_groups = relationship('Group', lazy='selectin', secondary=selected_groups)
     roles = relationship('Role', lazy='selectin', secondary=user_roles)
 
@@ -45,3 +43,11 @@ class User(Base):
                 return True
 
         return False
+
+    @classmethod
+    async def get_all(cls, db: Session) -> list:
+        async with db() as session:
+            records = await session.execute(select(User))
+            users = records.scalars().all()
+
+        return users

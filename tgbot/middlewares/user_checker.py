@@ -13,9 +13,6 @@ class UserCheckerMiddleware(BaseMiddleware):
         super().__init__()
 
     async def on_pre_process_message(self, message: types.Message, data: dict):
-        if message.text == '/start':
-            return
-
         db_session = message.bot.get('database')
         redis = message.bot.get('redis')
 
@@ -34,6 +31,9 @@ class UserCheckerMiddleware(BaseMiddleware):
                     else:
                         await redis.set(name=f'{message.from_id}:blocked', value='')
                 else:
+                    if message.text == '/start':
+                        return
+
                     await redis.set(name=f'{message.from_id}:exists', value='')
 
                     logging.error(f'[{message.from_id}]: Unregistered')
@@ -41,6 +41,9 @@ class UserCheckerMiddleware(BaseMiddleware):
                     raise CancelHandler()
         else:
             if not cached_is_user_exists:
+                if message.text == '/start':
+                    return
+
                 logging.error(f'[{message.from_id}]: Unregistered')
                 await message.answer(messages.user_unregistered)
                 raise CancelHandler()
