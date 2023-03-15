@@ -7,7 +7,7 @@ import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
-from tgbot.services.kai_parser.helper import lesson_type_to_emoji, get_group_teachers
+from tgbot.services.kai_parser.utils import lesson_type_to_emoji, get_group_teachers
 
 
 def form_teacher(teacher):

@@ -58,7 +58,13 @@ class UserAbout:
 
 
 @dataclass
+class Group:
+    members: list[BaseUser]
+    leader_index: int | None
+
+
+@dataclass
 class FullUserData:
     user_info: UserInfo
     user_about: UserAbout
-    group_members: list[BaseUser]
+    group: Group
