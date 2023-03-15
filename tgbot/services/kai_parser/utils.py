@@ -66,8 +66,7 @@ def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
 
 
 async def add_group_schedule(group_id: int, async_session):
-    k = KaiParser()
-    response = await k.get_group_schedule(group_id)
+    response = await KaiParser.get_group_schedule(group_id)
     prev_parity = 1
     if not response:
         raise KaiApiError
@@ -183,3 +182,11 @@ async def parse_groups(response, db):
             except IntegrityError:
                 await session.rollback()
                 await session.flush()
+
+
+async def get_group_id(group_name: int) -> int | None:
+    groups = await KaiParser.get_group_ids()
+    for i in groups:
+        if i['group'] == str(group_name):
+            return int(i['id'])
+    return None

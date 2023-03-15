@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 from json import JSONDecodeError
@@ -7,10 +6,8 @@ import aiohttp
 from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
 
-from tgbot.services.database.models import Group
-from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, UserInfo, FullUserData, BaseUser, Group as KAIGroup
+from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo
 from tgbot.services.kai_parser import helper
-from tgbot.services.utils import parse_phone_number
 
 
 class KaiParser:
@@ -27,7 +24,7 @@ class KaiParser:
     _timeout = 10
 
     @classmethod
-    async def get_user_info(cls, login, password, login_cookies=None):
+    async def get_user_info(cls, login, password, login_cookies=None) -> UserInfo:
         login_cookies = login_cookies or await cls._get_login_cookies(login, password)
 
         async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
@@ -37,7 +34,7 @@ class KaiParser:
 
                 soup = BeautifulSoup(await response.text(), 'lxml')
 
-        return cls._parse_user_info(soup)
+        return helper.parse_user_info(soup)
 
     @classmethod
     async def get_user_about(cls, login, password, role='student', login_cookies=None) -> UserAbout | None:
@@ -134,7 +131,7 @@ class KaiParser:
         return full_user_data
 
     @classmethod
-    async def get_user_group_members(cls, login, password, login_cookies=None):
+    async def get_user_group_members(cls, login, password, login_cookies=None) -> Group:
         login_cookies = login_cookies or await cls._get_login_cookies(login, password)
 
         async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
@@ -143,10 +140,10 @@ class KaiParser:
                     raise KaiApiError(f'[{login}]: {response.status} received from my group request')
                 soup = BeautifulSoup(await response.text(), 'lxml')
 
-        return cls._parse_group_members(soup)
+        return helper.parse_group_members(soup)
 
     @classmethod
-    async def get_group_ids(cls) -> list:
+    async def get_group_ids(cls) -> dict:
         params = {
             'p_p_id': 'pubStudentSchedule_WAR_publicStudentSchedule10',
             'p_p_lifecycle': 2,
@@ -157,14 +154,6 @@ class KaiParser:
                                     params=params, timeout=cls._timeout) as response:
                 response = await response.json(content_type='text/html')
                 return response
-
-    @classmethod
-    async def get_group_id(cls, group_name: int) -> int | None:
-        groups = await cls.get_group_ids()
-        for i in groups:
-            if i['group'] == str(group_name):
-                return int(i['id'])
-        return None
 
     @classmethod
     async def get_group_schedule(cls, group_id: int) -> list | None:
@@ -247,56 +236,3 @@ class KaiParser:
                                     params=params, timeout=cls._timeout) as response:
                 response = await response.json(content_type='text/html')
                 return response
-
-    @classmethod
-    def _parse_user_info(cls, soup: BeautifulSoup):
-        last_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_lastName')['value'].strip()
-        first_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_firstName')['value'].strip()
-        middle_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_middleName')['value'].strip()
-
-        full_name = ' '.join((last_name, first_name, middle_name))
-
-        sex = ''
-        sex_select = soup.find('select', id='_aboutMe_WAR_aboutMe10_sex')
-        for option in sex_select.findAll():
-            if option.get('selected') is not None:
-                sex = option.text.strip()
-                break
-
-        birthday_str = soup.find('input', id='_aboutMe_WAR_aboutMe10_birthDay')['value'].strip()
-        birthday = datetime.datetime.strptime(birthday_str, '%d.%m.%Y').date()
-
-        phone = soup.find('input', id='_aboutMe_WAR_aboutMe10_phoneNumber0')['value'].strip()
-        phone = parse_phone_number(phone)
-
-        email = soup.find('input', id='_aboutMe_WAR_aboutMe10_email')['value'].strip()
-
-        user_info = UserInfo(
-            full_name=full_name,
-            sex=sex,
-            birthday=birthday,
-            phone=phone,
-            email=email
-        )
-
-        return user_info
-
-    @classmethod
-    def _parse_group_members(cls, soup: BeautifulSoup) -> Group:
-        group_members = list()
-        leader_ind = None
-        table_rows = soup.find_all('tr')
-        for ind, row in enumerate(table_rows[1:]):
-            columns = row.find_all('td')
-
-            full_name = columns[1].text.strip()
-            if 'Староста' in full_name:
-                leader_ind = ind
-                full_name = full_name.replace('Староста', '').strip()
-            email = columns[2].text.strip()
-            phone = parse_phone_number(columns[3].text.strip())
-
-            user = BaseUser(full_name=full_name, email=email, phone=phone)
-            group_members.append(user)
-
-        return KAIGroup(members=group_members, leader_index=leader_ind)
