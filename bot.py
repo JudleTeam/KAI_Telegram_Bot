@@ -44,15 +44,23 @@ def register_all_handlers(dp):
 
 
 async def main():
+    config = load_config('.env')
+
     log_file = rf'logs/{datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")}.log'
-    if not os.path.exists('logs'): os.mkdir('logs')
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+
+    if config.misc.write_logs:
+        log_handlers = logging.FileHandler(log_file), logging.StreamHandler()
+    else:
+        log_handlers = logging.StreamHandler(),
+
     logging.basicConfig(
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
-        handlers=(logging.FileHandler(log_file), logging.StreamHandler())
+        handlers=log_handlers
     )
     logger.info('Starting bot')
-    config = load_config('.env')
 
     engine = create_async_engine(
         f'postgresql+asyncpg://{config.database.user}:{config.database.password}@'

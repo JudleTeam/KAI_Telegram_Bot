@@ -30,6 +30,7 @@ class I18N:
 @dataclass
 class Miscellaneous:
     rate_limit: float
+    write_logs: bool
 
 
 @dataclass
@@ -48,7 +49,7 @@ def load_config(path: str = None):
         bot=TelegramBot(
             token=env.str('BOT_TOKEN'),
             admin_ids=list(map(int, env.list('ADMINS'))),
-            use_redis=env.bool('USE_REDIS'),
+            use_redis=env.bool('USE_REDIS')
         ),
         database=DatabaseConfig(
             host=env.str('DB_HOST'),
@@ -63,6 +64,7 @@ def load_config(path: str = None):
             locales_dir=Path(__file__).parent / 'locales'
         ),
         misc=Miscellaneous(
-            rate_limit=env.float('RATE_LIMIT')
+            rate_limit=env.float('RATE_LIMIT'),
+            write_logs=env.bool('WRITE_LOGS')
         )
     )

@@ -36,6 +36,7 @@ class User(Base):
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     selected_groups = relationship('Group', lazy='selectin', secondary=selected_groups)
     roles = relationship('Role', lazy='selectin', secondary=user_roles)
+    kai_user = relationship('KAIUser', lazy='selectin', uselist=False)
 
     def has_right_to(self, right: str):
         for role in self.roles:
