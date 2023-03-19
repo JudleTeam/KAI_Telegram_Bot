@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table, select
+from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table, select, String
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql.expression import text
 
@@ -31,12 +31,16 @@ class User(Base):
     created_at = Column(DateTime(), nullable=False, server_default=text('NOW()'))
     is_blocked_bot = Column(Boolean, nullable=False, server_default=text('false'))
     is_blocked = Column(Boolean, nullable=False, server_default=text('false'))
+    phone = Column(String(32), nullable=True, unique=True)
 
     language = relationship('Language', lazy='selectin')
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     selected_groups = relationship('Group', lazy='selectin', secondary=selected_groups)
     roles = relationship('Role', lazy='selectin', secondary=user_roles)
-    kai_user = relationship('KAIUser', lazy='selectin', uselist=False)
+    kai_user = relationship('KAIUser', lazy='selectin', uselist=False, back_populates='telegram_user')
+
+    def has_role(self, role: str):
+        return role in [_role.title for _role in self.roles]
 
     def has_right_to(self, right: str):
         for role in self.roles:

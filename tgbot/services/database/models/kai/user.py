@@ -1,8 +1,9 @@
 import os
 
 from environs import Env
-from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String, Date
+from sqlalchemy.future import select
+from sqlalchemy.orm import relationship, Session
 from sqlalchemy_utils import StringEncryptedType
 
 from tgbot.services.database.base import Base
@@ -16,7 +17,8 @@ class KAIUser(Base):
     env.read_env(os.getcwd() + r'\.env')
     SECRET_KEY = env.str('SECRET_KEY')
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    kai_id = Column(Integer, unique=True, nullable=True)
 
     telegram_user_id = Column(BigInteger, ForeignKey('telegram_user.telegram_id'), unique=True)
 
@@ -24,7 +26,9 @@ class KAIUser(Base):
     password = Column(StringEncryptedType(key=SECRET_KEY), nullable=True)
     full_name = Column(String(255), nullable=False)
     phone = Column(String(32), nullable=True, unique=True)
-    email = Column(String(64), nullable=True)
+    email = Column(String(64), nullable=False, unique=True)
+    sex = Column(String(16), nullable=True)  # Потом вынести типы в отдельную таблицу
+    birthday = Column(Date, nullable=True)
 
     group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_kai_user_group'), nullable=False)
     zach_number = Column(Integer, nullable=True)  # Уникальный?
@@ -45,3 +49,19 @@ class KAIUser(Base):
     profile = relationship('Profile', lazy='selectin')
     departament = relationship('Departament', lazy='selectin')
     institute = relationship('Institute', lazy='selectin')
+
+    telegram_user = relationship('User', lazy='selectin', uselist=False, back_populates='kai_user')
+
+    @classmethod
+    async def get_by_phone(cls, phone: str, db: Session):
+        async with db() as session:
+            record = await session.execute(select(KAIUser).where(KAIUser.phone == phone))
+
+        return record.scalar()
+
+    @classmethod
+    async def get_by_email(cls, email: str, db: Session):
+        async with db() as session:
+            record = await session.execute(select(KAIUser).where(KAIUser.email == email))
+
+        return record.scalar()

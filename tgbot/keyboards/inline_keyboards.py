@@ -13,6 +13,7 @@ def get_profile_keyboard(_):
         InlineKeyboardButton(_(buttons.choose_group), callback_data=callbacks.navigation.new('grp_choose', payload='')),
         InlineKeyboardButton(_(buttons.choose_language),
                              callback_data=callbacks.navigation.new('lang_choose', payload='profile')),
+        InlineKeyboardButton(_(buttons.verification), callback_data=callbacks.navigation.new('verification', payload=''))
     )
 
     return keyboard
@@ -162,4 +163,48 @@ def get_teachers_keyboard(_):
     keyboard.add(
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
+    return keyboard
+
+
+def get_verification_keyboard(_, user: User):
+    keyboard = InlineKeyboardMarkup()
+
+    if not user.phone:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.via_phone), callback_data='pass')
+        )
+
+    if not (user.kai_user and user.kai_user.login):
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.navigation.new('start_login', payload=''))
+        )
+    else:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.navigation.new('logout', payload=''))
+        )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new('profile', payload='back'))
+    )
+
+    return keyboard
+
+
+def get_cancel_keyboard(_, to: str, payload=''):
+    keyboard = InlineKeyboardMarkup()
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.cancel), callback_data=callbacks.cancel.new(to=to, payload=payload))
+    )
+
+    return keyboard
+
+
+def get_back_keyboard(_, to: str, payload=''):
+    keyboard = InlineKeyboardMarkup()
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new(to=to, payload=payload))
+    )
+
     return keyboard

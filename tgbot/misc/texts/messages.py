@@ -59,7 +59,7 @@ teacher = (
     '————————————————\n'
 )
 
-kai_error = _('An error occurred on the KAI side. Try later')
+kai_error = _('An error occurred on the KAI side. Please, try later')
 
 select_group = _('Select group')
 
@@ -74,3 +74,34 @@ user_has_been_unblocked = _('User {user_id} has been unblocked')
 
 admin_block = _('You have been blocked by the administrator!')
 admin_unblock = _('You have been unblocked by the administrator!')
+
+verification_menu = _(
+    'Verification\n\n'
+    'Phone verified: {phone_status}\n'
+    'KAI credentials: {kai_status}\n'
+    'Profile verified: {profile_status}'
+)
+
+login_input = _(
+    'Verification\n\n'
+    'Please, input your login'
+)
+
+password_input = _(
+    'Verification\n\n'
+    'Please, input your password'
+)
+
+authorization_process = _('Authorization...\nPlease wait a moment')
+
+bad_credentials = _(
+    '‼️ Something went wrong!\n'
+    'Looks like you entered the wrong credentials'
+)
+
+success_login = _(
+    '✅ Hooray!\n'
+    'You have successfully verified your account'
+)
+
+kai_logout = _('Your credentials have been removed from the database')

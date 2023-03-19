@@ -6,7 +6,7 @@ import aiohttp
 from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
 
-from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo
+from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials
 from tgbot.services.kai_parser import helper
 
 
@@ -217,7 +217,7 @@ class KaiParser:
                 return session.cookie_jar
 
         if retries > 3:
-            return None
+            raise BadCredentials(f'[{login}]: Login failed. Invalid login or password')
         logging.error(f'[{login}]: Login failed. Retry {retries}')
         return await cls._get_login_cookies(login, password, retries + 1)
 

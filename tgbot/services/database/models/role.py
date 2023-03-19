@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey, select
+from sqlalchemy import Column, Integer, String, Table, ForeignKey, select, Boolean
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, Session
 
@@ -20,6 +20,7 @@ class Role(Base):
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     title = Column(String(40), unique=True, nullable=False)
+    to_show = Column(Boolean, nullable=False)
 
     rights = relationship('Right', lazy='selectin', secondary=role_rights)
 
@@ -35,17 +36,27 @@ class Role(Base):
         return {role.title: role for role in db_roles}
 
     @classmethod
+    async def get_by_title(cls, role: str, db: Session):
+        async with db() as session:
+            record = await session.execute(select(Role).where(Role.title == role))
+            role = record.scalar()
+
+        return role
+
+    @classmethod
     async def insert_default_roles(cls, db: Session):
         rights_dict = await Right.get_rights_dict(db)
         roles_to_insert = [
-            Role(title=roles.student, rights=[
+            Role(title=roles.student, to_show=True, rights=[
 
             ]),
-            Role(title=roles.group_leader, rights=[
+            Role(title=roles.group_leader, to_show=True, rights=[
                 rights_dict[rights.edit_homework],
-                rights_dict[rights.send_group_post],
                 rights_dict[rights.edit_group_events],
                 rights_dict[rights.edit_group_pinned_message]
+            ]),
+            Role(title=roles.authorized, to_show=False, rights=[
+
             ])
         ]
 

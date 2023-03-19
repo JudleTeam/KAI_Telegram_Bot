@@ -68,12 +68,12 @@ def parse_user_info(soup: BeautifulSoup):
             break
 
     birthday_str = soup.find('input', id='_aboutMe_WAR_aboutMe10_birthDay')['value'].strip()
-    birthday = datetime.datetime.strptime(birthday_str, '%d.%m.%Y').date()
+    birthday = datetime.strptime(birthday_str, '%d.%m.%Y').date()
 
     phone = soup.find('input', id='_aboutMe_WAR_aboutMe10_phoneNumber0')['value'].strip()
     phone = parse_phone_number(phone)
 
-    email = soup.find('input', id='_aboutMe_WAR_aboutMe10_email')['value'].strip()
+    email = soup.find('input', id='_aboutMe_WAR_aboutMe10_email')['value'].strip().lower()
 
     user_info = UserInfo(
         full_name=full_name,
@@ -97,11 +97,10 @@ def parse_group_members(soup: BeautifulSoup) -> Group:
         if 'Староста' in full_name:
             leader_ind = ind
             full_name = full_name.replace('Староста', '').strip()
-        email = columns[2].text.strip()
+        email = columns[2].text.strip().lower()
         phone = parse_phone_number(columns[3].text.strip())
 
         user = BaseUser(full_name=full_name, email=email, phone=phone)
         group_members.append(user)
 
     return Group(members=group_members, leader_index=leader_ind)
-
