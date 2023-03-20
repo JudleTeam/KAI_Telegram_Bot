@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import datetime
 from tgbot.misc import callbacks
-from tgbot.misc.texts import buttons
+from tgbot.misc.texts import buttons, roles
 from tgbot.services.database.models import Language, User
 
 
@@ -171,7 +171,7 @@ def get_verification_keyboard(_, user: User):
 
     if not user.phone:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.via_phone), callback_data='pass')
+            InlineKeyboardButton(_(buttons.via_phone), callback_data=callbacks.navigation.new('send_phone', payload=''))
         )
 
     if not (user.kai_user and user.kai_user.login):
@@ -181,6 +181,11 @@ def get_verification_keyboard(_, user: User):
     else:
         keyboard.add(
             InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.navigation.new('logout', payload=''))
+        )
+
+    if user.has_role(roles.verified):
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.unlink_account), callback_data=callbacks.navigation.new('unlink', payload=''))
         )
 
     keyboard.add(

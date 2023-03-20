@@ -57,6 +57,9 @@ class Role(Base):
             ]),
             Role(title=roles.authorized, to_show=False, rights=[
 
+            ]),
+            Role(title=roles.verified, to_show=False, rights=[
+
             ])
         ]
 

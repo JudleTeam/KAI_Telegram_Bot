@@ -2,16 +2,31 @@ import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ContentType
 
 from tgbot.handlers.profile import show_verification
-from tgbot.keyboards import inline_keyboards
+from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import states, callbacks
-from tgbot.misc.texts import messages
-from tgbot.services.database.models import User
+from tgbot.misc.texts import messages, roles
+from tgbot.services.database.models import User, Role
 from tgbot.services.kai_parser import KaiParser
 from tgbot.services.kai_parser.schemas import KaiApiError, BadCredentials
-from tgbot.services.utils import add_full_user_to_db
+from tgbot.services.utils import add_full_user_to_db, verify_profile_with_phone
+
+
+async def unlink_account(call: CallbackQuery):
+    _ = call.bot.get('_')
+    db_session = call.bot.get('database')
+
+    async with db_session.begin() as session:
+        user = await session.get(User, call.from_user.id)
+        user.kai_user = None
+        user.remove_role(roles.verified)
+        user.remove_role(roles.authorized)
+
+    logging.info(f'[{call.from_user.id}]: Unlinked account')
+    await call.answer(_(messages.account_unlinked))
+    await show_verification(call)
 
 
 async def kai_logout(call: CallbackQuery):
@@ -22,6 +37,7 @@ async def kai_logout(call: CallbackQuery):
         user = await session.get(User, call.from_user.id)
         user.kai_user.login = None
         user.kai_user.password = None
+        user.remove_role(roles.group_leader)
 
     logging.info(f'[{call.from_user.id}]: KAI logout')
 
@@ -77,16 +93,44 @@ async def get_user_password(message: Message, state: FSMContext):
         await main_call.message.edit_text(_(messages.bad_credentials), reply_markup=keyboard)
         logging.info(f'[{message.from_id}]: Bad credentials')
     else:
-        await main_call.message.edit_text(_(messages.success_login), reply_markup=keyboard)
-        logging.info(f'[{message.from_id}]: Success login')
-
-        await add_full_user_to_db(user_data, login, password, message.from_id, db)
+        result = await add_full_user_to_db(user_data, login, password, message.from_id, db)
+        if result:
+            await main_call.message.edit_text(_(messages.success_login), reply_markup=keyboard)
+            logging.info(f'[{message.from_id}]: Success login')
+        else:
+            await main_call.message.edit_text(_(messages.credentials_busy), reply_markup=keyboard)
+            logging.info(f'[{message.from_id}]: Tried to login to someone else\'s account ({login})')
 
     await state.finish()
+
+
+async def send_phone_keyboard(call: CallbackQuery):
+    _ = call.bot.get('_')
+
+    await call.message.answer(_(messages.share_contact), reply_markup=reply_keyboards.get_send_phone_keyboard(_))
+    await call.answer()
+
+
+async def get_user_phone(message: Message):
+    _ = message.bot.get('_')
+    db = message.bot.get('database')
+
+    is_verified = await verify_profile_with_phone(message.from_id, message.contact.phone_number, db)
+    text = _(messages.phone_verified) + '\n'
+    if is_verified:
+        text += _(messages.phone_found)
+    else:
+        text += _(messages.phone_not_found)
+
+    await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
 def register_verification(dp: Dispatcher):
     dp.register_callback_query_handler(start_kai_login, callbacks.navigation.filter(to='start_login'))
     dp.register_callback_query_handler(kai_logout, callbacks.navigation.filter(to='logout'))
+    dp.register_callback_query_handler(unlink_account, callbacks.navigation.filter(to='unlink'))
     dp.register_message_handler(get_user_login, state=states.KAILogin.waiting_for_login)
     dp.register_message_handler(get_user_password, state=states.KAILogin.waiting_for_password)
+
+    dp.register_callback_query_handler(send_phone_keyboard, callbacks.navigation.filter(to='send_phone'))
+    dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT])

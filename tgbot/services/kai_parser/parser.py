@@ -112,7 +112,7 @@ class KaiParser:
             if user_data.get('list') is not None and len(user_data.get('list')) == 0:
                 return None
 
-            return UserAbout(**user_data['list'][0])
+            return UserAbout(**user_data['list'][-1])
 
     @classmethod
     async def get_full_user_data(cls, login, password) -> FullUserData:

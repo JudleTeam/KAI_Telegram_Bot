@@ -52,6 +52,10 @@ class KAIUser(Base):
 
     telegram_user = relationship('User', lazy='selectin', uselist=False, back_populates='kai_user')
 
+    @property
+    def is_logged_in(self) -> bool:
+        return bool(self.kai_id)
+
     @classmethod
     async def get_by_phone(cls, phone: str, db: Session):
         async with db() as session:
@@ -63,5 +67,12 @@ class KAIUser(Base):
     async def get_by_email(cls, email: str, db: Session):
         async with db() as session:
             record = await session.execute(select(KAIUser).where(KAIUser.email == email))
+
+        return record.scalar()
+
+    @classmethod
+    async def get_by_telegram_id(cls, telegram_id: int, db: Session):
+        async with db() as session:
+            record = await session.execute(select(KAIUser).where(KAIUser.telegram_user_id == telegram_id))
 
         return record.scalar()

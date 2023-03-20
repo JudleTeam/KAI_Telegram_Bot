@@ -1,3 +1,5 @@
+import logging
+
 import phonenumbers
 from phonenumbers import NumberParseException
 from sqlalchemy.orm import Session
@@ -40,11 +42,15 @@ def parse_phone_number(phone_number) -> str | None:
     return phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
 
 
-async def add_full_user_to_db(full_user: FullUserData, login: str, password: str, tg_id: int, db: Session):
+async def add_full_user_to_db(full_user: FullUserData, login: str, password: str, tg_id: int, db: Session) -> bool:
     user_about = full_user.user_about
     user_info = full_user.user_info
 
     contract_number = int(user_about.numDog) if user_about.numDog.isdigit() else None
+    roles_dict = await Role.get_roles_dict(db)
+
+    kai_user = await KAIUser.get_by_telegram_id(tg_id, db)
+    already_used = bool(kai_user)
 
     async with db.begin() as session:
         kai_user: KAIUser = await KAIUser.get_by_email(full_user.user_info.email, db)
@@ -70,7 +76,8 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             session.add(profile)
 
         if kai_user:
-            kai_user.telegram_user_id = tg_id
+            if not already_used:
+                kai_user.telegram_user_id = tg_id
 
             kai_user.kai_id = int(user_about.studId)
             kai_user.competition_type = user_about.competitionType
@@ -96,9 +103,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
 
             await session.merge(kai_user)
         else:
+            insert_tg_id = None if already_used else tg_id
             kai_user = KAIUser(
                 kai_id=int(user_about.studId),
-                telegram_user_id=tg_id,
+                telegram_user_id=insert_tg_id,
                 login=login,
                 password=password,
                 full_name=user_info.full_name,
@@ -122,25 +130,66 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             )
             session.add(kai_user)
 
-        if not tg_user.has_role(roles.authorized):
-            authorized_role = await Role.get_by_title(roles.authorized, db)
-            tg_user.roles.append(authorized_role)
+        if not already_used:
+            if not tg_user.has_role(roles.authorized):
+                tg_user.roles.append(roles_dict[roles.authorized])
 
-        leader_email = full_user.group.members[full_user.group.leader_index].email
-        if leader_email == user_info.email and not tg_user.has_role(roles.group_leader):
-            leader_role = await Role.get_by_title(roles.group_leader, db)
-            tg_user.roles.append(leader_role)
+            if not tg_user.has_role(roles.verified):
+                tg_user.roles.append(roles_dict[roles.verified])
+
+            leader_email = full_user.group.members[full_user.group.leader_index].email
+            if leader_email == user_info.email and not tg_user.has_role(roles.group_leader):
+                tg_user.roles.append(roles_dict[roles.group_leader])
+                logging.info(f'[{tg_id}]: Appointed group leader')
 
         for member in full_user.group.members:
             if member.email == user_info.email:
                 continue
 
+            if member.phone:
+                member_tg: User = await User.get_by_phone(member.phone, db)
+                if member_tg and not member_tg.has_role(roles.verified):
+                    member_tg_id = member_tg.telegram_id
+                    member_tg.roles.append(roles_dict[roles.verified])
+                    await session.merge(member_tg)
+
+                    logging.info(f'[{tg_id}]: Verified classmate {member_tg_id}')
+                else:
+                    member_tg_id = None
+
             member_in_db = await KAIUser.get_by_email(member.email, db)
             if not member_in_db:
                 new_member = KAIUser(
+                    telegram_user_id=member_tg_id,
                     full_name=member.full_name,
                     phone=member.phone,
                     email=member.email,
                     group_id=int(user_about.groupId)
                 )
                 session.add(new_member)
+
+    return not already_used
+
+
+async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -> bool:
+    phone = parse_phone_number(phone)
+    is_verified = False
+    async with db() as session:
+        user = await session.get(User, telegram_id)
+        user.phone = phone
+
+        await session.commit()
+        kai_user = await KAIUser.get_by_phone(phone, db)
+        if kai_user:
+            kai_user.telegram_user_id = telegram_id
+            await session.merge(kai_user)
+
+            if not user.has_role(roles.verified):
+                verified_role = await Role.get_by_title(roles.verified, db)
+                user.roles.append(verified_role)
+
+            await session.commit()
+
+            is_verified = True
+
+    return is_verified

@@ -39,8 +39,14 @@ class User(Base):
     roles = relationship('Role', lazy='selectin', secondary=user_roles)
     kai_user = relationship('KAIUser', lazy='selectin', uselist=False, back_populates='telegram_user')
 
-    def has_role(self, role: str):
-        return role in [_role.title for _role in self.roles]
+    def has_role(self, role_title: str):
+        return role_title in [role.title for role in self.roles]
+
+    def remove_role(self, role_title: str):
+        for role in self.roles:
+            if role.title == role_title:
+                self.roles.remove(role)
+                break
 
     def has_right_to(self, right: str):
         for role in self.roles:
@@ -48,6 +54,13 @@ class User(Base):
                 return True
 
         return False
+
+    @classmethod
+    async def get_by_phone(cls, phone, db: Session):
+        async with db() as session:
+            record = await session.execute(select(User).where(User.phone == phone))
+
+        return record.scalar()
 
     @classmethod
     async def get_all(cls, db: Session) -> list:

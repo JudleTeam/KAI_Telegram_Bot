@@ -89,7 +89,8 @@ def parse_user_info(soup: BeautifulSoup):
 def parse_group_members(soup: BeautifulSoup) -> Group:
     group_members = list()
     leader_ind = None
-    table_rows = soup.find_all('tr')
+    last_table = soup.find_all('table')[-1]
+    table_rows = last_table.find_all('tr')
     for ind, row in enumerate(table_rows[1:]):
         columns = row.find_all('td')
 

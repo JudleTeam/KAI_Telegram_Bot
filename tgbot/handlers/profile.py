@@ -36,7 +36,7 @@ async def show_verification(call: CallbackQuery):
     async with db_session() as session:
         user = await session.get(User, call.from_user.id)
 
-    profile_status = '✅' if user.has_role(roles.authorized) else '❌'
+    profile_status = '✅' if user.has_role(roles.verified) else '❌'
     phone_status = '✅' if user.kai_user and user.phone else '❌'
     kai_status = '✅' if user.kai_user and user.kai_user.login else '❌'
 
