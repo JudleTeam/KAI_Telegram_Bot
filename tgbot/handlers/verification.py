@@ -23,6 +23,7 @@ async def unlink_account(call: CallbackQuery):
         user.kai_user = None
         user.remove_role(roles.verified)
         user.remove_role(roles.authorized)
+        user.remove_role(roles.group_leader)
 
     logging.info(f'[{call.from_user.id}]: Unlinked account')
     await call.answer(_(messages.account_unlinked))

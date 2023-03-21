@@ -14,6 +14,7 @@ kai_logout = _('Logout from KAI')
 unlink_account = _('Unlink account')
 remove_favorite = _('Remove from favorites')
 add_favorite = _('Add to favorites')
+channel = _('Channel')
 
 today = _('Today')
 tomorrow = _('Tomorrow')

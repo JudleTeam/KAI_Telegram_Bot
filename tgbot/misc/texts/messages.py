@@ -116,3 +116,9 @@ phone_not_found = _('❌ Your phone number was not found in the database')
 credentials_busy = _('❌ Someone is already signed in with these credentials')
 
 account_unlinked = _('You have successfully unlinked your account')
+
+channel_advertising = _('Subscribe to the Telegram channel of the project! '
+                        'There will be the latest news on the project and more!')
+
+dont_do = _('You don\'t have to do this!')
+group_chat_error = _('Sorry, I don\'t know how to work in group chats yet')

@@ -31,6 +31,7 @@ class I18N:
 class Miscellaneous:
     rate_limit: float
     write_logs: bool
+    channel_link: str
 
 
 @dataclass
@@ -65,6 +66,7 @@ def load_config(path: str = None):
         ),
         misc=Miscellaneous(
             rate_limit=env.float('RATE_LIMIT'),
-            write_logs=env.bool('WRITE_LOGS')
+            write_logs=env.bool('WRITE_LOGS'),
+            channel_link=env.str('CHANNEL_LINK')
         )
     )

@@ -49,11 +49,9 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
     contract_number = int(user_about.numDog) if user_about.numDog.isdigit() else None
     roles_dict = await Role.get_roles_dict(db)
 
-    kai_user = await KAIUser.get_by_telegram_id(tg_id, db)
-    already_used = bool(kai_user)
-
     async with db.begin() as session:
         kai_user: KAIUser = await KAIUser.get_by_email(full_user.user_info.email, db)
+        already_used = bool(kai_user.telegram_user_id)
         tg_user: User = await session.get(User, tg_id)
         speciality = await session.get(Speciality, int(user_about.specId))
         if not speciality:

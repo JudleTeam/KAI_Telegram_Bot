@@ -4,7 +4,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
-from aiogram.utils import markdown as md
+from aiogram.utils import markdown as md, markdown
 
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import callbacks, states
@@ -54,10 +54,15 @@ async def send_education_menu(message: Message, state: FSMContext):
     await message.answer(_(messages.in_development))
 
 
-async def send_main_menu(call: CallbackQuery, state: FSMContext):
+async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
 
     await call.message.delete()
+    if callback_data['payload'] == 'at_start':
+        config = call.bot.get('config')
+        await call.message.answer(_(messages.channel_advertising),
+                                  reply_markup=inline_keyboards.get_channel_keyboard(_, config.misc.channel_link))
+
     await call.message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
     await call.answer()
     await state.finish()

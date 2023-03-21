@@ -8,7 +8,7 @@ from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 
 
-async def update_user_block(message: Message, is_blocked: bool) -> User | None:
+async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str):
     _ = message.bot.get('_')
     db_session = message.bot.get('database')
     redis = message.bot.get('redis')
@@ -23,6 +23,10 @@ async def update_user_block(message: Message, is_blocked: bool) -> User | None:
         await message.answer(_(messages.ban_unban_invalid_format.format(command=args[0])))
         return
 
+    if int(user_id_to_update) == message.from_user.id:
+        await message.answer(_(messages.dont_do))
+        return
+
     async with db_session.begin() as session:
         user_to_update = await session.get(User, int(user_id_to_update))
         if not user_to_update:
@@ -35,35 +39,29 @@ async def update_user_block(message: Message, is_blocked: bool) -> User | None:
     await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value)
     logging.info(f'Admin {message.from_id} {args[0][1:]} user {user_to_update.telegram_id}')
 
-    return user_to_update
+    user_locale = user_to_update.language.code if user_to_update.language else 'en'
+    await message.bot.send_message(
+        chat_id=user_to_update.telegram_id,
+        text=_(blocked_msg, locale=user_locale) if is_blocked else _(unblocked_msg, locale=user_locale),
+    )
 
 
 async def pardon_user(message: Message):
-    _ = message.bot.get('_')
-
-    user_to_pardon = await update_user_block(message, False)
-    if user_to_pardon is None:
-        return
-
-    await message.bot.send_message(
-        chat_id=user_to_pardon.telegram_id,
-        text=_(messages.admin_unblock, locale=user_to_pardon.language.code)
+    await update_user_block_and_notify(
+        message,
+        is_blocked=False,
+        blocked_msg=messages.admin_unblock,
+        unblocked_msg=messages.user_has_been_unblocked
     )
-    await message.answer(_(messages.user_has_been_unblocked.format(user_id=user_to_pardon.telegram_id)))
 
 
 async def block_user(message: Message):
-    _ = message.bot.get('_')
-
-    user_to_block = await update_user_block(message, True)
-    if user_to_block is None:
-        return
-
-    await message.bot.send_message(
-        chat_id=user_to_block.telegram_id,
-        text=_(messages.admin_block, locale=user_to_block.language.code)
+    await update_user_block_and_notify(
+        message,
+        is_blocked=True,
+        blocked_msg=messages.admin_block,
+        unblocked_msg=messages.user_has_been_blocked
     )
-    await message.answer(_(messages.user_has_been_blocked.format(user_id=user_to_block.telegram_id)))
 
 
 async def send_users(message: Message):

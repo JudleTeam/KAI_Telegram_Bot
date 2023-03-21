@@ -213,3 +213,13 @@ def get_back_keyboard(_, to: str, payload=''):
     )
 
     return keyboard
+
+
+def get_channel_keyboard(_, link):
+    keyboard = InlineKeyboardMarkup()
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.channel), url=link)
+    )
+
+    return keyboard
