@@ -8,6 +8,8 @@ from .profile import register_profile
 from .group_choose import register_group_choose
 from .admin_commands import register_admin_commands
 from .verification import register_verification
+from .education import register_education
+from .my_group import register_my_group
 
 register_functions = (
     register_schedule,
@@ -17,6 +19,8 @@ register_functions = (
     register_user,
     register_teachers,
     register_profile,
+    register_education,
+    register_my_group,
     register_group_choose,
     register_verification,
 

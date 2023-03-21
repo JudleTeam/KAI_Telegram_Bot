@@ -48,10 +48,11 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
 
     contract_number = int(user_about.numDog) if user_about.numDog.isdigit() else None
     roles_dict = await Role.get_roles_dict(db)
+    prefix = None
 
     async with db.begin() as session:
         kai_user: KAIUser = await KAIUser.get_by_email(full_user.user_info.email, db)
-        already_used = bool(kai_user.telegram_user_id)
+        already_used = bool(kai_user.telegram_user_id) if kai_user else False
         tg_user: User = await session.get(User, tg_id)
         speciality = await session.get(Speciality, int(user_about.specId))
         if not speciality:
@@ -73,9 +74,25 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             profile = Profile(id=int(user_about.profileId), name=user_about.profileName)
             session.add(profile)
 
+        if not already_used:
+            if not tg_user.has_role(roles.authorized):
+                tg_user.roles.append(roles_dict[roles.authorized])
+
+            if not tg_user.has_role(roles.verified):
+                tg_user.roles.append(roles_dict[roles.verified])
+
+            is_leader = False
+            leader_email = full_user.group.members[full_user.group.leader_index].email
+            if leader_email == user_info.email and not tg_user.has_role(roles.group_leader):
+                tg_user.roles.append(roles_dict[roles.group_leader])
+                is_leader = True
+                prefix = '👨🏻‍💼'
+                logging.info(f'[{tg_id}]: Appointed group leader')
+
         if kai_user:
             if not already_used:
                 kai_user.telegram_user_id = tg_id
+                kai_user.is_leader = is_leader
 
             kai_user.kai_id = int(user_about.studId)
             kai_user.competition_type = user_about.competitionType
@@ -87,6 +104,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             kai_user.status = user_about.status.strip()
             kai_user.program_form = user_about.programForm
 
+            kai_user.prefix = prefix
             kai_user.login = login
             kai_user.password = password
             kai_user.phone = user_info.phone
@@ -99,7 +117,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             kai_user.institute = institute
             kai_user.profile = profile
 
-            await session.merge(kai_user)
+            kai_user = await session.merge(kai_user)
         else:
             insert_tg_id = None if already_used else tg_id
             kai_user = KAIUser(
@@ -112,6 +130,8 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 email=user_info.email,
                 sex=user_info.sex,
                 birthday=user_info.birthday,
+                is_leader=is_leader,
+                prefix=prefix,
                 group_id=int(user_about.groupId),
                 zach_number=int(user_about.zach),
                 competition_type=user_about.competitionType,
@@ -128,20 +148,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             )
             session.add(kai_user)
 
-        if not already_used:
-            if not tg_user.has_role(roles.authorized):
-                tg_user.roles.append(roles_dict[roles.authorized])
-
-            if not tg_user.has_role(roles.verified):
-                tg_user.roles.append(roles_dict[roles.verified])
-
-            leader_email = full_user.group.members[full_user.group.leader_index].email
-            if leader_email == user_info.email and not tg_user.has_role(roles.group_leader):
-                tg_user.roles.append(roles_dict[roles.group_leader])
-                logging.info(f'[{tg_id}]: Appointed group leader')
-
-        for member in full_user.group.members:
+        for ind, member in enumerate(full_user.group.members):
             if member.email == user_info.email:
+                kai_user.position = ind + 1
+                await session.merge(kai_user)
                 continue
 
             if member.phone:
@@ -157,11 +167,15 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
 
             member_in_db = await KAIUser.get_by_email(member.email, db)
             if not member_in_db:
+                is_mem_leader = ind == full_user.group.leader_index
                 new_member = KAIUser(
                     telegram_user_id=member_tg_id,
                     full_name=member.full_name,
                     phone=member.phone,
                     email=member.email,
+                    is_leader=is_mem_leader,
+                    prefix='👨🏻‍💼' if is_mem_leader else None,
+                    position=ind + 1,
                     group_id=int(user_about.groupId)
                 )
                 session.add(new_member)

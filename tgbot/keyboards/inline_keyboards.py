@@ -223,3 +223,32 @@ def get_channel_keyboard(_, link):
     )
 
     return keyboard
+
+
+def get_education_keyboard(_):
+    keyboard = InlineKeyboardMarkup()
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.my_group), callback_data=callbacks.navigation.new(to='my_group', payload=''))
+    )
+
+    return keyboard
+
+
+def get_my_group_keyboard(_, user: User):
+    keyboard = InlineKeyboardMarkup()
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.classmates), callback_data=callbacks.navigation.new(to='classmates', payload=''))
+    )
+
+    if user.kai_user.is_leader:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.edit_pinned_text), callback_data=callbacks.navigation.new(to='edit_pin_text', payload=''))
+        )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new(to='education', payload=''))
+    )
+
+    return keyboard

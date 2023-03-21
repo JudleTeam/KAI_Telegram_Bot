@@ -60,11 +60,17 @@ async def send_shop_menu(message: Message, state: FSMContext):
     await message.answer(_(messages.in_development))
 
 
+async def show_education_menu(call: CallbackQuery):
+    _ = call.bot.get('_')
+
+    await call.message.edit_text(_(messages.education_menu), reply_markup=inline_keyboards.get_education_keyboard(_))
+
+
 async def send_education_menu(message: Message, state: FSMContext):
     _ = message.bot.get('_')
 
     await state.finish()
-    await message.answer(_(messages.in_development))
+    await message.answer(_(messages.education_menu), reply_markup=inline_keyboards.get_education_keyboard(_))
 
 
 async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMContext):
@@ -93,3 +99,4 @@ def register_main_menu(dp: Dispatcher):
     dp.register_message_handler(send_shop_menu, Text(startswith=reply_commands.shop_symbol), state='*')
 
     dp.register_message_handler(send_education_menu, Text(startswith=reply_commands.education_symbol), state='*')
+    dp.register_callback_query_handler(show_education_menu, callbacks.navigation.filter(to='education'))

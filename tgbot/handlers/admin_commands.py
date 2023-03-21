@@ -17,12 +17,12 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
     args = message.text.split()
     if len(args) != 2:
-        await message.answer(_(messages.ban_unban_invalid_format.format(command=args[0])))
+        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
         return
 
     user_id_to_update = args[1]
     if not user_id_to_update.isdigit():
-        await message.answer(_(messages.ban_unban_invalid_format.format(command=args[0])))
+        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
         return
 
     user_id_to_update = int(user_id_to_update)
@@ -87,7 +87,30 @@ async def send_users(message: Message):
     logging.info(f'Admin {message.from_id} used "/users"')
 
 
+async def set_prefix(message: Message):
+    _ = message.bot.get('_')
+    db = message.bot.get('database')
+
+    args = message.text.split()
+    if len(args) != 3 or len(args[1]) > 32 or not args[2].isdigit():
+        await message.answer(_(messages.set_prefix_bad_format))
+        return
+
+    prefix = args[1]
+    user_id = args[2]
+    async with db.begin() as session:
+        user = await session.get(User, int(user_id))
+        if not user or not user.kai_user:
+            await message.answer(_(messages.set_prefix_bad_user).format(user_id=md.hcode(user_id)))
+            return
+
+        user.kai_user.prefix = prefix
+
+    await message.answer(_(messages.prefix_set).format(user_id=md.hcode(user_id), prefix=prefix))
+
+
 def register_admin_commands(dp: Dispatcher):
-    dp.register_message_handler(block_user, commands=['ban'], is_admin=True)
-    dp.register_message_handler(pardon_user, commands=['pardon'], is_admin=True)
+    dp.register_message_handler(block_user, commands=['ban', 'block'], is_admin=True)
+    dp.register_message_handler(pardon_user, commands=['pardon', 'unban', 'unblock'], is_admin=True)
     dp.register_message_handler(send_users, commands=['users'], is_admin=True)
+    dp.register_message_handler(set_prefix, commands=['set_prefix'], is_admin=True)

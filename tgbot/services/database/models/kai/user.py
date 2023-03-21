@@ -1,7 +1,7 @@
 import os
 
 from environs import Env
-from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String, Date
+from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String, Date, Boolean
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy_utils import StringEncryptedType
@@ -22,6 +22,8 @@ class KAIUser(Base):
 
     telegram_user_id = Column(BigInteger, ForeignKey('telegram_user.telegram_id'), unique=True)
 
+    position = Column(Integer, nullable=True)
+    prefix = Column(String(32), nullable=True)
     login = Column(String(64), unique=True, nullable=True)
     password = Column(StringEncryptedType(key=SECRET_KEY), nullable=True)
     full_name = Column(String(255), nullable=False)
@@ -29,6 +31,7 @@ class KAIUser(Base):
     email = Column(String(64), nullable=False, unique=True)
     sex = Column(String(16), nullable=True)  # Потом вынести типы в отдельную таблицу
     birthday = Column(Date, nullable=True)
+    is_leader = Column(Boolean, nullable=False)
 
     group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_kai_user_group'), nullable=False)
     zach_number = Column(Integer, nullable=True)  # Уникальный?
@@ -50,7 +53,14 @@ class KAIUser(Base):
     departament = relationship('Departament', lazy='selectin')
     institute = relationship('Institute', lazy='selectin')
 
+    group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     telegram_user = relationship('User', lazy='selectin', uselist=False, back_populates='kai_user')
+
+    async def get_classmates(self, db: Session):
+        async with db() as session:
+            records = await session.execute(select(KAIUser).where(KAIUser.group_id == self.group_id).order_by(KAIUser.position))
+
+        return records.scalars().all()
 
     @property
     def is_logged_in(self) -> bool:

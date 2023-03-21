@@ -28,3 +28,7 @@ odd_week = _('1️⃣ Odd')
 prev_day = _('Prev. day')
 next_day = _('Next day')
 group = _('Group №{group_name}')
+
+my_group = _('My group')
+classmates = _('Classmates')
+edit_pinned_text = _('Edit pinned text')
