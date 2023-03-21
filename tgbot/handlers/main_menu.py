@@ -4,7 +4,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
-from aiogram.utils import markdown as md, markdown
+from aiogram.utils import markdown as md
 
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import callbacks, states
@@ -26,18 +26,31 @@ async def send_schedule_menu(message: Message):
 
 async def send_profile_menu(message: Message, state: FSMContext):
     _ = message.bot.get('_')
+    db = message.bot.get('database')
 
     await state.finish()
-    await message.answer(_(messages.profile_menu), reply_markup=inline_keyboards.get_profile_keyboard(_))
+
+    async with db() as session:
+        user = await session.get(User, message.from_id)
+
+    roles_str = ', '.join(map(_, user.get_roles_titles_to_show()))
+    await message.answer(_(messages.profile_menu).format(roles=roles_str),
+                         reply_markup=inline_keyboards.get_profile_keyboard(_))
 
 
 async def show_profile_menu(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
+    db = call.bot.get('database')
 
     if callback_data['payload'] == 'back_gc':
         await state.finish()
 
-    await call.message.edit_text(_(messages.profile_menu), reply_markup=inline_keyboards.get_profile_keyboard(_))
+    async with db() as session:
+        user = await session.get(User, call.from_user.id)
+
+    roles_str = ', '.join(map(_, user.get_roles_titles_to_show()))
+    await call.message.edit_text(_(messages.profile_menu).format(roles=roles_str),
+                                 reply_markup=inline_keyboards.get_profile_keyboard(_))
 
 
 async def send_shop_menu(message: Message, state: FSMContext):

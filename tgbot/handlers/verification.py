@@ -117,7 +117,7 @@ async def get_user_phone(message: Message):
     db = message.bot.get('database')
 
     is_verified = await verify_profile_with_phone(message.from_id, message.contact.phone_number, db)
-    text = _(messages.phone_verified) + '\n'
+    text = _(messages.phone_verified) + '\n\n'
     if is_verified:
         text += _(messages.phone_found)
     else:

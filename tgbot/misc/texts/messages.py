@@ -22,7 +22,10 @@ schedule_menu = _(
     '📝 - Seminar\n'
     '📢 - Lecture\n'
 )
-profile_menu = _('Profile menu')
+profile_menu = _(
+    'Profile menu\n\n'
+    'Your roles: {roles}'
+    )
 
 group_choose = _('Current group: {group_name}\n\n'
                  'Enter a group number or select from your favorites')

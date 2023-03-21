@@ -2,6 +2,7 @@ import logging
 
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery, Message
+from aiogram.utils import markdown as md
 
 from tgbot.misc import callbacks
 from tgbot.misc.texts import messages
@@ -12,6 +13,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
     _ = message.bot.get('_')
     db_session = message.bot.get('database')
     redis = message.bot.get('redis')
+    config = message.bot.get('config')
 
     args = message.text.split()
     if len(args) != 2:
@@ -23,14 +25,15 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
         await message.answer(_(messages.ban_unban_invalid_format.format(command=args[0])))
         return
 
-    if int(user_id_to_update) == message.from_user.id:
+    user_id_to_update = int(user_id_to_update)
+    if user_id_to_update == message.from_user.id or user_id_to_update in config.bot.main_admins_ids:
         await message.answer(_(messages.dont_do))
         return
 
     async with db_session.begin() as session:
-        user_to_update = await session.get(User, int(user_id_to_update))
+        user_to_update = await session.get(User, user_id_to_update)
         if not user_to_update:
-            await message.answer(_(messages.user_not_exist.format(user_id=user_id_to_update)))
+            await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_id_to_update))))
             return
 
         user_to_update.is_blocked = is_blocked
@@ -38,6 +41,11 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
     redis_value = '1' if is_blocked else ''
     await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value)
     logging.info(f'Admin {message.from_id} {args[0][1:]} user {user_to_update.telegram_id}')
+
+    if is_blocked:
+        await message.answer(_(messages.user_has_been_blocked).format(user_id=md.hcode(user_id_to_update)))
+    else:
+        await message.answer(_(messages.user_has_been_unblocked).format(user_id=md.hcode(user_id_to_update)))
 
     user_locale = user_to_update.language.code if user_to_update.language else 'en'
     await message.bot.send_message(
@@ -73,7 +81,7 @@ async def send_users(message: Message):
     for user in all_users:
         tg_user = await message.bot.get_chat(user.telegram_id)
         user_tag = tg_user.mention if tg_user.mention else tg_user.full_name
-        formatted_users.append(f'[{tg_user.id}] {user_tag}')
+        formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
 
     await message.answer('\n'.join(formatted_users))
     logging.info(f'Admin {message.from_id} used "/users"')
