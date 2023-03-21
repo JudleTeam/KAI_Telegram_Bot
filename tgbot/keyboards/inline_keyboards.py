@@ -244,7 +244,7 @@ def get_my_group_keyboard(_, user: User):
 
     if user.kai_user.is_leader:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.edit_pinned_text), callback_data=callbacks.navigation.new(to='edit_pin_text', payload=''))
+            InlineKeyboardButton(_(buttons.edit_pinned_text), callback_data='pass')
         )
 
     keyboard.add(

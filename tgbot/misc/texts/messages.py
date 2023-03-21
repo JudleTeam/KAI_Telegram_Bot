@@ -24,6 +24,7 @@ schedule_menu = _(
 )
 profile_menu = _(
     'Profile menu\n\n'
+    'Selected group: {s_group_name}\n'
     'Your roles: {roles}'
     )
 
@@ -123,6 +124,12 @@ education_menu = _('Education menu')
 my_group_menu = _(
     'My group ({group_name})\n\n'
     
+    'Year: {year} | Faculty: {faculty}\n'
+    'Institute: {institute}\n'
+    'Departament: {departament}\n'
+    'Speciality: {speciality}\n'
+    'Profile: {profile}\n\n'
+    
     'Pinned text:\n{pinned_text}'
 )
 need_be_verified = _('You need to be verified to access')
@@ -138,3 +145,14 @@ set_prefix_bad_format = _(
 )
 set_prefix_bad_user = _('User {user_id} does not exist or is not verified')
 prefix_set = _('User {user_id} was prefixed with {prefix}')
+
+verified_info = _(
+    'Full name: {full_name}\n'
+    'Position in the group: {group_pos}\n'
+    'Native group: {n_group_name}\n'
+    'Phone: {phone}\n'
+    'Email: {email}'
+)
+authorized_info = _(
+    'Number of the record book: {zach}'
+)

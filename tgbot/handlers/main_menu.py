@@ -8,7 +8,7 @@ from aiogram.utils import markdown as md
 
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import callbacks, states
-from tgbot.misc.texts import reply_commands, messages, buttons
+from tgbot.misc.texts import reply_commands, messages, buttons, roles
 from tgbot.services.database.models import User
 
 
@@ -33,9 +33,23 @@ async def send_profile_menu(message: Message, state: FSMContext):
     async with db() as session:
         user = await session.get(User, message.from_id)
 
+    s_group = md.hcode(user.group.group_name) if user.group else '????'
     roles_str = ', '.join(map(_, user.get_roles_titles_to_show()))
-    await message.answer(_(messages.profile_menu).format(roles=roles_str),
-                         reply_markup=inline_keyboards.get_profile_keyboard(_))
+
+    text = _(messages.profile_menu).format(roles=roles_str, s_group_name=s_group)
+    if user.has_role(roles.verified):
+        text += '\n\n' + _(messages.verified_info).format(
+            full_name=md.hcode(user.kai_user.full_name),
+            group_pos=md.hcode(user.kai_user.position),
+            n_group_name=md.hcode(user.kai_user.group.group_name),
+            phone=md.hcode(user.kai_user.phone or _(messages.missing)),
+            email=md.hcode(user.kai_user.email)
+        )
+
+    if user.has_role(roles.authorized):
+        text += '\n' + _(messages.authorized_info).format(zach=md.hcode(user.kai_user.zach_number))
+
+    await message.answer(text, reply_markup=inline_keyboards.get_profile_keyboard(_))
 
 
 async def show_profile_menu(call: CallbackQuery, callback_data: dict, state: FSMContext):
@@ -48,9 +62,23 @@ async def show_profile_menu(call: CallbackQuery, callback_data: dict, state: FSM
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
+    s_group = md.hcode(user.group.group_name) if user.group else '????'
     roles_str = ', '.join(map(_, user.get_roles_titles_to_show()))
-    await call.message.edit_text(_(messages.profile_menu).format(roles=roles_str),
-                                 reply_markup=inline_keyboards.get_profile_keyboard(_))
+
+    text = _(messages.profile_menu).format(roles=roles_str, s_group_name=s_group)
+    if user.has_role(roles.verified):
+        text += '\n\n' + _(messages.verified_info).format(
+            full_name=md.hcode(user.kai_user.full_name),
+            group_pos=md.hcode(user.kai_user.position),
+            n_group_name=md.hcode(user.kai_user.group.group_name),
+            phone=md.hcode(user.kai_user.phone or _(messages.missing)),
+            email=md.hcode(user.kai_user.email)
+        )
+
+    if user.has_role(roles.authorized):
+        text += '\n' + _(messages.authorized_info).format(zach=md.hcode(user.kai_user.zach_number))
+
+    await call.message.edit_text(text, reply_markup=inline_keyboards.get_profile_keyboard(_))
 
 
 async def send_shop_menu(message: Message, state: FSMContext):

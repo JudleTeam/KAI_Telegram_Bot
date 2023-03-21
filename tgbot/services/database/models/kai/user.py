@@ -48,7 +48,7 @@ class KAIUser(Base):
     institute_id = Column(Integer, ForeignKey('institute.id'), nullable=True)
     departament_id = Column(Integer, ForeignKey('departament.id'), nullable=True)
 
-    specialty = relationship('Speciality', lazy='selectin')
+    speciality = relationship('Speciality', lazy='selectin')
     profile = relationship('Profile', lazy='selectin')
     departament = relationship('Departament', lazy='selectin')
     institute = relationship('Institute', lazy='selectin')

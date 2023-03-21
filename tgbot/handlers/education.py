@@ -21,6 +21,12 @@ async def show_my_group(call: CallbackQuery):
     pinned_text = user.kai_user.group.pinned_text or _(messages.missing)
     await call.message.edit_text(
         _(messages.my_group_menu).format(
+            year=md.hcode(str(user.kai_user.group.group_name)[1]),
+            faculty=md.hcode(str(user.kai_user.group.group_name)[0]),
+            institute=md.hcode(user.kai_user.institute.name),
+            departament=md.hcode(user.kai_user.departament.name),
+            speciality=md.hcode(user.kai_user.speciality.code),
+            profile=md.hcode(user.kai_user.profile.name),
             group_name=md.hcode(user.kai_user.group.group_name),
             pinned_text=md.hitalic(pinned_text)
         ),

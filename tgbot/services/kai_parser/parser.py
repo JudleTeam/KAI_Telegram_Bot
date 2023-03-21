@@ -42,7 +42,7 @@ class KaiParser:
         API response example:
         list: [
             {
-              "groupNum": "4111",
+              "groupNum": "4115",
               "competitionType": "бюджет",
               "specCode": "09.03.04 Программная инженерия",
               "kafName": "Кафедра прикладной математики и информатики",
@@ -64,7 +64,7 @@ class KaiParser:
               "eduCycle": "Полный",
               "specName": "Программная инженерия",
               "specId": "1540001",
-              "zach": "241287",
+              "zach": "41241",
               "profileName": "Разработка программно-информационных систем",
               "dateDog": "",
               "kafId": "1264959",
