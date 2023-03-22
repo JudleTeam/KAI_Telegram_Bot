@@ -4,6 +4,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
+from tgbot.handlers.education import show_my_group
 from tgbot.handlers.main_menu import show_profile_menu
 from tgbot.handlers.profile import show_verification
 from tgbot.misc import callbacks
@@ -24,6 +25,7 @@ async def cancel(call: CallbackQuery, callback_data: dict, state: FSMContext):
         case 'verification':
             logging.info(f'[{call.from_user.id}]: Cancel KAI login')
             await show_verification(call)
+        case 'my_group': await show_my_group(call)
 
 
 def register_other(dp: Dispatcher):

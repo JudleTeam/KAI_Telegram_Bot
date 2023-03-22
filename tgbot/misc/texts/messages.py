@@ -52,7 +52,7 @@ lesson_template = _(
 full_schedule_pointer = '➤'
 
 teachers_template = _(
-    'List of teachers:\n\n'
+    'List of teachers {group_name}:\n\n'
     '————————————————\n'
     '{teachers}'
 )
@@ -156,3 +156,5 @@ verified_info = _(
 authorized_info = _(
     'Number of the record book: {zach}'
 )
+
+pin_text_input = _('Enter the text of the pinned message')

@@ -1,6 +1,7 @@
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
+from aiogram.utils.exceptions import InvalidQueryID
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks
@@ -32,7 +33,11 @@ async def show_my_group(call: CallbackQuery):
         ),
         reply_markup=inline_keyboards.get_my_group_keyboard(_, user)
     )
-    await call.answer()
+
+    try:
+        await call.answer()
+    except InvalidQueryID:
+        pass
 
 
 def register_education(dp: Dispatcher):
