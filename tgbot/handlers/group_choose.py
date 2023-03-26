@@ -66,7 +66,6 @@ async def get_group_name(message: Message, state: FSMContext):
         call = CallbackQuery(**data['call'])
 
     db_session = message.bot.get('database')
-    group_name = int(group_name)
     group = await Group.get_group_by_name(group_name, db_session)
     if not group:
         if _(messages.group_not_exist) not in main_mess.text:

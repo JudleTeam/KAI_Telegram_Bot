@@ -6,6 +6,10 @@ class KaiApiError(Exception):
     """Can't get data from Kai site"""
 
 
+class BadCredentials(Exception):
+    """Bad credentials for login"""
+
+
 @dataclass
 class Teacher:
     type: str
@@ -16,7 +20,7 @@ class Teacher:
 @dataclass
 class BaseUser:
     full_name: str
-    phone: str
+    phone: str | None
     email: str
 
 
@@ -58,7 +62,13 @@ class UserAbout:
 
 
 @dataclass
+class Group:
+    members: list[BaseUser]
+    leader_index: int | None
+
+
+@dataclass
 class FullUserData:
     user_info: UserInfo
     user_about: UserAbout
-    group_members: list[BaseUser]
+    group: Group

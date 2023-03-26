@@ -11,7 +11,7 @@ import tgbot.misc.callbacks as callbacks
 from tgbot.misc import states
 from tgbot.misc.texts import messages, buttons
 from tgbot.services.database.models import User
-from tgbot.services.kai_parser.helper import get_schedule_by_week_day, lesson_type_to_emoji
+from tgbot.services.kai_parser.utils import get_schedule_by_week_day, lesson_type_to_emoji
 
 
 def convert_day(today: str):
@@ -45,8 +45,7 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
         with_pointer = True
     else:
         with_pointer = False
-    schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(),
-                                                   2 if not week_num % 2 else 1, db)
+    schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(), 2 if not week_num % 2 else 1, db)
     if not schedule_list or not schedule_list[0].lesson_name:
         lessons = _('Day off\n')
     else:

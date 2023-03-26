@@ -17,7 +17,8 @@ from tgbot import middlewares
 from tgbot.services.database.base import Base
 from tgbot.services.database.models import Language, Role
 from tgbot.services.database.models.right import Right
-from tgbot.services.kai_parser.parser import KaiParser
+from tgbot.services.kai_parser import KaiParser
+from tgbot.services.kai_parser.utils import parse_groups
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +44,23 @@ def register_all_handlers(dp):
 
 
 async def main():
+    config = load_config('.env')
+
     log_file = rf'logs/{datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")}.log'
-    if not os.path.exists('logs'): os.mkdir('logs')
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+
+    if config.misc.write_logs:
+        log_handlers = logging.FileHandler(log_file), logging.StreamHandler()
+    else:
+        log_handlers = logging.StreamHandler(),
+
     logging.basicConfig(
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
-        handlers=(logging.FileHandler(log_file), logging.StreamHandler())
+        handlers=log_handlers
     )
     logger.info('Starting bot')
-    config = load_config('.env')
 
     engine = create_async_engine(
         f'postgresql+asyncpg://{config.database.user}:{config.database.password}@'
@@ -84,7 +93,7 @@ async def main():
     await Language.check_languages(async_sessionmaker, bot['_'].available_locales)
     await Right.insert_default_rights(async_sessionmaker)
     await Role.insert_default_roles(async_sessionmaker)
-    await KaiParser.parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
+    await parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
 
     try:
         await dp.start_polling()

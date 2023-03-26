@@ -6,6 +6,7 @@ from tgbot.services.database.base import Base
 
 class GroupTeacher(Base):
     __tablename__ = 'group_teacher'
+
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     group_id = Column(BigInteger, ForeignKey('group.group_id'))
     teacher_name = Column(String, nullable=False)

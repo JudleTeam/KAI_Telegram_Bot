@@ -7,3 +7,12 @@ class ScheduleState(StatesGroup):
 
 class GroupChoose(StatesGroup):
     waiting_for_group = State()
+
+
+class KAILogin(StatesGroup):
+    waiting_for_login = State()
+    waiting_for_password = State()
+
+
+class GroupPinText(StatesGroup):
+    waiting_for_text = State()

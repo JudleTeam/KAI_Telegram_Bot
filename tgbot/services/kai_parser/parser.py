@@ -1,19 +1,13 @@
-import asyncio
-import datetime
 import json
 import logging
 from json import JSONDecodeError
-import pickle
-from dataclasses import dataclass
 
 import aiohttp
 from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
-from sqlalchemy.exc import IntegrityError
 
-from tgbot.services.database.models import Group
-from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, UserInfo, FullUserData, BaseUser
-from tgbot.services.utils import parse_phone_number
+from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials
+from tgbot.services.kai_parser import helper
 
 
 class KaiParser:
@@ -30,121 +24,7 @@ class KaiParser:
     _timeout = 10
 
     @classmethod
-    async def _get_schedule_data(cls, group_id: int) -> list:
-        params = {
-            'p_p_id': 'pubStudentSchedule_WAR_publicStudentSchedule10',
-            'p_p_lifecycle': 2,
-            'p_p_resource_id': 'schedule'
-        }
-        data = {
-            'groupId': group_id
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(cls.base_url, data=data, headers=cls.base_headers,
-                                    params=params, timeout=cls._timeout) as response:
-                response = await response.json(content_type='text/html')
-                return response
-
-    @classmethod
-    async def _get_login_cookies(cls, login, password, retries=1) -> AbstractCookieJar | None:
-        login_headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-            'Host': 'kai.ru',
-            'Origin': 'https://kai.ru',
-            'Referer': 'https://kai.ru/',
-            'Accept': 'text/html,application/xhtml+xml, application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9,ru;q =0.8',
-            'Cache-Control': 'max-age=0',
-            'Connection': 'keep-alive',
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(cls.kai_main_url, headers=login_headers) as response:
-                if not response.ok:
-                    if retries > 3:
-                        raise KaiApiError(f'[{login}]: {response.status} received from "{cls.kai_main_url}"')
-                    logging.error(f'[{login}]: Bad response from KAI. Retry {retries}')
-                    return await cls._get_login_cookies(login, password, retries + 1)
-            cookies = session.cookie_jar
-
-        login_data = {
-            '_58_login': login,
-            '_58_password': password
-        }
-        login_params = {
-            'p_p_id': 58,
-            'p_p_lifecycle': 1,
-            'p_p_state': 'normal',
-            'p_p_mode': 'view',
-            '_58_struts_action': '/login/login'
-        }
-        async with aiohttp.ClientSession(cookie_jar=cookies) as session:
-            await session.post(cls.kai_main_url, data=login_data, headers=login_headers,
-                               params=login_params, timeout=cls._timeout)
-
-        for el in session.cookie_jar:
-            if el.key == 'USER_UUID':
-                return session.cookie_jar
-
-        if retries > 3:
-            return None
-        logging.error(f'[{login}]: Login failed. Retry {retries}')
-        return await cls._get_login_cookies(login, password, retries + 1)
-
-    @classmethod
-    async def _login_session(cls, session: aiohttp.ClientSession, login, password) -> bool:
-        """
-        ТУПОЕ ГОВНО ГОВНА ВТОРОЙ ЗАПРОС ПРОСТО ПАДАЕТ С TIMEOUT ERROR ХУЙ ПОЙМИ С ЧЕГО РАЗРАБЫ ДАУНЫ. С ОТДЕЛЬЫНМИ
-        СЕССИЯМИ ВСЁ РАБОТАЕТ ПРЕКРАСНО, А ТУТ ТОЛЬКО ЕСЛИ ЗАПУСКАТЬ В ДЕБАГЕ И ТО ЧЕРЕЗ РАЗ НАХУЙ
-
-        :param session:
-        :param login:
-        :param password:
-        :return:
-        """
-        login_headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-            'Host': 'kai.ru',
-            'Origin': 'https://kai.ru',
-            'Referer': 'https://kai.ru/main',
-            'Accept': 'text/html,application/xhtml+xml, application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9,ru;q =0.8',
-            'Cache-Control': 'max-age=0',
-            'Connection': 'keep-alive',
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-
-        async with session.get(cls.kai_main_url, headers=login_headers) as response:
-            print(response.status)
-            if not response.ok:
-                raise KaiApiError(f'[{login}]: {response.status} received from "{cls.kai_main_url}"')
-
-        print([el for el in session.cookie_jar])
-
-        login_data = {
-            '_58_login': login,
-            '_58_password': password
-        }
-        await asyncio.sleep(1)
-        print(1)
-        async with session.post(cls.kai_main_url, data=login_data, headers=login_headers,
-                                timeout=cls._timeout) as response:
-            print(response.status)
-            if not response.ok:
-                raise KaiApiError(f'[{login}]: {response.status} received from login request')
-
-        print([el for el in session.cookie_jar])
-        for el in session.cookie_jar:
-            if el.key == 'USER_UUID':
-                return True
-
-        return False
-
-    @classmethod
-    async def get_user_info(cls, login, password, login_cookies=None):
+    async def get_user_info(cls, login, password, login_cookies=None) -> UserInfo:
         login_cookies = login_cookies or await cls._get_login_cookies(login, password)
 
         async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
@@ -154,40 +34,7 @@ class KaiParser:
 
                 soup = BeautifulSoup(await response.text(), 'lxml')
 
-        return cls._parse_user_info(soup)
-
-    @classmethod
-    def _parse_user_info(cls, soup: BeautifulSoup):
-        last_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_lastName')['value'].strip()
-        first_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_firstName')['value'].strip()
-        middle_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_middleName')['value'].strip()
-
-        full_name = ' '.join((last_name, first_name, middle_name))
-
-        sex = ''
-        sex_select = soup.find('select', id='_aboutMe_WAR_aboutMe10_sex')
-        for option in sex_select.findAll():
-            if option.get('selected') is not None:
-                sex = option.text.strip()
-                break
-
-        birthday_str = soup.find('input', id='_aboutMe_WAR_aboutMe10_birthDay')['value'].strip()
-        birthday = datetime.datetime.strptime(birthday_str, '%d.%m.%Y').date()
-
-        phone = soup.find('input', id='_aboutMe_WAR_aboutMe10_phoneNumber0')['value'].strip()
-        phone = parse_phone_number(phone)
-
-        email = soup.find('input', id='_aboutMe_WAR_aboutMe10_email')['value'].strip()
-
-        user_info = UserInfo(
-            full_name=full_name,
-            sex=sex,
-            birthday=birthday,
-            phone=phone,
-            email=email
-        )
-
-        return user_info
+        return helper.parse_user_info(soup)
 
     @classmethod
     async def get_user_about(cls, login, password, role='student', login_cookies=None) -> UserAbout | None:
@@ -195,7 +42,7 @@ class KaiParser:
         API response example:
         list: [
             {
-              "groupNum": "4111",
+              "groupNum": "4115",
               "competitionType": "бюджет",
               "specCode": "09.03.04 Программная инженерия",
               "kafName": "Кафедра прикладной математики и информатики",
@@ -217,7 +64,7 @@ class KaiParser:
               "eduCycle": "Полный",
               "specName": "Программная инженерия",
               "specId": "1540001",
-              "zach": "241287",
+              "zach": "41241",
               "profileName": "Разработка программно-информационных систем",
               "dateDog": "",
               "kafId": "1264959",
@@ -265,7 +112,7 @@ class KaiParser:
             if user_data.get('list') is not None and len(user_data.get('list')) == 0:
                 return None
 
-            return UserAbout(**user_data['list'][0])
+            return UserAbout(**user_data['list'][-1])
 
     @classmethod
     async def get_full_user_data(cls, login, password) -> FullUserData:
@@ -273,18 +120,18 @@ class KaiParser:
 
         user_info = await cls.get_user_info(login, password, login_cookies)
         user_about = await cls.get_user_about(login, password, login_cookies=login_cookies)
-        group_members = await cls.get_user_group_members(login, password, login_cookies)
+        user_group = await cls.get_user_group_members(login, password, login_cookies)
 
         full_user_data = FullUserData(
             user_info=user_info,
             user_about=user_about,
-            group_members=group_members
+            group=user_group
         )
 
         return full_user_data
 
     @classmethod
-    async def get_user_group_members(cls, login, password, login_cookies=None):
+    async def get_user_group_members(cls, login, password, login_cookies=None) -> Group:
         login_cookies = login_cookies or await cls._get_login_cookies(login, password)
 
         async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
@@ -293,28 +140,10 @@ class KaiParser:
                     raise KaiApiError(f'[{login}]: {response.status} received from my group request')
                 soup = BeautifulSoup(await response.text(), 'lxml')
 
-        return cls._parse_group_members(soup)
+        return helper.parse_group_members(soup)
 
     @classmethod
-    def _parse_group_members(cls, soup: BeautifulSoup) -> list[BaseUser]:
-        group_members = list()
-        table_rows = soup.find_all('tr')
-        for row in table_rows[1:]:
-            columns = row.find_all('td')
-
-            full_name = columns[1].text.strip()
-            if 'Староста' in full_name:
-                full_name = full_name.replace('Староста', '').strip()
-            email = columns[2].text.strip()
-            phone = parse_phone_number(columns[3].text.strip())
-
-            user = BaseUser(full_name=full_name, email=email, phone=phone)
-            group_members.append(user)
-
-        return group_members
-
-    @classmethod
-    async def get_group_ids(cls) -> list:
+    async def get_group_ids(cls) -> dict:
         params = {
             'p_p_id': 'pubStudentSchedule_WAR_publicStudentSchedule10',
             'p_p_lifecycle': 2,
@@ -327,82 +156,13 @@ class KaiParser:
                 return response
 
     @classmethod
-    async def parse_groups(cls, response, db):
-        async with db() as session:
-            for i in response:
-                new_group = Group(
-                    group_id=i['id'],
-                    group_name=int(i['group'])
-                )
-                session.add(new_group)
-                try:
-                    await session.commit()
-                except IntegrityError:
-                    await session.rollback()
-                    await session.flush()
-
-    @classmethod
-    async def get_group_id(cls, group_name: int) -> int | None:
-        groups = await cls.get_group_ids()
-        for i in groups:
-            if i['group'] == str(group_name):
-                return int(i['id'])
-        return None
-
-    @classmethod
-    def _parse_teachers(cls, response) -> list:
-        # виды занятий, название дисциплины, фио
-        res = []
-        for key in response:  # дни недели от 1 до 6
-            for el in response[key]:
-                lesson_type = el['disciplType'].strip()
-                lesson_name = el['disciplName'].strip()
-                teacher_name = el['prepodName'].strip()
-                if not teacher_name:
-                    teacher_name = 'Не задан'
-                for i in res:
-                    if i['lesson_name'] == lesson_name and i['teacher_name'] == teacher_name.title():
-                        if lesson_type not in i['type']:
-                            i['type'] += f', {lesson_type}'
-                        break
-                else:
-                    res.append(
-                        {'type': lesson_type,
-                         'lesson_name': lesson_name,
-                         'teacher_name': teacher_name.title()}
-                    )
-        return res
-
-    @classmethod
-    def _parse_schedule(cls, response) -> list:
-        res = [0] * 6
-        for key in sorted(response):
-            day = response[key]
-            day_res = []
-            for para in day:
-                if '---' in (para["audNum"]).rstrip():  # Экранирование множественных тире
-                    para["audNum"] = "--"
-                if '---' in (para["buildNum"]).rstrip():
-                    para["buildNum"] = "--"
-                para_structure = {
-                    'dayDate': para["dayDate"][:100].rstrip(),
-                    'disciplName': (para["disciplName"]).rstrip(),
-                    'audNum': para["audNum"].rstrip(),
-                    'buildNum': para["buildNum"].rstrip(),
-                    'dayTime': para["dayTime"][:5].rstrip(),
-                    'disciplType': para["disciplType"][:4].rstrip()
-                }
-                day_res.append(para_structure)
-            res[int(key) - 1] = day_res
-        return res
-
-    @classmethod
     async def get_group_schedule(cls, group_id: int) -> list | None:
         try:
             response = await cls._get_schedule_data(group_id)
         except Exception:
             return None
-        return cls._parse_schedule(response)
+
+        return helper.parse_schedule(response)
 
     @classmethod
     async def get_group_teachers(cls, group_id: int) -> list | None:
@@ -410,59 +170,69 @@ class KaiParser:
             response = await cls._get_schedule_data(group_id)
         except Exception:
             return None
-        return cls._parse_teachers(response)
 
+        return helper.parse_teachers(response)
 
-def pretty_schedule(group_schedule):
-    a = {'dayDate': set(), 'buildNum': set(), 'dayTime': set(), 'disciplType': set()}
+    @classmethod
+    async def _get_login_cookies(cls, login, password, retries=1) -> AbstractCookieJar | None:
+        login_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+            'Host': 'kai.ru',
+            'Origin': 'https://kai.ru',
+            'Referer': 'https://kai.ru/',
+            'Accept': 'text/html,application/xhtml+xml, application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9,ru;q =0.8',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
 
-    for day in group_schedule:
-        # print(day)
-        if day:
-            for i in day:
-                lesson = ''
-                for j in i.keys():
-                    lesson += f'{j}: {i[j]} '
-                    if j in a.keys():
-                        a[j].add(i[j])
-            # print(lesson)
-    # print(a)
-    return a
+        async with aiohttp.ClientSession() as session:
+            async with session.get(cls.kai_main_url, headers=login_headers) as response:
+                if not response.ok:
+                    if retries > 3:
+                        raise KaiApiError(f'[{login}]: {response.status} received from "{cls.kai_main_url}"')
+                    logging.error(f'[{login}]: Bad response from KAI. Retry {retries}')
+                    return await cls._get_login_cookies(login, password, retries + 1)
+            cookies = session.cookie_jar
 
+        login_data = {
+            '_58_login': login,
+            '_58_password': password
+        }
+        login_params = {
+            'p_p_id': 58,
+            'p_p_lifecycle': 1,
+            'p_p_state': 'normal',
+            'p_p_mode': 'view',
+            '_58_struts_action': '/login/login'
+        }
+        async with aiohttp.ClientSession(cookie_jar=cookies) as session:
+            await session.post(cls.kai_main_url, data=login_data, headers=login_headers,
+                               params=login_params, timeout=cls._timeout)
 
-async def main():
-    k = KaiParser()
-    with open('data.pickle', 'rb') as f:
-        group_ids = pickle.load(f)
-    ids = []
-    for j, el in enumerate(group_ids):
-        if j > 1000:
-            break
-        ids.append(el['id'])
-    a = {'dayDate': set(), 'buildNum': set(), 'dayTime': set(), 'disciplType': set()}
-    for h, i in enumerate(ids):
-        print(h)
-        group_schedule = await k.get_group_schedule(i)
-        if not group_schedule:
-            print('no group_schedule')
-            continue
-        b = pretty_schedule(group_schedule)
-        for j in b.keys():
-            a[j].update(b[j])
-        with open('temp_data.pickle', 'wb') as f:
-            pickle.dump(a, f)
+        for el in session.cookie_jar:
+            if el.key == 'USER_UUID':
+                return session.cookie_jar
 
-    data_day_date = a['dayDate']
-    with open('data_day_date.pickle', 'wb') as f:
-        pickle.dump(data_day_date, f)
-    with open('data_day_date.pickle', 'rb') as f:
-        data_1 = pickle.load(f)
-    print("\n".join(data_1))
-    full_data = await k.get_full_user_data('KitaevGA', 'pass')
-    for user in full_data.group_members:
-        print(user)
-    # print(await k.get_group_ids())
+        if retries > 3:
+            raise BadCredentials(f'[{login}]: Login failed. Invalid login or password')
+        logging.error(f'[{login}]: Login failed. Retry {retries}')
+        return await cls._get_login_cookies(login, password, retries + 1)
 
-
-if __name__ == '__main__':
-    asyncio.run(main())
+    @classmethod
+    async def _get_schedule_data(cls, group_id: int) -> list:
+        params = {
+            'p_p_id': 'pubStudentSchedule_WAR_publicStudentSchedule10',
+            'p_p_lifecycle': 2,
+            'p_p_resource_id': 'schedule'
+        }
+        data = {
+            'groupId': group_id
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(cls.base_url, data=data, headers=cls.base_headers,
+                                    params=params, timeout=cls._timeout) as response:
+                response = await response.json(content_type='text/html')
+                return response
