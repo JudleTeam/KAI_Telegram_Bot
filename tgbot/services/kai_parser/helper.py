@@ -2,11 +2,11 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-from tgbot.services.kai_parser.schemas import UserInfo, Group, BaseUser
+from tgbot.services.kai_parser.schemas import UserInfo, BaseUser, Group, Lesson, LessonType, Teacher
 from tgbot.services.utils import parse_phone_number
 
 
-def parse_teachers(response) -> list:
+def parse_teachers(response) -> list[Teacher]:
     # виды занятий, название дисциплины, фио
     res = []
     for key in response:  # дни недели от 1 до 6
@@ -17,39 +17,37 @@ def parse_teachers(response) -> list:
             if not teacher_name:
                 teacher_name = 'Не задан'
             for i in res:
-                if i['lesson_name'] == lesson_name and i['teacher_name'] == teacher_name.title():
-                    if lesson_type not in i['type']:
-                        i['type'] += f', {lesson_type}'
+                if i.lesson_name == lesson_name and i.teacher_full_name == teacher_name.title():
+                    if lesson_type not in i.type:
+                        i.type += f', {lesson_type}'
                     break
             else:
-                res.append(
-                    {'type': lesson_type,
-                     'lesson_name': lesson_name,
-                     'teacher_name': teacher_name.title()}
-                )
+                res.append(Teacher(lesson_type, lesson_name, teacher_name.title()))
     return res
 
 
-def parse_schedule(response) -> list:
-    res = [0] * 6
+def parse_schedule(response) -> list[list[Lesson]]:
+    res = []  # by days with lessons
     for key in sorted(response):
         day = response[key]
         day_res = []
-        for para in day:
-            if '---' in (para["audNum"]).rstrip():  # Экранирование множественных тире
-                para["audNum"] = "--"
-            if '---' in (para["buildNum"]).rstrip():
-                para["buildNum"] = "--"
-            para_structure = {
-                'dayDate': para["dayDate"][:100].rstrip(),
-                'disciplName': (para["disciplName"]).rstrip(),
-                'audNum': para["audNum"].rstrip(),
-                'buildNum': para["buildNum"].rstrip(),
-                'dayTime': para["dayTime"][:5].rstrip(),
-                'disciplType': para["disciplType"][:4].rstrip()
-            }
-            day_res.append(para_structure)
-        res[int(key) - 1] = day_res
+        for lesson in day:
+            if '---' in (lesson["audNum"]).rstrip():  # Экранирование множественных тире
+                lesson["audNum"] = "--"
+            if '---' in (lesson["buildNum"]).rstrip():
+                lesson["buildNum"] = "--"
+            day_res.append(
+                Lesson(
+                    number_of_day=int(key),
+                    start_time=lesson["dayTime"][:5].rstrip(),
+                    parity_of_week=lesson["dayDate"][:100].rstrip(),
+                    lesson_name=lesson["disciplName"].rstrip(),
+                    auditory_number=lesson["audNum"].rstrip(),
+                    building_number=lesson["buildNum"].rstrip(),
+                    lesson_type=lesson["disciplType"][:4].rstrip()
+                )
+            )
+        res.append(day_res)
     return res
 
 

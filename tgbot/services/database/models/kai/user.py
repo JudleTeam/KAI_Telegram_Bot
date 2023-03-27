@@ -14,7 +14,7 @@ class KAIUser(Base):
 
     # Да, это костыль
     env = Env()
-    env.read_env(os.getcwd() + r'\.env')
+    env.read_env(os.path.join(os.getcwd(), '.env'))
     SECRET_KEY = env.str('SECRET_KEY')
 
     id = Column(Integer, primary_key=True, autoincrement=True)

@@ -6,6 +6,10 @@ class KaiApiError(Exception):
     """Can't get data from Kai site"""
 
 
+class ParsingError(Exception):
+    """Can't parse data from kai.ru"""
+
+
 class BadCredentials(Exception):
     """Bad credentials for login"""
 
@@ -15,6 +19,24 @@ class Teacher:
     type: str
     lesson_name: str
     teacher_full_name: str
+
+
+class LessonType(str):
+    lecture = 'лек'
+    practice = 'пр'
+    laboratory_work = 'л.р.'
+    consultation = 'конс'
+
+
+@dataclass
+class Lesson:
+    number_of_day: int
+    start_time: str
+    parity_of_week: str
+    lesson_name: str
+    auditory_number: str
+    building_number: str
+    lesson_type: str
 
 
 @dataclass

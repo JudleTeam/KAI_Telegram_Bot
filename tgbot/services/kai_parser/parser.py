@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from json import JSONDecodeError
@@ -6,7 +7,8 @@ import aiohttp
 from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
 
-from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials
+from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials, \
+    ParsingError
 from tgbot.services.kai_parser import helper
 
 
@@ -159,19 +161,31 @@ class KaiParser:
     async def get_group_schedule(cls, group_id: int) -> list | None:
         try:
             response = await cls._get_schedule_data(group_id)
-        except Exception:
-            return None
+        except Exception as e:
+            logging.error(e)
+            raise KaiApiError
 
-        return helper.parse_schedule(response)
+        try:
+            result = helper.parse_schedule(response)
+        except Exception as e:
+            logging.error(e)
+            raise ParsingError
+        return result
 
     @classmethod
     async def get_group_teachers(cls, group_id: int) -> list | None:
         try:
             response = await cls._get_schedule_data(group_id)
-        except Exception:
-            return None
+        except Exception as e:
+            logging.error(e)
+            raise KaiApiError
 
-        return helper.parse_teachers(response)
+        try:
+            result = helper.parse_teachers(response)
+        except Exception as e:
+            logging.error(e)
+            raise ParsingError
+        return result
 
     @classmethod
     async def _get_login_cookies(cls, login, password, retries=1) -> AbstractCookieJar | None:
@@ -236,3 +250,17 @@ class KaiParser:
                                     params=params, timeout=cls._timeout) as response:
                 response = await response.json(content_type='text/html')
                 return response
+
+
+async def main():
+    k = KaiParser()
+
+    res = await k.get_group_schedule(23325)
+    for i in res:
+        for j in i:
+            print(j)
+        print('\n')
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
