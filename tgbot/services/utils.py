@@ -156,7 +156,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
 
             if member.phone:
                 member_tg: User = await User.get_by_phone(member.phone, db)
-                if member_tg and not member_tg.has_role(roles.verified) and not member_tg.kai_user:
+                if member_tg and not member_tg.has_role(roles.verified):
                     member_tg_id = member_tg.telegram_id
                     member_tg.roles.append(roles_dict[roles.verified])
                     await session.merge(member_tg)

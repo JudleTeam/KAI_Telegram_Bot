@@ -72,6 +72,7 @@ class KaiParser:
             }
         ]
 
+        :param retries:
         :param login_cookies:
         :param login:
         :param password:
@@ -106,16 +107,17 @@ class KaiParser:
         try:
             user_data = json.loads(text)
         except JSONDecodeError:
-            logging.error(f'[{login}]: Failed decode received data. Part of text: {text[:32]}...')
-            return None
+            raise KaiApiError(f'[{login}]: Failed decode received data. Part of text: {text[:32]}...')
         else:
             if user_data.get('list') is not None and len(user_data.get('list')) == 0:
-                return None
+                raise KaiApiError(f'[{login}]: No data')
 
             return UserAbout(**user_data['list'][-1])
 
     @classmethod
     async def get_full_user_data(cls, login, password) -> FullUserData:
+        login = login.lower()
+
         login_cookies = await cls._get_login_cookies(login, password)
 
         user_info = await cls.get_user_info(login, password, login_cookies)
