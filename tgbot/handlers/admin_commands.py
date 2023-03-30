@@ -1,11 +1,13 @@
 import logging
+import os
+from pathlib import Path
 
 from aiogram import Dispatcher
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InputFile
 from aiogram.utils import markdown as md
 
 from tgbot.misc import callbacks
-from tgbot.misc.texts import messages
+from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User
 
 
@@ -109,8 +111,54 @@ async def set_prefix(message: Message):
     await message.answer(_(messages.prefix_set).format(user_id=md.hcode(user_id), prefix=prefix))
 
 
+async def send_last_log(message: Message):
+    await message.answer_document(InputFile(Path(os.getcwd()).joinpath(message.bot.get('log_file'))))
+
+
+async def send_user_info(message: Message):
+    _ = message.bot.get('_')
+    db = message.bot.get('database')
+
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
+        return
+
+    user_to_show_id = args[1]
+    if not user_to_show_id.isdigit():
+        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
+        return
+
+    async with db.begin() as session:
+        user_to_show = await session.get(User, int(user_to_show_id))
+        if not user_to_show:
+            await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_to_show_id))))
+            return
+
+    s_group = md.hcode(user_to_show.group.group_name) if user_to_show.group else '????'
+    roles_str = ', '.join(map(_, user_to_show.get_roles_titles(to_show=False)))
+
+    text = _(messages.for_admin_info).format(roles=roles_str, s_group_name=s_group, is_blocked=user_to_show.is_blocked,
+                                             telegram_id=md.hcode(user_to_show_id))
+    if user_to_show.has_role(roles.verified):
+        text += '\n' + _(messages.verified_info).format(
+            full_name=md.hcode(user_to_show.kai_user.full_name),
+            group_pos=md.hcode(user_to_show.kai_user.position),
+            n_group_name=md.hcode(user_to_show.kai_user.group.group_name),
+            phone=md.hcode(user_to_show.kai_user.phone or _(messages.missing)),
+            email=md.hcode(user_to_show.kai_user.email)
+        )
+
+    if user_to_show.has_role(roles.authorized):
+        text += '\n' + _(messages.authorized_info).format(zach=md.hcode(user_to_show.kai_user.zach_number))
+
+    await message.answer(text)
+
+
 def register_admin_commands(dp: Dispatcher):
     dp.register_message_handler(block_user, commands=['ban', 'block'], is_admin=True)
     dp.register_message_handler(pardon_user, commands=['pardon', 'unban', 'unblock'], is_admin=True)
     dp.register_message_handler(send_users, commands=['users'], is_admin=True)
     dp.register_message_handler(set_prefix, commands=['set_prefix'], is_admin=True)
+    dp.register_message_handler(send_last_log, commands=['last_log'], is_admin=True)
+    dp.register_message_handler(send_user_info, commands=['user_info'], is_admin=True)

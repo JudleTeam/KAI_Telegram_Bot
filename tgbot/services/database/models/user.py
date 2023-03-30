@@ -55,8 +55,11 @@ class User(Base):
 
         return False
 
-    def get_roles_titles_to_show(self):
-        return [role.title for role in self.roles if role.to_show]
+    def get_roles_titles(self, to_show=True):
+        if to_show:
+            return [role.title for role in self.roles if role.to_show]
+
+        return [role.title for role in self.roles]
 
     @classmethod
     async def get_by_phone(cls, phone, db: Session):

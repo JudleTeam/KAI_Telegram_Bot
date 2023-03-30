@@ -85,6 +85,7 @@ async def main():
     bot['config'] = config
     bot['redis'] = redis
     bot['database'] = async_sessionmaker
+    bot['log_file'] = log_file
 
     register_all_middlewares(dp, config)
     register_all_filters(dp)

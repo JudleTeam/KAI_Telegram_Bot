@@ -34,7 +34,7 @@ async def send_profile_menu(message: Message, state: FSMContext):
         user = await session.get(User, message.from_id)
 
     s_group = md.hcode(user.group.group_name) if user.group else '????'
-    roles_str = ', '.join(map(_, user.get_roles_titles_to_show()))
+    roles_str = ', '.join(map(_, user.get_roles_titles()))
 
     text = _(messages.profile_menu).format(roles=roles_str, s_group_name=s_group)
     if user.has_role(roles.verified):
@@ -63,7 +63,7 @@ async def show_profile_menu(call: CallbackQuery, callback_data: dict, state: FSM
         user = await session.get(User, call.from_user.id)
 
     s_group = md.hcode(user.group.group_name) if user.group else '????'
-    roles_str = ', '.join(map(_, user.get_roles_titles_to_show()))
+    roles_str = ', '.join(map(_, user.get_roles_titles()))
 
     text = _(messages.profile_menu).format(roles=roles_str, s_group_name=s_group)
     if user.has_role(roles.verified):

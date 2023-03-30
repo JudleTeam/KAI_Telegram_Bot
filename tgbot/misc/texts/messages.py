@@ -157,5 +157,11 @@ verified_info = _(
 authorized_info = _(
     'Number of the record book: {zach}'
 )
+for_admin_info = _(
+    'Telegram ID: {telegram_id}\n'
+    'Is blocked: {is_blocked}\n'
+    'Selected group: {s_group_name}\n'
+    'Roles: {roles}\n'
+)
 
 pin_text_input = _('Enter the text of the pinned message')
