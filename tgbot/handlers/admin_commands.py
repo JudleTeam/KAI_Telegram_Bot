@@ -138,8 +138,16 @@ async def send_user_info(message: Message):
     s_group = md.hcode(user_to_show.group.group_name) if user_to_show.group else '????'
     roles_str = ', '.join(map(_, user_to_show.get_roles_titles(to_show=False)))
 
-    text = _(messages.for_admin_info).format(roles=roles_str, s_group_name=s_group, is_blocked=user_to_show.is_blocked,
-                                             telegram_id=md.hcode(user_to_show_id))
+    tg_user = await message.bot.get_chat(user_to_show_id)
+    text = _(messages.for_admin_info).format(
+        roles=roles_str,
+        s_group_name=s_group,
+        is_blocked=user_to_show.is_blocked,
+        telegram_id=md.hcode(user_to_show_id),
+        tg_full_name=md.hcode(tg_user.full_name),
+        tg_mention=md.hcode(tg_user.mention),
+        telegram_phone=md.hcode(user_to_show.phone)
+    )
     if user_to_show.has_role(roles.verified):
         text += '\n' + _(messages.verified_info).format(
             full_name=md.hcode(user_to_show.kai_user.full_name),

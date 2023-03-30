@@ -159,6 +159,9 @@ authorized_info = _(
 )
 for_admin_info = _(
     'Telegram ID: {telegram_id}\n'
+    'Telegram full name: {tg_full_name}\n'
+    'Telegram mention: {tg_mention}\n'
+    'Telegram phone: {telegram_phone}\n'
     'Is blocked: {is_blocked}\n'
     'Selected group: {s_group_name}\n'
     'Roles: {roles}\n'
