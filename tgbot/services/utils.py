@@ -112,7 +112,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             kai_user.sex = user_info.sex
             kai_user.birthday = user_info.birthday
 
-            kai_user.specialty = speciality
+            kai_user.speciality = speciality
             kai_user.departament = departament
             kai_user.institute = institute
             kai_user.profile = profile
@@ -141,7 +141,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 edu_qualification=user_about.eduQualif,
                 program_form=user_about.programForm,
                 status=user_about.status.strip(),
-                specialty=speciality,
+                speciality=speciality,
                 profile=profile,
                 departament=departament,
                 institute=institute
@@ -156,7 +156,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
 
             if member.phone:
                 member_tg: User = await User.get_by_phone(member.phone, db)
-                if member_tg and not member_tg.has_role(roles.verified):
+                if member_tg and not member_tg.has_role(roles.verified) and not member_tg.kai_user:
                     member_tg_id = member_tg.telegram_id
                     member_tg.roles.append(roles_dict[roles.verified])
                     await session.merge(member_tg)
@@ -183,7 +183,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
     return not already_used
 
 
-async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -> bool:
+async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -> bool | None:
     phone = parse_phone_number(phone)
     is_verified = False
     async with db() as session:
@@ -193,6 +193,8 @@ async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -
         await session.commit()
         kai_user = await KAIUser.get_by_phone(phone, db)
         if kai_user:
+            if kai_user.telegram_user_id and kai_user.telegram_user_id != telegram_id:
+                return None
             kai_user.telegram_user_id = telegram_id
             await session.merge(kai_user)
 

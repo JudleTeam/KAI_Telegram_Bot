@@ -8,7 +8,7 @@ from tgbot.handlers.profile import show_verification
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import states, callbacks
 from tgbot.misc.texts import messages, roles
-from tgbot.services.database.models import User, Role
+from tgbot.services.database.models import User, Role, KAIUser
 from tgbot.services.kai_parser import KaiParser
 from tgbot.services.kai_parser.schemas import KaiApiError, BadCredentials
 from tgbot.services.utils import add_full_user_to_db, verify_profile_with_phone
@@ -39,6 +39,7 @@ async def kai_logout(call: CallbackQuery):
         user.kai_user.login = None
         user.kai_user.password = None
         user.remove_role(roles.group_leader)
+        user.remove_role(roles.authorized)
 
     logging.info(f'[{call.from_user.id}]: KAI logout')
 
@@ -118,12 +119,41 @@ async def get_user_phone(message: Message):
 
     is_verified = await verify_profile_with_phone(message.from_id, message.contact.phone_number, db)
     text = _(messages.phone_verified) + '\n\n'
-    if is_verified:
+    if is_verified is None:
+        text += _(messages.kai_account_busy)
+    elif is_verified:
         text += _(messages.phone_found)
     else:
         text += _(messages.phone_not_found)
 
     await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard(_))
+
+
+async def check_phone(call: CallbackQuery):
+    _ = call.bot.get('_')
+    db = call.bot.get('database')
+
+    async with db.begin() as session:
+        user = await session.get(User, call.from_user.id)
+        kai_user = await KAIUser.get_by_phone(user.phone, db)
+
+        if not kai_user:
+            await call.answer(_(messages.phone_not_found), show_alert=True)
+            return
+
+        if kai_user.telegram_user_id:
+            await call.answer(_(messages.kai_account_busy), show_alert=True)
+            return
+
+        user.kai_user = kai_user
+
+        roles_dict = await Role.get_roles_dict(db)
+        user.roles.append(roles_dict[roles.verified])
+        if kai_user.password:
+            user.roles.append(roles_dict[roles.authorized])
+
+    await call.answer(_(messages.phone_found), show_alert=True)
+    await show_verification(call)
 
 
 def register_verification(dp: Dispatcher):
@@ -134,4 +164,5 @@ def register_verification(dp: Dispatcher):
     dp.register_message_handler(get_user_password, state=states.KAILogin.waiting_for_password)
 
     dp.register_callback_query_handler(send_phone_keyboard, callbacks.navigation.filter(to='send_phone'))
+    dp.register_callback_query_handler(check_phone, callbacks.navigation.filter(to='check_phone'))
     dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT])

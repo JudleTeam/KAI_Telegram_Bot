@@ -36,15 +36,15 @@ async def show_verification(call: CallbackQuery):
     async with db_session() as session:
         user = await session.get(User, call.from_user.id)
 
-    profile_status = '✅' if user.has_role(roles.verified) else '❌'
-    phone_status = '✅' if user.kai_user and user.phone else '❌'
-    kai_status = '✅' if user.kai_user and user.kai_user.login else '❌'
+    verified_status = '✅' if user.has_role(roles.verified) else '❌'
+    phone_status = '✅' if user.phone else '❌'
+    authorized_status = '✅' if user.has_role(roles.authorized) else '❌'
 
     await call.message.edit_text(
         _(messages.verification_menu).format(
             phone_status=phone_status,
-            kai_status=kai_status,
-            profile_status=profile_status
+            kai_status=authorized_status,
+            profile_status=verified_status
         ),
         reply_markup=inline_keyboards.get_verification_keyboard(_, user)
     )
