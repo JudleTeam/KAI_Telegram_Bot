@@ -1,4 +1,5 @@
 import datetime
+from fuzzywuzzy import process
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -8,14 +9,48 @@ from tgbot.services.database.models import Schedule, GroupTeacher, Group
 from tgbot.services.kai_parser.schemas import KaiApiError
 
 
-def get_parity(week: str):
-    match week:
-        case 'неч':
-            return 1
-        case 'чет':
-            return 2
-        case _:
-            return 0
+def get_int_parity(parity_raw: str) -> int:
+    templates_odd = ['неч', 'неч.нед.', 'Нечет.нед.', 'неч/-', ]
+    templates_even = ['чет', '-/чет', 'четная неделя', 'чет.нед.', ]
+
+    a = process.extractOne(parity_raw, templates_odd)
+    b = process.extractOne(parity_raw, templates_even)
+    # parity_of_week 0 - both, 1 - odd, 2 - even
+    if a[1] > 70 or b[1] > 70:
+        if a[1] > b[1]:
+            parity_of_week = 1
+        elif b[1] > a[1]:
+            parity_of_week = 2
+        else:
+            parity_of_week = 0
+    else:  # dates or nothing
+        if ',' in parity_raw:
+            sep = ','
+        else:
+            sep = ' '
+        if '/' in parity_raw:
+            parity_raw = parity_raw.replace('/', sep)
+        h = parity_raw.split(sep)
+
+        year = datetime.datetime.now().year
+        sum_k = []
+        for j in h:
+            try:
+                try:
+                    date = datetime.datetime.strptime(j, '%d.%m.%Y')
+                except:
+                    j = j.strip() + f'.{year}'
+                date = datetime.datetime.strptime(j, '%d.%m.%Y')
+
+                sum_k.append(int(date.strftime("%V")) % 2)  # append 0 or 1
+            except:
+                pass
+        else:
+            if sum_k and len(sum_k) * sum_k[0] == sum(sum_k):
+                parity_of_week = sum_k[0]
+            else:
+                parity_of_week = 0
+    return parity_of_week
 
 
 def lesson_type_order(lesson_type: str):
@@ -67,56 +102,27 @@ def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
 
 async def add_group_schedule(group_id: int, async_session):
     response = await KaiParser.get_group_schedule(group_id)
-    prev_parity = 1
-    if not response:
-        raise KaiApiError
+    for i in response:
+        for j in i:
+            print(j)
+        print('\n')
 
-    for num, day in enumerate(response):
-        if not day:
-            async with async_session.begin() as session:
-                empty_lesson = Schedule(
-                    group_id=group_id,
-                    number_of_day=num + 1,
-                    parity_of_week=prev_parity,
-                    lesson_name='',
-                    auditory_number='',
-                    building_number='',
-                    lesson_type='',
-                    start_time=datetime.datetime.now().time()
-                )
-                session.add(empty_lesson)
-            continue
-
+    for day in response:
         for lesson in day:
-            start_time = datetime.datetime.strptime(lesson['dayTime'], '%H:%M')
-            if num != 6:
-                prev_parity = get_parity(lesson['dayDate'])
-            else:
-                if lesson['dayDate'] == 'неч':
-                    prev_parity = 2
-                elif lesson['dayDate'] == 'чет':
-                    prev_parity = 1
-            async with async_session.begin() as session:
-                ex = (await session.execute(select(Schedule).where(
-                    Schedule.number_of_day == num + 1,
-                    Schedule.parity_of_week == get_parity(lesson['dayDate']),
-                    Schedule.lesson_name == lesson['disciplName'],
-                    Schedule.auditory_number == lesson['audNum'],
-                    Schedule.building_number == lesson['buildNum']
-                ))).scalars().all()
-                if ex:
-                    [await session.delete(el) for el in ex]
+            start_time = datetime.datetime.strptime(lesson.start_time, '%H:%M').time()
 
+            async with async_session.begin() as session:
                 new_lesson = Schedule(
                     group_id=group_id,
-                    number_of_day=num + 1,
-                    parity_of_week=get_parity(lesson['dayDate']),
-                    lesson_name=lesson['disciplName'],
-                    auditory_number=lesson['audNum'],
-                    building_number=lesson['buildNum'],
-                    lesson_type=lesson['disciplType'],
-                    start_time=start_time.time(),
-                    end_time=get_lesson_end_time(start_time.time(), lesson['disciplType'])
+                    number_of_day=lesson.number_of_day,
+                    parity_of_week=lesson.parity_of_week,
+                    int_parity_of_week=get_int_parity(lesson.parity_of_week),
+                    lesson_name=lesson.lesson_name,
+                    auditory_number=lesson.auditory_number,
+                    building_number=lesson.building_number,
+                    lesson_type=lesson.lesson_type,
+                    start_time=start_time,
+                    end_time=get_lesson_end_time(start_time, lesson.lesson_type)
                 )
                 session.add(new_lesson)
 
@@ -140,19 +146,13 @@ async def add_group_teachers(group_id: int, async_session):
 
 
 async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
-    if day_of_week == 7:
-        return None
     async with db.begin() as session:
         stm = select(Schedule).where(Schedule.group_id == group_id, Schedule.number_of_day == day_of_week)
         schedule = (await session.execute(stm)).scalars().all()
-        if not schedule:
-            try:
-                await add_group_schedule(group_id, db)
-            except KaiApiError:
-                return None
-            schedule = (await session.execute(stm)).scalars().all()
-            if not schedule:
-                return None
+
+        if not schedule:  # free day
+            return None
+
         schedule = [i for i in schedule if i.parity_of_week in (0, parity)]
         return schedule
 

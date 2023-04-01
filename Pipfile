@@ -17,6 +17,8 @@ bs4 = "*"
 phonenumbers = "*"
 sqlalchemy-utils = "*"
 cryptography = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
