@@ -16,6 +16,9 @@ class UserCheckerMiddleware(BaseMiddleware):
         await self.check(message)
 
     async def on_pre_process_callback_query(self, call: types.CallbackQuery, data: dict):
+        if 'start' in call.data:
+            return
+
         await self.check(call.message)
 
     @staticmethod 

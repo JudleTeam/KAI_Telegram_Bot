@@ -23,8 +23,7 @@ async def show_classmates(call: CallbackQuery):
         name = member.full_name
         if member.telegram_user_id:
             member_tg = await call.bot.get_chat(member.telegram_user_id)
-            if member_tg.mention:
-                name = md.hlink(member.full_name, f't.me/{member_tg.mention[1:]}')
+            name = md.hlink(member.full_name, member_tg.user_url)
 
         prefix = member.prefix or ''
 

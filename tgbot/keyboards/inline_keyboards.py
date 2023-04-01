@@ -184,12 +184,18 @@ def get_teachers_keyboard(_, group_name):
 def get_verification_keyboard(_, user: User):
     keyboard = InlineKeyboardMarkup()
 
+    is_verified = user.has_role(roles.verified)
+
     if not user.phone:
         keyboard.add(
             InlineKeyboardButton(_(buttons.via_phone), callback_data=callbacks.navigation.new('send_phone', payload=''))
         )
+    elif not is_verified:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.check_phone), callback_data=callbacks.navigation.new('check_phone', payload=''))
+        )
 
-    if not (user.kai_user and user.kai_user.login):
+    if not (user.has_role(roles.authorized)):
         keyboard.add(
             InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.navigation.new('start_login', payload=''))
         )
@@ -198,7 +204,7 @@ def get_verification_keyboard(_, user: User):
             InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.navigation.new('logout', payload=''))
         )
 
-    if user.has_role(roles.verified):
+    if is_verified:
         keyboard.add(
             InlineKeyboardButton(_(buttons.unlink_account), callback_data=callbacks.navigation.new('unlink', payload=''))
         )

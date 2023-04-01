@@ -117,6 +117,7 @@ credentials_busy = _('❌ Someone is already signed in with these credentials')
 account_unlinked = _('You have successfully unlinked your account')
 channel_advertising = _('Subscribe to the Telegram channel of the project! '
                         'There will be the latest news on the project and more!')
+kai_account_busy = _('❌ Account with this number already linked to someone else Telegram')
 dont_do = _('You don\'t have to do this!')
 group_chat_error = _('Sorry, I don\'t know how to work in group chats yet')
 
@@ -155,6 +156,15 @@ verified_info = _(
 )
 authorized_info = _(
     'Number of the record book: {zach}'
+)
+for_admin_info = _(
+    'Telegram ID: {telegram_id}\n'
+    'Telegram full name: {tg_full_name}\n'
+    'Telegram mention: {tg_mention}\n'
+    'Telegram phone: {telegram_phone}\n'
+    'Is blocked: {is_blocked}\n'
+    'Selected group: {s_group_name}\n'
+    'Roles: {roles}\n'
 )
 
 pin_text_input = _('Enter the text of the pinned message')
