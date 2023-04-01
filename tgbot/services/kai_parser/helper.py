@@ -1,173 +1,105 @@
-import datetime
+from datetime import datetime
 
-from sqlalchemy import select
+from bs4 import BeautifulSoup
 
-from tgbot.services.kai_parser.parser import KaiParser
-from tgbot.services.database.models import Schedule, GroupTeacher
-
-
-class KaiApiError(Exception):
-    """Can't get data from Kai site"""
+from tgbot.services.kai_parser.schemas import UserInfo, BaseUser, Group, Lesson, LessonType, Teacher
+from tgbot.services.utils import parse_phone_number
 
 
-def get_parity(week: str):
-    match week:
-        case 'неч':
-            return 1
-        case 'чет':
-            return 2
-        case _:
-            return 0
-
-
-def lesson_type_order(lesson_type: str):
+def parse_teachers(response) -> list[Teacher]:
+    # виды занятий, название дисциплины, фио
     res = []
-    if 'лек' in lesson_type:
-        res.append('лек')
-    if 'пр' in lesson_type:
-        res.append('пр')
-    if 'л.р.' in lesson_type:
-        res.append('л.р.')
-    return ', '.join(res)
-
-
-def lesson_type_to_emoji(lesson_type):
-    lessons_emoji = {
-        'лек': '📢',
-        'пр': '📝',
-        'л.р.': '🧪',
-        'конс': '❓',
-        'физ': '🏆'
-    }
-
-    res = [lessons_emoji[el] for el in lesson_type.split(', ')]
+    for key in response:  # дни недели от 1 до 6
+        for el in response[key]:
+            lesson_type = el['disciplType'].strip()
+            lesson_name = el['disciplName'].strip()
+            teacher_name = el['prepodName'].strip()
+            if not teacher_name:
+                teacher_name = 'Не задан'
+            for i in res:
+                if i.lesson_name == lesson_name and i.teacher_full_name == teacher_name.title():
+                    if lesson_type not in i.type:
+                        i.type += f', {lesson_type}'
+                    break
+            else:
+                res.append(Teacher(lesson_type, lesson_name, teacher_name.title()))
     return res
 
 
-schedule_time = (
-    (datetime.time(8, 00), datetime.time(9, 30)),
-    (datetime.time(9, 40), datetime.time(11, 10)),
-    (datetime.time(11, 20), datetime.time(12, 50)),
-    (datetime.time(13, 30), datetime.time(15, 0)),
-    (datetime.time(15, 10), datetime.time(16, 40)),
-    (datetime.time(16, 50), datetime.time(18, 20)),
-    (datetime.time(18, 25), datetime.time(19, 55)),
-    (datetime.time(20, 0), datetime.time(21, 30))
-)
-
-
-def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
-    match lesson_type:
-        case 'лек' | 'пр':
-            for i in schedule_time:
-                if i[0] == start_time:
-                    return i[1]
-        case 'л.р.':
-            for k, i in enumerate(schedule_time):
-                if i[0] == start_time:
-                    return schedule_time[k + 1][1]
-
-
-async def add_group_schedule(group_id: int, async_session):
-    k = KaiParser()
-    response = await k.get_group_schedule(group_id)
-    prev_parity = 1
-    if response:
-        for num, day in enumerate(response):
-            if not day:
-                async with async_session.begin() as session:
-                    empty_lesson = Schedule(
-                        group_id=group_id,
-                        number_of_day=num + 1,
-                        parity_of_week=prev_parity,
-                        lesson_name='',
-                        auditory_number='',
-                        building_number='',
-                        lesson_type='',
-                        start_time=datetime.datetime.now().time()
-                    )
-                    session.add(empty_lesson)
-                continue
-            for lesson in day:
-                start_time = datetime.datetime.strptime(lesson['dayTime'], '%H:%M')
-                if num != 6:
-                    prev_parity = get_parity(lesson['dayDate'])
-                else:
-                    if lesson['dayDate'] == 'неч':
-                        prev_parity = 2
-                    elif lesson['dayDate'] == 'чет':
-                        prev_parity = 1
-                async with async_session.begin() as session:
-                    ex = (await session.execute(select(Schedule).where(
-                        Schedule.number_of_day == num + 1,
-                        Schedule.parity_of_week == get_parity(lesson['dayDate']),
-                        Schedule.lesson_name == lesson['disciplName'],
-                        Schedule.auditory_number == lesson['audNum'],
-                        Schedule.building_number == lesson['buildNum']
-                    ))).scalars().all()
-                    if ex:
-                        await session.delete(ex)
-
-                    new_lesson = Schedule(
-                        group_id=group_id,
-                        number_of_day=num + 1,
-                        parity_of_week=get_parity(lesson['dayDate']),
-                        lesson_name=lesson['disciplName'],
-                        auditory_number=lesson['audNum'],
-                        building_number=lesson['buildNum'],
-                        lesson_type=lesson['disciplType'],
-                        start_time=start_time.time(),
-                        end_time=get_lesson_end_time(start_time.time(), lesson['disciplType'])
-                    )
-                    session.add(new_lesson)
-    else:
-        raise KaiApiError
-
-
-async def add_group_teachers(group_id: int, async_session):
-    kai_parser = KaiParser()
-    response = await kai_parser.get_group_teachers(group_id)
-    if not response:
-        raise KaiApiError
-
-    async with async_session.begin() as session:
-        for teacher in response:
-            teacher['type'] = lesson_type_order(teacher['type'])
-
-            new_teacher = GroupTeacher(
-                group_id=group_id,
-                teacher_name=teacher['teacher_name'],
-                lesson_type=teacher['type'],
-                lesson_name=teacher['lesson_name']
+def parse_schedule(response) -> list[list[Lesson]]:
+    res = []  # by days with lessons
+    for key in sorted(response):
+        day = response[key]
+        day_res = []
+        for lesson in day:
+            if '---' in (lesson["audNum"]).rstrip():  # Экранирование множественных тире
+                lesson["audNum"] = "--"
+            if '---' in (lesson["buildNum"]).rstrip():
+                lesson["buildNum"] = "--"
+            day_res.append(
+                Lesson(
+                    number_of_day=int(key),
+                    start_time=lesson["dayTime"][:5].rstrip(),
+                    parity_of_week=lesson["dayDate"][:100].rstrip(),
+                    lesson_name=lesson["disciplName"].rstrip(),
+                    auditory_number=lesson["audNum"].rstrip(),
+                    building_number=lesson["buildNum"].rstrip(),
+                    lesson_type=lesson["disciplType"][:4].rstrip()
+                )
             )
-            session.add(new_teacher)
+        res.append(day_res)
+    return res
 
 
-async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
-    if day_of_week == 7:
-        return None
-    async with db.begin() as session:
-        stm = select(Schedule).where(Schedule.group_id == group_id, Schedule.number_of_day == day_of_week)
-        schedule = (await session.execute(stm)).scalars().all()
-        if not schedule:
-            try:
-                await add_group_schedule(group_id, db)
-            except KaiApiError:
-                return None
-            schedule = (await session.execute(stm)).scalars().all()
-            if not schedule:
-                return None
-        schedule = [i for i in schedule if i.parity_of_week in (0, parity)]
-        return schedule
+def parse_user_info(soup: BeautifulSoup):
+    last_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_lastName')['value'].strip()
+    first_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_firstName')['value'].strip()
+    middle_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_middleName')['value'].strip()
+
+    full_name = ' '.join((last_name, first_name, middle_name))
+
+    sex = ''
+    sex_select = soup.find('select', id='_aboutMe_WAR_aboutMe10_sex')
+    for option in sex_select.findAll():
+        if option.get('selected') is not None:
+            sex = option.text.strip()
+            break
+
+    birthday_str = soup.find('input', id='_aboutMe_WAR_aboutMe10_birthDay')['value'].strip()
+    birthday = datetime.strptime(birthday_str, '%d.%m.%Y').date()
+
+    phone = soup.find('input', id='_aboutMe_WAR_aboutMe10_phoneNumber0')['value'].strip()
+    phone = parse_phone_number(phone)
+
+    email = soup.find('input', id='_aboutMe_WAR_aboutMe10_email')['value'].strip().lower()
+
+    user_info = UserInfo(
+        full_name=full_name,
+        sex=sex,
+        birthday=birthday,
+        phone=phone,
+        email=email
+    )
+
+    return user_info
 
 
-async def get_group_teachers(group_id: int, db_session):
-    teachers = await GroupTeacher.get_group_teachers(group_id, db_session)
-    if teachers: return teachers
+def parse_group_members(soup: BeautifulSoup) -> Group:
+    group_members = list()
+    leader_ind = None
+    last_table = soup.find_all('table')[-1]
+    table_rows = last_table.find_all('tr')
+    for ind, row in enumerate(table_rows[1:]):
+        columns = row.find_all('td')
 
-    try:
-        await add_group_teachers(group_id, db_session)
-    except KaiApiError:
-        return None
-    else:
-        return await get_group_teachers(group_id, db_session)
+        full_name = columns[1].text.strip()
+        if 'Староста' in full_name:
+            leader_ind = ind
+            full_name = full_name.replace('Староста', '').strip()
+        email = columns[2].text.strip().lower()
+        phone = parse_phone_number(columns[3].text.strip())
+
+        user = BaseUser(full_name=full_name, email=email, phone=phone)
+        group_members.append(user)
+
+    return Group(members=group_members, leader_index=leader_ind)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, select, ForeignKey
+from sqlalchemy import Column, BigInteger, Integer, select, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
@@ -8,10 +8,11 @@ class Group(Base):
     __tablename__ = 'group'
 
     group_id = Column(BigInteger, primary_key=True, autoincrement=False)
-    group_leader_id = Column(BigInteger, ForeignKey('telegram_user.telegram_id'))
+    group_leader_id = Column(BigInteger, ForeignKey('kai_user.id'))
+    pinned_text = Column(Text, nullable=True)
     group_name = Column(Integer, nullable=False, unique=True)
 
-    group_leader = relationship('User', lazy='selectin', foreign_keys=[group_leader_id])
+    group_leader = relationship('KAIUser', lazy='selectin', foreign_keys=[group_leader_id])
 
     @classmethod
     async def get_group_by_name(cls, group_name, db_session):

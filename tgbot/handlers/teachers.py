@@ -7,7 +7,7 @@ import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
-from tgbot.services.kai_parser.helper import lesson_type_to_emoji, get_group_teachers
+from tgbot.services.kai_parser.utils import lesson_type_to_emoji, get_group_teachers
 
 
 def form_teacher(teacher):
@@ -37,8 +37,8 @@ async def show_teachers(call: CallbackQuery):
         return
 
     teachers_str = ''.join(map(form_teacher, teachers))
-    msg = _(messages.teachers_template).format(teachers=teachers_str)
-    await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(_))
+    msg = _(messages.teachers_template).format(teachers=teachers_str, group_name=md.hcode(user.group.group_name))
+    await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(_, user.group.group_name))
 
 
 def register_teachers(dp: Dispatcher):

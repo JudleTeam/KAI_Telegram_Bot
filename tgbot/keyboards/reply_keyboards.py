@@ -13,3 +13,13 @@ def get_main_keyboard(_):
     )
 
     return keyboard
+
+
+def get_send_phone_keyboard(_):
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+
+    keyboard.add(
+        KeyboardButton(_(reply_commands.share_contact), request_contact=True)
+    )
+
+    return keyboard

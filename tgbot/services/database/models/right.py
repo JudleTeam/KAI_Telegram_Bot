@@ -14,13 +14,7 @@ class Right(Base):
 
     @classmethod
     async def insert_default_rights(cls, db: Session):
-        rights_to_insert = [
-            Right(title=rights.edit_homework),
-            Right(title=rights.edit_group_events),
-            Right(title=rights.send_group_post),
-            Right(title=rights.edit_group_pinned_message),
-            Right(title='test')
-        ]
+        rights_to_insert = [Right(title=right) for right in rights.rights_list]
 
         async with db() as session:
             for right in rights_to_insert:

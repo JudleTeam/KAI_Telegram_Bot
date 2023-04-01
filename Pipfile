@@ -12,10 +12,18 @@ sqlalchemy = {extras = ["asyncio"], version = "*"}
 iso-language-codes = "*"
 aiohttp = "*"
 redis = "*"
+lxml = "*"
+bs4 = "*"
+phonenumbers = "*"
+sqlalchemy-utils = "*"
+cryptography = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
 pybabel = "*"
+requests = "*"
 
 [requires]
 python_version = "3.10"

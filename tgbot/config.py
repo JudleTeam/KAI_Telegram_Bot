@@ -16,7 +16,8 @@ class DatabaseConfig:
 @dataclass
 class TelegramBot:
     token: str
-    admin_ids: list[int]
+    admin_ids: set[int]
+    main_admins_ids: set[int]
     use_redis: bool
 
 
@@ -30,6 +31,8 @@ class I18N:
 @dataclass
 class Miscellaneous:
     rate_limit: float
+    write_logs: bool
+    channel_link: str
 
 
 @dataclass
@@ -44,11 +47,15 @@ def load_config(path: str = None):
     env = Env()
     env.read_env(path)
 
+    main_admins = set(map(int, env.list('MAIN_ADMINS')))
+    admins = set(map(int, env.list('ADMINS'))) | main_admins
+
     return Config(
         bot=TelegramBot(
             token=env.str('BOT_TOKEN'),
-            admin_ids=list(map(int, env.list('ADMINS'))),
-            use_redis=env.bool('USE_REDIS'),
+            admin_ids=admins,
+            main_admins_ids=main_admins,
+            use_redis=env.bool('USE_REDIS')
         ),
         database=DatabaseConfig(
             host=env.str('DB_HOST'),
@@ -63,6 +70,8 @@ def load_config(path: str = None):
             locales_dir=Path(__file__).parent / 'locales'
         ),
         misc=Miscellaneous(
-            rate_limit=env.float('RATE_LIMIT')
+            rate_limit=env.float('RATE_LIMIT'),
+            write_logs=env.bool('WRITE_LOGS'),
+            channel_link=env.str('CHANNEL_LINK')
         )
     )
