@@ -145,7 +145,8 @@ async def check_phone(call: CallbackQuery):
             await call.answer(_(messages.kai_account_busy), show_alert=True)
             return
 
-        user.kai_user = kai_user
+        kai_user.telegram_user_id = call.from_user.id
+        kai_user = await session.merge(kai_user)
 
         roles_dict = await Role.get_roles_dict(db)
         user.roles.append(roles_dict[roles.verified])
