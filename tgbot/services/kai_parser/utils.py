@@ -149,11 +149,10 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
     async with db.begin() as session:
         stm = select(Schedule).where(Schedule.group_id == group_id, Schedule.number_of_day == day_of_week)
         schedule = (await session.execute(stm)).scalars().all()
-
         if not schedule:  # free day
             return None
 
-        schedule = [i for i in schedule if i.parity_of_week in (0, parity)]
+        schedule = [i for i in schedule if i.int_parity_of_week in (0, parity)]
         return schedule
 
 
