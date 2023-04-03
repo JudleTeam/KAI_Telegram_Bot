@@ -53,6 +53,51 @@ def get_int_parity(parity_raw: str) -> int:
     return parity_of_week
 
 
+def get_subgroups(parity_raw: str):
+    index_1 = parity_raw.find('подгруппа')
+    index_2 = parity_raw.find('п/г')
+    print(parity_raw, index_1)
+    if index_1 != -1:
+        a = parity_raw[index_1 - 2: index_1 - 1]
+        b = parity_raw[index_1 - 5: index_1 - 4]
+        if a.isdigit():
+            print(int(a))
+        elif b.isdigit():
+            print(int(b))
+        else:
+            print('NO')
+    elif index_2 != -1:
+        a = parity_raw[index_2 - 1: index_2]
+        if a.isdigit():
+            print(int(a))
+    else:
+        print('NO')
+    if '/' in parity_raw:
+        a, b = parity_raw.split('/')
+        if ',' in a:
+            sep = ','
+        else:
+            sep = ' '
+        year = datetime.datetime.now().year
+
+        a_dates = []
+        b_dates = []
+        for i in (a, b):
+            dates = []
+            for j in i:
+                try:
+                    try:
+                        date = datetime.datetime.strptime(j, '%d.%m.%Y')
+                    except:
+                        j = j.strip() + f'.{year}'
+                    date = datetime.datetime.strptime(j, '%d.%m.%Y')
+                    dates.append(date)
+                except:
+                    pass
+            else:
+                pass
+
+
 def lesson_type_order(lesson_type: str):
     res = []
     if 'лек' in lesson_type:

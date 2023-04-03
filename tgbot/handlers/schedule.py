@@ -128,6 +128,8 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
 
     # add 6110 schedule
     # await add_group_schedule(23325, db)
+    # add 4120 schedule
+    # await add_group_schedule(23551, db)
     today = datetime.datetime.now()
     if callback_data['payload'] == 'change':
         today += datetime.timedelta(days=7)
