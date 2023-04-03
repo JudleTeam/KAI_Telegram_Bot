@@ -138,7 +138,7 @@ def get_schedule_day_keyboard(_, parity, today, group_name):
     else:
         week_button = buttons.even_week
     keyboard.add(
-        InlineKeyboardButton(_(week_button), callback_data=callbacks.change_schedule_week.new(action='day', payload=parity))
+        InlineKeyboardButton(_(week_button), callback_data=callbacks.change_schedule_week.new(action='day', payload=today.date()))
     )
 
     keyboard.add(

@@ -5,6 +5,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
+from aiogram.utils.exceptions import MessageNotModified
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
@@ -53,7 +54,8 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
     msg = messages.schedule_day_template.format(
         day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
                     (
-                    _('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'), _('Sunday'),)[
+                        _('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'),
+                        _('Sunday'),)[
                         today.weekday()] +
                     (f' ({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
         lessons=lessons
@@ -77,9 +79,7 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
 
 
 async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    db = call.bot.get('database')
-    _ = call.bot.get('_')
-
+    db, _ = call.bot.get('database'), call.bot.get('_')
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
@@ -89,35 +89,31 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: F
     today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
     week_num = int(today.strftime("%V"))
 
-    state_data = await state.get_data()
-
-    flag = state_data.get('change_week', False)
-
-    if flag and week_num != int(convert_day(state_data['today']).strftime("%V")):
-        try:
-            msg = await form_day(_, db, user, today, False, False)
-        except Exception as e:
-            logging.error(
-                f'[{call.from_user.id}]: Error with group {user.group.group_name} day schedule ({today}) - {e}')
-            await call.answer(_(messages.kai_error), show_alert=True)
-            return
-
+    msg = await form_day(_, db, user, today, with_date=True)
+    try:
         await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today,
                                                                                         user.group.group_name))
-    else:
-        try:
-            msg = await form_day(_, db, user, today, True)
-        except Exception as e:
-            logging.error(
-                f'[{call.from_user.id}]: Error with group {user.group.group_name} day schedule ({today}) - {e}')
-            await call.answer(_(messages.kai_error), show_alert=True)
-            return
+    except MessageNotModified as e:
+        pass
 
-        await states.ScheduleState.today.set()
-        await state.update_data(today=str(today))
-        await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today,
-                                                                                        user.group.group_name))
+    await call.answer()
 
+
+async def change_week_parity(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    if callback_data['action'] == 'day':
+        schedule_day = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
+        schedule_day_week_num = int(schedule_day.strftime("%V"))
+        if schedule_day_week_num % 2 == 0:
+            new_schedule_day = schedule_day + datetime.timedelta(days=7)
+        else:
+            new_schedule_day = schedule_day - datetime.timedelta(days=7)
+        await send_today_schedule(call, dict(action='change_week', payload=str(new_schedule_day.date())), state)
+    elif callback_data['action'] == 'week':
+        week_parity = int(datetime.datetime.now().strftime("%V")) % 2
+        if week_parity != int(callback_data['payload']):
+            await send_full_schedule(call, dict(action='', payload=''))
+        else:
+            await send_full_schedule(call, dict(action='', payload='change'))
     await call.answer()
 
 
@@ -131,8 +127,9 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
             return
 
     # add 6110 schedule
-    await add_group_schedule(23325, db)
-
+    # await add_group_schedule(23325, db)
+    # add 4120 schedule
+    # await add_group_schedule(23551, db)
     today = datetime.datetime.now()
     if callback_data['payload'] == 'change':
         today += datetime.timedelta(days=7)
@@ -153,29 +150,6 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
     await call.message.edit_text(all_lessons,
                                  reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2, user.group.group_name))
 
-    await call.answer()
-
-
-async def change_week_parity(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    if callback_data['action'] == 'day':
-        today = convert_day((await state.get_data())['today'])
-        if int(today.strftime("%V")) % 2 != int(callback_data['payload']):
-            await state.update_data(change_week=False)
-            await send_today_schedule(call, dict(action='change_week', payload=str(today.date())), state)
-            return
-        await state.update_data(change_week=True)
-        if callback_data['payload'] == '0':
-            await send_today_schedule(call, dict(action='change_week', payload=str(
-                (datetime.datetime.now() + datetime.timedelta(days=21)).date())), state)
-        else:
-            await send_today_schedule(call, dict(action='change_week', payload=str(
-                (datetime.datetime.now() + datetime.timedelta(days=14)).date())), state)
-    else:
-        week_parity = int(datetime.datetime.now().strftime("%V")) % 2
-        if week_parity != int(callback_data['payload']):
-            await send_full_schedule(call, dict(action='', payload=''))
-        else:
-            await send_full_schedule(call, dict(action='', payload='change'))
     await call.answer()
 
 
