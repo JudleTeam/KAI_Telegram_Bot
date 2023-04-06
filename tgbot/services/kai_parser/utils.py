@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from fuzzywuzzy import process
 
@@ -54,48 +55,48 @@ def get_int_parity(parity_raw: str) -> int:
 
 
 def get_subgroups(parity_raw: str):
+    """Return number of subgroup and string for parity of week if had one else return 0"""
     index_1 = parity_raw.find('подгруппа')
     index_2 = parity_raw.find('п/г')
-    print(parity_raw, index_1)
     if index_1 != -1:
         a = parity_raw[index_1 - 2: index_1 - 1]
         b = parity_raw[index_1 - 5: index_1 - 4]
         if a.isdigit():
-            print(int(a))
+            # parity_raw = parity_raw.replace(parity_raw[index_1 - 2: index_1 + 9], '')
+            return int(a)
         elif b.isdigit():
-            print(int(b))
-        else:
-            print('NO')
+            # parity_raw = parity_raw.replace(parity_raw[index_1 - 5: index_1 + 9], '')
+            return int(b)
     elif index_2 != -1:
         a = parity_raw[index_2 - 1: index_2]
         if a.isdigit():
-            print(int(a))
-    else:
-        print('NO')
-    if '/' in parity_raw:
-        a, b = parity_raw.split('/')
+            # parity_raw = parity_raw.replace(parity_raw[index_2 - 1: index_2 + 3], '')
+            return int(a)
+    elif '/' in parity_raw:
+        a, b = parity_raw.split('/')  # 20.03, 25.03 / 05.04, 15.04 чет
         if ',' in a:
             sep = ','
         else:
             sep = ' '
         year = datetime.datetime.now().year
 
-        a_dates = []
-        b_dates = []
+        res_dates = []
         for i in (a, b):
             dates = []
-            for j in i:
+            for j in i.split(sep):
                 try:
                     try:
                         date = datetime.datetime.strptime(j, '%d.%m.%Y')
                     except:
                         j = j.strip() + f'.{year}'
                     date = datetime.datetime.strptime(j, '%d.%m.%Y')
-                    dates.append(date)
+                    dates.append(str(date.date()))
                 except:
                     pass
             else:
-                pass
+                res_dates.append(dates)
+        return (1, res_dates[0]), (2, res_dates[1])
+    return 0
 
 
 def lesson_type_order(lesson_type: str):
@@ -234,3 +235,17 @@ async def get_group_id(group_name: int) -> int | None:
         if i['group'] == str(group_name):
             return int(i['id'])
     return None
+
+
+async def main():
+    k = KaiParser()
+    res = await k.get_group_schedule(23551)  # 23551 - 4120
+    for i in res:
+        for j in i:
+            print(j)
+            print(get_subgroups(j.parity_of_week))
+        print('\n')
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

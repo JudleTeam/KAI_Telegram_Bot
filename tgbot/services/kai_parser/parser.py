@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from json import JSONDecodeError
@@ -7,9 +6,9 @@ import aiohttp
 from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
 
+from tgbot.services.kai_parser import helper
 from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials, \
     ParsingError
-from tgbot.services.kai_parser import helper
 
 
 class KaiParser:
@@ -252,17 +251,3 @@ class KaiParser:
                                     params=params, timeout=cls._timeout) as response:
                 response = await response.json(content_type='text/html')
                 return response
-
-
-async def main():
-    k = KaiParser()
-
-    res = await k.get_group_schedule(23325)
-    for i in res:
-        for j in i:
-            print(j)
-        print('\n')
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
