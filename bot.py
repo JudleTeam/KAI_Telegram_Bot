@@ -19,6 +19,7 @@ from tgbot.services.database.models import Language, Role
 from tgbot.services.database.models.right import Right
 from tgbot.services.kai_parser import KaiParser
 from tgbot.services.kai_parser.utils import parse_groups
+from tgbot.services.schedulers import start_schedulers
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,8 @@ async def main():
     await Right.insert_default_rights(async_sessionmaker)
     await Role.insert_default_roles(async_sessionmaker)
     await parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
+
+    asyncio.create_task(start_schedulers(bot, async_sessionmaker))
 
     try:
         await dp.start_polling()

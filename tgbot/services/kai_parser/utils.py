@@ -163,6 +163,7 @@ async def add_group_schedule(group_id: int, async_session):
                     number_of_day=lesson.number_of_day,
                     parity_of_week=lesson.parity_of_week,
                     int_parity_of_week=get_int_parity(lesson.parity_of_week),
+                    subgroup=get_subgroups(lesson.parity_of_week),
                     lesson_name=lesson.lesson_name,
                     auditory_number=lesson.auditory_number,
                     building_number=lesson.building_number,
@@ -191,9 +192,13 @@ async def add_group_teachers(group_id: int, async_session):
             session.add(new_teacher)
 
 
-async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
+async def get_schedule_by_week_day(group_id: int, subgroup: int, day_of_week: int, parity: int, db):
     async with db.begin() as session:
-        stm = select(Schedule).where(Schedule.group_id == group_id, Schedule.number_of_day == day_of_week)
+        stm = select(Schedule).where(
+            Schedule.group_id == group_id,
+            Schedule.number_of_day == day_of_week,
+            Schedule.subgroup == subgroup
+        )
         schedule = (await session.execute(stm)).scalars().all()
         if not schedule:  # free day
             return None

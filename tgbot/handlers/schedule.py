@@ -19,7 +19,7 @@ def convert_day(today: str):
     return datetime.datetime.strptime(today, '%Y-%m-%d %H:%M:%S')
 
 
-def form_lessons(schedule_list):
+def form_lessons(schedule_list, with_full_parity):
     lessons = []
     for i in schedule_list:
         if i.auditory_number == 'КСК КАИ ОЛИМП':
@@ -28,6 +28,7 @@ def form_lessons(schedule_list):
             i.lesson_type = 'физ'
         else:
             i.building_number += ' зд.'
+        full_parity_msg = i.parity_of_week if with_full_parity else ''
         lessons.append(messages.lesson_template.format(
             start_time=i.start_time.strftime('%H:%M'),
             end_time=i.end_time.strftime('%H:%M'),
@@ -35,29 +36,34 @@ def form_lessons(schedule_list):
             lesson_name=i.lesson_name,
             building=i.building_number,
             auditory=i.auditory_number
-        ))
+        ) + full_parity_msg)
     lessons = '\n\n'.join(lessons) + '\n'
     return lessons
 
 
-async def form_day(_, db, user, today, with_date=False, with_pointer=False):
+async def form_day(_, db, user, today, with_date=False, with_pointer=False, with_full_parity=True):
     week_num = int(today.strftime("%V"))
     if with_pointer and today.date() == datetime.datetime.now().date():
         with_pointer = True
     else:
         with_pointer = False
-    schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(), 2 if not week_num % 2 else 1, db)
+    subgroup = 1
+    schedule_list = await get_schedule_by_week_day(user.group_id, subgroup, today.isoweekday(), 2 if not week_num % 2 else 1, db)
     if not schedule_list or not schedule_list[0].lesson_name:
         lessons = _('Day off\n')
     else:
-        lessons = form_lessons(schedule_list)
+        lessons = form_lessons(schedule_list, with_full_parity)
     msg = messages.schedule_day_template.format(
         day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
                     (
-                        _('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'),
-                        _('Sunday'),)[
-                        today.weekday()] +
-                    (f' ({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
+                        _('Monday'),
+                        _('Tuesday'),
+                        _('Wednesday'),
+                        _('Thursday'),
+                        _('Friday'),
+                        _('Saturday'),
+                        _('Sunday'),
+                    )[today.weekday()] + (f' ({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
         lessons=lessons
     )
 

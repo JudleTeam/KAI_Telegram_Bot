@@ -19,6 +19,7 @@ sqlalchemy-utils = "*"
 cryptography = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
+aioschedule = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
