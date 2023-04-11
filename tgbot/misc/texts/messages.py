@@ -142,15 +142,15 @@ classmates_list = _(
 )
 
 set_prefix_bad_format = _(
-    'Invalid /set_prefix command format. The command should be followed by the user\'s Telegram ID, then a new prefix (can be empty). '
-    'Example: "/set_prefix 393867797 💩"'
+    'Invalid /set_prefix command format. The command should be followed by the user\'s Telegram ID, '
+    'then a new prefix (can be empty, limit 32 symbols). Example: "/set_prefix 393867797 💩"'
 )
 set_prefix_bad_user = _('User {user_id} does not exist or is not verified')
 prefix_set = _('User {user_id} was prefixed with {prefix}')
 
 send_message_bad_format = _(
-    'Invalid /send_message command format. The command must be a response to a message that you must send. '
-    'The command should be followed by the user\'s Telegram ID, to whom the message will be sent.'
+    'Invalid /send_message command format. The command must be a reply to a message that you must send. '
+    'The command should be followed by the user\'s Telegram ID, to whom the message will be sent'
 )
 message_sent = _('The message was sent to user {user_id}')
 
