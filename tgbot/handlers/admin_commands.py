@@ -20,12 +20,12 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
     args = message.text.split()
     if len(args) != 2:
-        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
+        await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
         return
 
     user_id_to_update = args[1]
     if not user_id_to_update.isdigit():
-        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
+        await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
         return
 
     user_id_to_update = int(user_id_to_update)
@@ -36,7 +36,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
     async with db_session.begin() as session:
         user_to_update = await session.get(User, user_id_to_update)
         if not user_to_update:
-            await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_id_to_update))))
+            await message.answer(_(messages.user_not_exist).format(user_id=md.hcode(user_id_to_update)))
             return
 
         user_to_update.is_blocked = is_blocked
@@ -122,18 +122,18 @@ async def send_user_info(message: Message):
 
     args = message.text.split()
     if len(args) != 2:
-        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
+        await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
         return
 
     user_to_show_id = args[1]
     if not user_to_show_id.isdigit():
-        await message.answer(_(messages.ban_unban_bad_format.format(command=args[0])))
+        await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
         return
 
     async with db.begin() as session:
         user_to_show = await session.get(User, int(user_to_show_id))
         if not user_to_show:
-            await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_to_show_id))))
+            await message.answer(_(messages.user_not_exist).format(user_id=md.hcode(user_to_show_id)))
             return
 
     tg_user = await message.bot.get_chat(user_to_show_id)
@@ -159,11 +159,11 @@ async def send_message(message: Message):
     async with db.begin() as session:
         user_to_send = await session.get(User, int(user_to_send_id))
         if not user_to_send:
-            await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_to_send_id))))
+            await message.answer(_(messages.user_not_exist).format(user_id=md.hcode(user_to_send_id)))
             return
 
     await message.reply_to_message.send_copy(chat_id=user_to_send_id)
-    await message.reply_to_message.reply(_(messages.message_sent.format(user_id=user_to_send_id)))
+    await message.reply_to_message.reply(_(messages.message_sent).format(user_id=md.hcode(user_to_send_id)))
 
 
 def register_admin_commands(dp: Dispatcher):
