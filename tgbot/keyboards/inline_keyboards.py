@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
 from tgbot.misc import callbacks
 from tgbot.misc.texts import buttons, roles, rights
-from tgbot.services.database.models import Language, User
+from tgbot.services.database.models import Language, User, Group
 
 
 def get_profile_keyboard(_):
@@ -262,7 +262,8 @@ def get_my_group_keyboard(_, user: User):
 
     keyboard.add(
         InlineKeyboardButton(_(buttons.classmates), callback_data=callbacks.navigation.new(to='classmates', payload='')),
-        InlineKeyboardButton(_(buttons.homework), callback_data='pass')
+        InlineKeyboardButton(_(buttons.homework), callback_data='pass'),
+        InlineKeyboardButton(_(buttons.documents), callback_data=callbacks.navigation.new(to='documents', payload=''))
     )
 
     if user.has_right_to(rights.edit_group_pinned_message):
@@ -272,6 +273,19 @@ def get_my_group_keyboard(_, user: User):
 
     keyboard.add(
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new(to='education', payload=''))
+    )
+
+    return keyboard
+
+
+def get_documents_keyboard(_, group: Group):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.educational_program), url=group.educational_program),
+        InlineKeyboardButton(_(buttons.syllabus), url=group.syllabus),
+        InlineKeyboardButton(_(buttons.study_schedule), url=group.study_schedule),
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new(to='my_group', payload=''))
     )
 
     return keyboard

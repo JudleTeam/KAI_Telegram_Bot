@@ -114,6 +114,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             )
             session.add(kai_user)
 
+        kai_user.group.syllabus = full_user.documents.syllabus
+        kai_user.group.educational_program = full_user.documents.educational_program
+        kai_user.group.study_schedule = full_user.documents.study_schedule
+
         for ind, member in enumerate(full_user.group.members):
             if member.email == user_info.email:
                 kai_user.position = ind + 1

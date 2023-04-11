@@ -2,7 +2,7 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-from tgbot.services.kai_parser.schemas import UserInfo, BaseUser, Group, Lesson, LessonType, Teacher
+from tgbot.services.kai_parser.schemas import UserInfo, BaseUser, Group, Lesson, LessonType, Teacher, Documents
 from tgbot.services.utils import parse_phone_number
 
 
@@ -103,3 +103,14 @@ def parse_group_members(soup: BeautifulSoup) -> Group:
         group_members.append(user)
 
     return Group(members=group_members, leader_index=leader_ind)
+
+
+def parse_documents(soup: BeautifulSoup) -> Documents:
+    content = soup.find('div', class_='row div_container')
+    urls = content.find_all('a', limit=3)
+
+    return Documents(
+        syllabus=urls[1]['href'],
+        educational_program=urls[0]['href'],
+        study_schedule=urls[2]['href']
+    )

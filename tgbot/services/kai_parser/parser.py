@@ -7,8 +7,8 @@ from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
 
 from tgbot.services.kai_parser import helper
-from tgbot.services.kai_parser.schemas import KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials, \
-    ParsingError
+from tgbot.services.kai_parser.schemas import (KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials,
+                                               ParsingError, Documents)
 
 
 class KaiParser:
@@ -16,6 +16,7 @@ class KaiParser:
     about_me_url = 'https://kai.ru/group/guest/common/about-me'
     my_group_url = 'https://kai.ru/group/guest/student/moa-gruppa'
     kai_main_url = 'https://kai.ru/main'
+    syllabus_url = 'https://kai.ru/group/guest/student/ucebnyj-plan'
 
     base_headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
@@ -23,6 +24,19 @@ class KaiParser:
     }
 
     _timeout = 10
+
+    @classmethod
+    async def get_documents(cls, login, password, login_cookies=None) -> Documents:
+        login_cookies = login_cookies or await cls._get_login_cookies(login, password)
+
+        async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
+            async with session.get(cls.syllabus_url, headers=cls.base_headers) as response:
+                if not response.ok:
+                    raise KaiApiError(f'[{login}]: {response.status} received from syllabus request')
+
+                soup = BeautifulSoup(await response.text(), 'lxml')
+
+        return helper.parse_documents(soup)
 
     @classmethod
     async def get_user_info(cls, login, password, login_cookies=None) -> UserInfo:
@@ -122,11 +136,13 @@ class KaiParser:
         user_info = await cls.get_user_info(login, password, login_cookies)
         user_about = await cls.get_user_about(login, password, login_cookies=login_cookies)
         user_group = await cls.get_user_group_members(login, password, login_cookies)
+        documents = await cls.get_documents(login, password, login_cookies)
 
         full_user_data = FullUserData(
             user_info=user_info,
             user_about=user_about,
-            group=user_group
+            group=user_group,
+            documents=documents
         )
 
         return full_user_data

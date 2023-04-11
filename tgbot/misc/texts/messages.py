@@ -176,3 +176,4 @@ for_admin_info = _(
 )
 
 pin_text_input = _('Enter the text of the pinned message')
+documents = _('Documents')

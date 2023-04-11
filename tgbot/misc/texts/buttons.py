@@ -35,3 +35,8 @@ classmates = _('Classmates')
 edit_pinned_text = _('Edit pinned text')
 homework = _('Homework')
 clear = _('Clear')
+
+documents = _('Documents')
+syllabus = _('Syllabus')
+educational_program = _('Educational program')
+study_schedule = _('Study schedule')

@@ -90,7 +90,15 @@ class Group:
 
 
 @dataclass
+class Documents:
+    syllabus: str
+    educational_program: str
+    study_schedule: str
+
+
+@dataclass
 class FullUserData:
     user_info: UserInfo
     user_about: UserAbout
     group: Group
+    documents: Documents

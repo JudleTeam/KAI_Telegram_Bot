@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, select, ForeignKey, Text
+from sqlalchemy import Column, BigInteger, Integer, select, ForeignKey, Text, String
 from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
@@ -11,6 +11,10 @@ class Group(Base):
     group_leader_id = Column(BigInteger, ForeignKey('kai_user.id'))
     pinned_text = Column(Text, nullable=True)
     group_name = Column(Integer, nullable=False, unique=True)
+
+    syllabus = Column(String(255), nullable=True)
+    educational_program = Column(String(255), nullable=True)
+    study_schedule = Column(String(255), nullable=True)
 
     group_leader = relationship('KAIUser', lazy='selectin', foreign_keys=[group_leader_id])
 

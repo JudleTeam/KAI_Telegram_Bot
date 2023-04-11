@@ -80,9 +80,22 @@ async def clear_pin_text(call: CallbackQuery, state: FSMContext):
     await show_my_group(call)
 
 
+async def show_documents(call: CallbackQuery):
+    _ = call.bot.get('_')
+    db = call.bot.get('database')
+
+    async with db() as session:
+        user = await session.get(User, call.from_user.id)
+
+    await call.message.edit_text(_(messages.documents),
+                                 reply_markup=inline_keyboards.get_documents_keyboard(_, user.group))
+    await call.answer()
+
+
 def register_my_group(dp: Dispatcher):
     dp.register_callback_query_handler(show_classmates, callbacks.navigation.filter(to='classmates'))
     dp.register_callback_query_handler(start_group_pip_text_input, callbacks.navigation.filter(to='edit_pin_text'))
     dp.register_message_handler(get_group_pin_text, state=states.GroupPinText.waiting_for_text)
     dp.register_callback_query_handler(clear_pin_text, callbacks.navigation.filter(to='clear_pin_text'),
                                        state=states.GroupPinText.waiting_for_text)
+    dp.register_callback_query_handler(show_documents, callbacks.navigation.filter(to='documents'))
