@@ -38,7 +38,7 @@ class KaiParser:
         return helper.parse_user_info(soup)
 
     @classmethod
-    async def get_user_about(cls, login, password, role='student', login_cookies=None) -> UserAbout | None:
+    async def get_user_about(cls, login, password, login_cookies=None) -> UserAbout | None:
         """
         API response example:
         list: [
@@ -73,11 +73,9 @@ class KaiParser:
             }
         ]
 
-        :param retries:
         :param login_cookies:
         :param login:
         :param password:
-        :param role: Of the possible roles, only "student" is known
         :return:
         """
         request_params = {
@@ -96,7 +94,7 @@ class KaiParser:
         async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
             about_me_data = {
                 'login': login,
-                'tab': role
+                'tab': 'student'
             }
             async with session.post(cls.about_me_url, headers=cls.base_headers,
                                     data=about_me_data, params=request_params) as response:

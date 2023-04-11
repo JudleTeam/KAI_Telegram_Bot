@@ -9,6 +9,7 @@ from aiogram.utils import markdown as md
 from tgbot.misc import callbacks
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User
+from tgbot.services.utils import get_user_description
 
 
 async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str):
@@ -94,12 +95,12 @@ async def set_prefix(message: Message):
     db = message.bot.get('database')
 
     args = message.text.split()
-    if len(args) != 3 or len(args[1]) > 32 or not args[2].isdigit():
+    if len(args) not in (2, 3) or not args[1].isdigit() or (len(args) == 3 and len(args[2]) > 32):
         await message.answer(_(messages.set_prefix_bad_format))
         return
 
-    prefix = args[1]
-    user_id = args[2]
+    user_id = args[1]
+    prefix = args[2] if len(args) == 3 else None
     async with db.begin() as session:
         user = await session.get(User, int(user_id))
         if not user or not user.kai_user:
@@ -135,32 +136,34 @@ async def send_user_info(message: Message):
             await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_to_show_id))))
             return
 
-    s_group = md.hcode(user_to_show.group.group_name) if user_to_show.group else '????'
-    roles_str = ', '.join(map(_, user_to_show.get_roles_titles(to_show=False)))
-
     tg_user = await message.bot.get_chat(user_to_show_id)
-    text = _(messages.for_admin_info).format(
-        roles=roles_str,
-        s_group_name=s_group,
-        is_blocked=user_to_show.is_blocked,
-        telegram_id=md.hcode(user_to_show_id),
-        tg_full_name=md.hcode(tg_user.full_name),
-        tg_mention=md.hcode(tg_user.mention),
-        telegram_phone=md.hcode(user_to_show.phone)
-    )
-    if user_to_show.has_role(roles.verified):
-        text += '\n' + _(messages.verified_info).format(
-            full_name=md.hcode(user_to_show.kai_user.full_name),
-            group_pos=md.hcode(user_to_show.kai_user.position),
-            n_group_name=md.hcode(user_to_show.kai_user.group.group_name),
-            phone=md.hcode(user_to_show.kai_user.phone or _(messages.missing)),
-            email=md.hcode(user_to_show.kai_user.email)
-        )
-
-    if user_to_show.has_role(roles.authorized):
-        text += '\n' + _(messages.authorized_info).format(zach=md.hcode(user_to_show.kai_user.zach_number))
+    text = get_user_description(_, tg_user, user_to_show, for_admin=True)
 
     await message.answer(text)
+
+
+async def send_message(message: Message):
+    _ = message.bot.get('_')
+    db = message.bot.get('database')
+
+    args = message.text.split()
+    if len(args) != 2 or not message.reply_to_message:
+        await message.answer(_(messages.send_message_bad_format))
+        return
+
+    user_to_send_id = args[1]
+    if not user_to_send_id.isdigit():
+        await message.answer(_(messages.send_message_bad_format))
+        return
+
+    async with db.begin() as session:
+        user_to_send = await session.get(User, int(user_to_send_id))
+        if not user_to_send:
+            await message.answer(_(messages.user_not_exist.format(user_id=md.hcode(user_to_send_id))))
+            return
+
+    await message.reply_to_message.send_copy(chat_id=user_to_send_id)
+    await message.reply_to_message.reply(_(messages.message_sent.format(user_id=user_to_send_id)))
 
 
 def register_admin_commands(dp: Dispatcher):
@@ -170,3 +173,4 @@ def register_admin_commands(dp: Dispatcher):
     dp.register_message_handler(set_prefix, commands=['set_prefix'], is_admin=True)
     dp.register_message_handler(send_last_log, commands=['last_log'], is_admin=True)
     dp.register_message_handler(send_user_info, commands=['user_info'], is_admin=True)
+    dp.register_message_handler(send_message, commands=['send_message'], is_admin=True)

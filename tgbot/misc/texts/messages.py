@@ -142,11 +142,17 @@ classmates_list = _(
 )
 
 set_prefix_bad_format = _(
-    'Invalid /set_prefix command format. The command should be followed by a new prefix, then the user\'s Telegram ID. '
-    'Example: "/set_prefix 💩 393867797"'
+    'Invalid /set_prefix command format. The command should be followed by the user\'s Telegram ID, then a new prefix (can be empty). '
+    'Example: "/set_prefix 393867797 💩"'
 )
 set_prefix_bad_user = _('User {user_id} does not exist or is not verified')
 prefix_set = _('User {user_id} was prefixed with {prefix}')
+
+send_message_bad_format = _(
+    'Invalid /send_message command format. The command must be a response to a message that you must send. '
+    'The command should be followed by the user\'s Telegram ID, to whom the message will be sent.'
+)
+message_sent = _('The message was sent to user {user_id}')
 
 verified_info = _(
     'Full name: {full_name}\n'
@@ -156,6 +162,7 @@ verified_info = _(
     'Email: {email}'
 )
 authorized_info = _(
+    'Birthday: {birthday}\n'
     'Number of the record book: {zach}'
 )
 for_admin_info = _(
@@ -165,7 +172,7 @@ for_admin_info = _(
     'Telegram phone: {telegram_phone}\n'
     'Is blocked: {is_blocked}\n'
     'Selected group: {s_group_name}\n'
-    'Roles: {roles}\n'
+    'Roles: {roles}'
 )
 
 pin_text_input = _('Enter the text of the pinned message')
