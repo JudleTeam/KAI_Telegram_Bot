@@ -65,6 +65,7 @@ teacher = (
 )
 
 kai_error = _('An error occurred on the KAI side. Please, try later')
+base_error = _('Something went wrong')
 
 select_group = _('Select group')
 

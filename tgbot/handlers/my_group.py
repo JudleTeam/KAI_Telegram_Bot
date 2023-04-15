@@ -1,6 +1,6 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InputFile
 from aiogram.utils import markdown as md
 
 from tgbot.handlers.education import show_my_group
@@ -82,13 +82,27 @@ async def clear_pin_text(call: CallbackQuery, state: FSMContext):
 
 async def show_documents(call: CallbackQuery):
     _ = call.bot.get('_')
+
+    await call.message.edit_text(_(messages.documents), reply_markup=inline_keyboards.get_documents_keyboard(_))
+    await call.answer()
+
+
+async def send_document(call: CallbackQuery, callback_data: dict):
     db = call.bot.get('database')
+    _ = call.bot.get('_')
 
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
-    await call.message.edit_text(_(messages.documents),
-                                 reply_markup=inline_keyboards.get_documents_keyboard(_, user.group))
+    match callback_data['payload']:
+        case 'syllabus': file_url = user.kai_user.group.syllabus
+        case 'program': file_url = user.kai_user.group.educational_program
+        case 'schedule': file_url = user.kai_user.group.study_schedule
+        case _:
+            await call.answer(_(messages.base_error), show_alert=True)
+            return
+
+    await call.message.answer_document(InputFile.from_url(file_url))
     await call.answer()
 
 
@@ -99,3 +113,4 @@ def register_my_group(dp: Dispatcher):
     dp.register_callback_query_handler(clear_pin_text, callbacks.navigation.filter(to='clear_pin_text'),
                                        state=states.GroupPinText.waiting_for_text)
     dp.register_callback_query_handler(show_documents, callbacks.navigation.filter(to='documents'))
+    dp.register_callback_query_handler(send_document, callbacks.action.filter(name='doc'))

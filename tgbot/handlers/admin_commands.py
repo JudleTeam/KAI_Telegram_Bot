@@ -3,11 +3,10 @@ import os
 from pathlib import Path
 
 from aiogram import Dispatcher
-from aiogram.types import CallbackQuery, Message, InputFile
+from aiogram.types import Message, InputFile
 from aiogram.utils import markdown as md
 
-from tgbot.misc import callbacks
-from tgbot.misc.texts import messages, roles
+from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 from tgbot.services.utils import get_user_description
 

@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from tgbot.misc.texts import roles
-from tgbot.services.database.models import Role, KAIUser, User, Speciality, Departament, Profile, Institute
+from tgbot.services.database.models import Role, KAIUser, User, Speciality, Departament, Profile, Institute, Group
 from tgbot.services.kai_parser.schemas import FullUserData
 from tgbot.services.utils.other import parse_phone_number
 
@@ -83,6 +83,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             kai_user.institute = institute
             kai_user.profile = profile
 
+            kai_user.group.syllabus = full_user.documents.syllabus
+            kai_user.group.educational_program = full_user.documents.educational_program
+            kai_user.group.study_schedule = full_user.documents.study_schedule
+
             kai_user = await session.merge(kai_user)
         else:
             insert_tg_id = None if already_used else tg_id
@@ -112,11 +116,13 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 departament=departament,
                 institute=institute
             )
-            session.add(kai_user)
 
-        kai_user.group.syllabus = full_user.documents.syllabus
-        kai_user.group.educational_program = full_user.documents.educational_program
-        kai_user.group.study_schedule = full_user.documents.study_schedule
+            group = await session.get(Group, int(user_about.groupId))
+            group.syllabus = full_user.documents.syllabus
+            group.educational_program = full_user.documents.educational_program
+            group.study_schedule = full_user.documents.study_schedule
+
+            session.add(kai_user)
 
         for ind, member in enumerate(full_user.group.members):
             if member.email == user_info.email:

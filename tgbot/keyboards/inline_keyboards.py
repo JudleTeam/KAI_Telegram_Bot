@@ -278,13 +278,13 @@ def get_my_group_keyboard(_, user: User):
     return keyboard
 
 
-def get_documents_keyboard(_, group: Group):
+def get_documents_keyboard(_):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.educational_program), url=group.educational_program),
-        InlineKeyboardButton(_(buttons.syllabus), url=group.syllabus),
-        InlineKeyboardButton(_(buttons.study_schedule), url=group.study_schedule),
+        InlineKeyboardButton(_(buttons.educational_program), callback_data=callbacks.action.new('doc', 'program')),
+        InlineKeyboardButton(_(buttons.syllabus), callback_data=callbacks.action.new('doc', 'syllabus')),
+        InlineKeyboardButton(_(buttons.study_schedule), callback_data=callbacks.action.new('doc', 'schedule')),
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new(to='my_group', payload=''))
     )
 
