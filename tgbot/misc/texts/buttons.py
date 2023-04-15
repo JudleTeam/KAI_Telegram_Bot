@@ -40,3 +40,5 @@ documents = _('Documents')
 syllabus = _('Syllabus')
 educational_program = _('Educational program')
 study_schedule = _('Study schedule')
+
+contact_us = _('Contact us')

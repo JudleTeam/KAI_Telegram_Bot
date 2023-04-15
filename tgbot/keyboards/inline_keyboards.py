@@ -300,3 +300,13 @@ def get_pin_text_keyboard(_):
     )
 
     return keyboard
+
+
+def get_help_keyboard(_, contact_url):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.contact_us), url=contact_url)
+    )
+
+    return keyboard

@@ -9,7 +9,8 @@ def get_main_keyboard(_):
         KeyboardButton(reply_commands.schedule_symbol + _(reply_commands.schedule)),
         KeyboardButton(reply_commands.education_symbol + _(reply_commands.education)),
         KeyboardButton(reply_commands.shop_symbol + _(reply_commands.shop)),
-        KeyboardButton(reply_commands.profile_symbol + _(reply_commands.profile))
+        KeyboardButton(reply_commands.profile_symbol + _(reply_commands.profile)),
+        KeyboardButton(reply_commands.help_symbol + _(reply_commands.help))
     )
 
     return keyboard

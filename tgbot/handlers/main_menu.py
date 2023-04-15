@@ -88,6 +88,15 @@ async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMCon
     await state.finish()
 
 
+async def send_help_menu(message: Message, state: FSMContext):
+    _ = message.bot.get('_')
+    config = message.bot.get('config')
+
+    await state.finish()
+    await message.answer(_(messages.help_menu),
+                         reply_markup=inline_keyboards.get_help_keyboard(_, config.misc.contact_link))
+
+
 def register_main_menu(dp: Dispatcher):
     dp.register_message_handler(send_schedule_menu, Text(startswith=reply_commands.schedule_symbol), state='*')
 
@@ -101,3 +110,5 @@ def register_main_menu(dp: Dispatcher):
 
     dp.register_message_handler(send_education_menu, Text(startswith=reply_commands.education_symbol), state='*')
     dp.register_callback_query_handler(show_education_menu, callbacks.navigation.filter(to='education'))
+
+    dp.register_message_handler(send_help_menu, Text(startswith=reply_commands.help_symbol), state='*')
