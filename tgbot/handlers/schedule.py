@@ -9,7 +9,6 @@ from aiogram.utils.exceptions import MessageNotModified
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
-from tgbot.misc import states
 from tgbot.misc.texts import messages, buttons
 from tgbot.services.database.models import User
 from tgbot.services.kai_parser.utils import get_schedule_by_week_day, lesson_type_to_emoji, add_group_schedule
@@ -28,7 +27,7 @@ def form_lessons(schedule_list, with_full_parity):
             i.lesson_type = 'физ'
         else:
             i.building_number += ' зд.'
-        full_parity_msg = i.parity_of_week if with_full_parity else ''
+        full_parity_msg = f'| {i.parity_of_week}' if with_full_parity else ''
         lessons.append(messages.lesson_template.format(
             start_time=i.start_time.strftime('%H:%M'),
             end_time=i.end_time.strftime('%H:%M'),
@@ -41,13 +40,14 @@ def form_lessons(schedule_list, with_full_parity):
     return lessons
 
 
-async def form_day(_, db, user, today, with_date=False, with_pointer=False, with_full_parity=True):
+async def form_day(_, db, user, today, with_date=False, with_pointer=False):
     week_num = int(today.strftime("%V"))
     if with_pointer and today.date() == datetime.datetime.now().date():
         with_pointer = True
     else:
         with_pointer = False
-    subgroup = 1
+    subgroup = user.auto_schedule_subgroup
+    with_full_parity = user.is_shown_parity
     schedule_list = await get_schedule_by_week_day(user.group_id, subgroup, today.isoweekday(), 2 if not week_num % 2 else 1, db)
     if not schedule_list or not schedule_list[0].lesson_name:
         lessons = _('Day off\n')
@@ -79,12 +79,16 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     group_name = user.group.group_name if user.group else '????'
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
-    await call.message.edit_text(_(messages.schedule_menu).format(week=md.hunderline(week_parity)),
-                                 reply_markup=inline.get_main_schedule_keyboard(_, group_name))
+    msg = _(messages.schedule_menu).format(
+        subgroup=user.auto_schedule_subgroup,
+        parity='✅' if user.is_shown_parity else '❌',
+        week=md.hunderline(week_parity),
+    )
+    await call.message.edit_text(msg, reply_markup=inline.get_main_schedule_keyboard(_, group_name))
     await call.answer()
 
 
-async def send_today_schedule(call: CallbackQuery, callback_data: dict, state: FSMContext):
+async def send_today_schedule(call: CallbackQuery, callback_data: dict):
     db, _ = call.bot.get('database'), call.bot.get('_')
     async with db() as session:
         user = await session.get(User, call.from_user.id)
@@ -159,8 +163,28 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
+async def switch_show_parity(call: CallbackQuery, state: FSMContext):
+    db = call.bot.get('database')
+    async with db.begin() as session:
+        user = await session.get(User, call.from_user.id)
+        user.is_shown_parity = not user.is_shown_parity
+    await show_schedule_menu(call, state)
+    await call.answer()
+
+
+async def switch_subgroup(call: CallbackQuery, state: FSMContext):
+    db = call.bot.get('database')
+    async with db.begin() as session:
+        user = await session.get(User, call.from_user.id)
+        user.auto_schedule_subgroup = 2 if user.auto_schedule_subgroup == 1 else 1
+    await show_schedule_menu(call, state)
+    await call.answer()
+
+
 def register_schedule(dp: Dispatcher):
     dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'), state='*')
     dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
     dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
+    dp.register_callback_query_handler(switch_show_parity, callbacks.schedule.filter(action='switch_show_parity'), state='*')
+    dp.register_callback_query_handler(switch_subgroup, callbacks.schedule.filter(action='switch_subgroup'), state='*')
     dp.register_callback_query_handler(change_week_parity, callbacks.change_schedule_week.filter(), state='*')

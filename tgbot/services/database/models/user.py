@@ -39,6 +39,9 @@ class User(Base):
     roles = relationship('Role', lazy='selectin', secondary=user_roles)
     kai_user = relationship('KAIUser', lazy='selectin', uselist=False, back_populates='telegram_user')
 
+    auto_schedule_subgroup = Column(Integer, server_default=text('1'))
+    is_shown_parity = Column(Boolean, server_default=text('true'))
+
     def has_role(self, role_title: str):
         return role_title in [role.title for role in self.roles]
 
