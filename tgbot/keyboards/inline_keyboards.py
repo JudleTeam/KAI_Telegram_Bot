@@ -190,25 +190,25 @@ def get_verification_keyboard(_, user: User, payload):
 
     if not user.phone:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.via_phone), callback_data=callbacks.navigation.new('send_phone', payload))
+            InlineKeyboardButton(_(buttons.via_phone), callback_data=callbacks.action.new('send_phone', payload))
         )
     elif not is_verified:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.check_phone), callback_data=callbacks.navigation.new('check_phone', payload))
+            InlineKeyboardButton(_(buttons.check_phone), callback_data=callbacks.action.new('check_phone', payload))
         )
 
     if not (user.has_role(roles.authorized)):
         keyboard.add(
-            InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.navigation.new('start_login', payload))
+            InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.action.new('start_login', payload))
         )
     else:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.navigation.new('logout', payload))
+            InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.action.new('logout', payload))
         )
 
     if is_verified:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.unlink_account), callback_data=callbacks.navigation.new('unlink', payload))
+            InlineKeyboardButton(_(buttons.unlink_account), callback_data=callbacks.action.new('unlink', payload))
         )
 
     if payload == 'at_start':
@@ -302,7 +302,7 @@ def get_pin_text_keyboard(_):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.clear), callback_data=callbacks.navigation.new(to='clear_pin_text', payload='')),
+        InlineKeyboardButton(_(buttons.clear), callback_data=callbacks.action.new(to='clear_pin_text', payload='')),
         InlineKeyboardButton(_(buttons.cancel), callback_data=callbacks.cancel.new(to='my_group', payload=''))
     )
 

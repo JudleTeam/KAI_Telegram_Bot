@@ -110,7 +110,7 @@ def register_my_group(dp: Dispatcher):
     dp.register_callback_query_handler(show_classmates, callbacks.navigation.filter(to='classmates'))
     dp.register_callback_query_handler(start_group_pip_text_input, callbacks.navigation.filter(to='edit_pin_text'))
     dp.register_message_handler(get_group_pin_text, state=states.GroupPinText.waiting_for_text)
-    dp.register_callback_query_handler(clear_pin_text, callbacks.navigation.filter(to='clear_pin_text'),
+    dp.register_callback_query_handler(clear_pin_text, callbacks.action.filter(name='clear_pin_text'),
                                        state=states.GroupPinText.waiting_for_text)
     dp.register_callback_query_handler(show_documents, callbacks.navigation.filter(to='documents'))
     dp.register_callback_query_handler(send_document, callbacks.action.filter(name='doc'))

@@ -167,12 +167,12 @@ async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContex
 
 
 def register_verification(dp: Dispatcher):
-    dp.register_callback_query_handler(start_kai_login, callbacks.navigation.filter(to='start_login'))
-    dp.register_callback_query_handler(kai_logout, callbacks.navigation.filter(to='logout'))
-    dp.register_callback_query_handler(unlink_account, callbacks.navigation.filter(to='unlink'))
+    dp.register_callback_query_handler(start_kai_login, callbacks.action.filter(name='start_login'))
+    dp.register_callback_query_handler(kai_logout, callbacks.action.filter(name='logout'))
+    dp.register_callback_query_handler(unlink_account, callbacks.action.filter(name='unlink'))
     dp.register_message_handler(get_user_login, state=states.KAILogin.waiting_for_login)
     dp.register_message_handler(get_user_password, state=states.KAILogin.waiting_for_password)
 
     dp.register_callback_query_handler(send_phone_keyboard, callbacks.navigation.filter(to='send_phone'))
-    dp.register_callback_query_handler(check_phone, callbacks.navigation.filter(to='check_phone'))
+    dp.register_callback_query_handler(check_phone, callbacks.action.filter(name='check_phone'))
     dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT], state=states.PhoneSendState)
