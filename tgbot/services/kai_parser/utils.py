@@ -200,10 +200,20 @@ async def get_schedule_by_week_day(group_id: int, subgroup: int, day_of_week: in
             Schedule.subgroup == subgroup
         )
         schedule = (await session.execute(stm)).scalars().all()
+        if subgroup:
+            stm = select(Schedule).where(
+                Schedule.group_id == group_id,
+                Schedule.number_of_day == day_of_week,
+                Schedule.subgroup == 0
+            )
+            schedule += (await session.execute(stm)).scalars().all()
         if not schedule:  # free day
             return None
 
         schedule = [i for i in schedule if i.int_parity_of_week in (0, parity)]
+
+        schedule = sorted(schedule, key=lambda x: x.start_time)
+
         return schedule
 
 

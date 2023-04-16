@@ -3,11 +3,14 @@ import logging
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
+from sqlalchemy import select
 
 from tgbot.handlers.profile import show_group_choose
 from tgbot.misc import callbacks, states
 from tgbot.misc.texts import messages
-from tgbot.services.database.models import User, Group
+from tgbot.services.database.models import User, Group, Schedule
+from tgbot.services.kai_parser.schemas import KaiApiError, ParsingError
+from tgbot.services.kai_parser.utils import add_group_schedule
 
 
 async def add_to_favorites(call: CallbackQuery, callback_data: dict, state: FSMContext):
@@ -52,6 +55,17 @@ async def select_group(call: CallbackQuery, callback_data: dict, state: FSMConte
         await session.refresh(user)
 
     logging.info(f'[{call.from_user.id}]: Changed group to {user.group.group_name} with favorite groups')
+    async with db_session() as session:
+        schedule = (await session.execute(select(Schedule).where(Schedule.group_id == user.group_id))).scalars().all()
+        if not schedule:
+            try:
+                await add_group_schedule(user.group_id, db_session)
+            except KaiApiError:
+                logging.error(f'Error with kai api for group {user.group.group_name}')
+                await call.answer(messages.kai_error)
+            except ParsingError:
+                logging.error(f'Error with parsing for group {user.group.group_name}')
+                await call.answer(messages.base_error)
     await call.answer(_(messages.group_changed))
     await show_group_choose(call, callback_data, state)
 
@@ -82,6 +96,17 @@ async def get_group_name(message: Message, state: FSMContext):
         user.group_id = group.group_id
 
     logging.info(f'[{message.from_id}]: Changed group to {group_name} with input')
+    async with db_session() as session:
+        schedule = (await session.execute(select(Schedule).where(Schedule.group_id == user.group_id))).scalars().all()
+        if not schedule:
+            try:
+                await add_group_schedule(user.group_id, db_session)
+            except KaiApiError:
+                logging.error(f'Error with kai api for group {group_name}')
+                await call.answer(messages.kai_error)
+            except ParsingError:
+                logging.error(f'Error with parsing for group {group_name}')
+                await call.answer(messages.base_error)
     await show_group_choose(call, {'payload': data['payload']}, state)
 
 

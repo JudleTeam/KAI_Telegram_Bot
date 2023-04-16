@@ -21,8 +21,12 @@ async def send_schedule_menu(message: Message):
     group_name = user.group.group_name if user.group else '????'
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
-    await message.answer(_(messages.schedule_menu).format(week=md.hunderline(week_parity)),
-                         reply_markup=inline_keyboards.get_main_schedule_keyboard(_, group_name))
+    msg = _(messages.schedule_menu).format(
+        subgroup=user.auto_schedule_subgroup,
+        parity='✅' if user.is_shown_parity else '❌',
+        week=md.hunderline(week_parity),
+    )
+    await message.answer(msg, reply_markup=inline_keyboards.get_main_schedule_keyboard(_, group_name))
 
 
 async def send_profile_menu(message: Message, state: FSMContext):
