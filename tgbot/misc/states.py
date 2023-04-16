@@ -16,3 +16,11 @@ class KAILogin(StatesGroup):
 
 class GroupPinText(StatesGroup):
     waiting_for_text = State()
+
+
+class PhoneSendState(StatesGroup):
+    """
+    State data:
+    payload - Used to determine where verification occurs
+    """
+    waiting_for_phone = State()

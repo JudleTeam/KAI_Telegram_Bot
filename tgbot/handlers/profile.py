@@ -1,6 +1,6 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
 from aiogram.utils.exceptions import InvalidQueryID
 
@@ -29,9 +29,11 @@ async def show_group_choose(call: CallbackQuery, callback_data: dict, state: FSM
     await states.GroupChoose.waiting_for_group.set()
 
 
-async def show_verification(call: CallbackQuery):
+async def show_verification(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     db_session = call.bot.get('database')
+
+    await state.finish()
 
     async with db_session() as session:
         user = await session.get(User, call.from_user.id)
@@ -46,11 +48,34 @@ async def show_verification(call: CallbackQuery):
             kai_status=authorized_status,
             profile_status=verified_status
         ),
-        reply_markup=inline_keyboards.get_verification_keyboard(_, user)
+        reply_markup=inline_keyboards.get_verification_keyboard(_, user, callback_data['payload'])
     )
     await call.answer()
 
 
+async def send_verification(message: Message, state: FSMContext):
+    _ = message.bot.get('_')
+    db_session = message.bot.get('database')
+    state_data = await state.get_data()
+    await state.finish()
+
+    async with db_session() as session:
+        user = await session.get(User, message.from_id)
+
+    verified_status = '✅' if user.has_role(roles.verified) else '❌'
+    phone_status = '✅' if user.phone else '❌'
+    authorized_status = '✅' if user.has_role(roles.authorized) else '❌'
+
+    await message.answer(
+        _(messages.verification_menu).format(
+            phone_status=phone_status,
+            kai_status=authorized_status,
+            profile_status=verified_status
+        ),
+        reply_markup=inline_keyboards.get_verification_keyboard(_, user, state_data['payload'])
+    )
+
+
 def register_profile(dp: Dispatcher):
     dp.register_callback_query_handler(show_group_choose, callbacks.navigation.filter(to='grp_choose'), state='*')
-    dp.register_callback_query_handler(show_verification, callbacks.navigation.filter(to='verification'))
+    dp.register_callback_query_handler(show_verification, callbacks.navigation.filter(to='verification'), state='*')

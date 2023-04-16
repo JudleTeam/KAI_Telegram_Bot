@@ -2,9 +2,9 @@ import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery, Message, ContentType
+from aiogram.types import CallbackQuery, Message, ContentType, ReplyKeyboardRemove
 
-from tgbot.handlers.profile import show_verification
+from tgbot.handlers.profile import show_verification, send_verification
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import states, callbacks
 from tgbot.misc.texts import messages, roles
@@ -14,7 +14,7 @@ from tgbot.services.kai_parser.schemas import KaiApiError, BadCredentials
 from tgbot.services.utils import add_full_user_to_db, verify_profile_with_phone
 
 
-async def unlink_account(call: CallbackQuery):
+async def unlink_account(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     db_session = call.bot.get('database')
 
@@ -27,10 +27,10 @@ async def unlink_account(call: CallbackQuery):
 
     logging.info(f'[{call.from_user.id}]: Unlinked account')
     await call.answer(_(messages.account_unlinked))
-    await show_verification(call)
+    await show_verification(call, callback_data, state)
 
 
-async def kai_logout(call: CallbackQuery):
+async def kai_logout(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     db_session = call.bot.get('database')
 
@@ -44,17 +44,17 @@ async def kai_logout(call: CallbackQuery):
     logging.info(f'[{call.from_user.id}]: KAI logout')
 
     await call.answer(_(messages.kai_logout))
-    await show_verification(call)
+    await show_verification(call, callback_data, state)
 
 
-async def start_kai_login(call: CallbackQuery, state: FSMContext):
+async def start_kai_login(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
 
     await call.message.edit_text(_(messages.login_input),
-                                 reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification'))
+                                 reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification', callback_data['payload']))
     await call.answer()
 
-    await state.update_data(main_call=call.to_python())
+    await state.update_data(main_call=call.to_python(), payload=callback_data['payload'])
     await states.KAILogin.waiting_for_login.set()
 
     logging.info(f'[{call.from_user.id}]: Start KAI login')
@@ -67,15 +67,17 @@ async def get_user_login(message: Message, state: FSMContext):
     async with state.proxy() as data:
         main_call = CallbackQuery(**data['main_call'])
         data['login'] = message.text.strip()
+        payload = data['payload']
 
     await main_call.message.edit_text(_(messages.password_input),
-                                      reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification'))
+                                      reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification', payload))
     await states.KAILogin.next()
 
 
 async def get_user_password(message: Message, state: FSMContext):
     _ = message.bot.get('_')
     db = message.bot.get('database')
+    state_data = await state.get_data()
 
     await message.delete()
     password = message.text.strip()
@@ -85,7 +87,7 @@ async def get_user_password(message: Message, state: FSMContext):
 
     await main_call.message.edit_text(_(messages.authorization_process))
 
-    keyboard = inline_keyboards.get_back_keyboard(_, 'verification')
+    keyboard = inline_keyboards.get_back_keyboard(_, 'verification', payload=state_data['payload'])
     try:
         user_data = await KaiParser.get_full_user_data(login, password)
     except KaiApiError:
@@ -106,14 +108,16 @@ async def get_user_password(message: Message, state: FSMContext):
     await state.finish()
 
 
-async def send_phone_keyboard(call: CallbackQuery):
+async def send_phone_keyboard(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
 
+    await states.PhoneSendState.waiting_for_phone.set()
+    await state.update_data(payload=callback_data['payload'])
     await call.message.answer(_(messages.share_contact), reply_markup=reply_keyboards.get_send_phone_keyboard(_))
     await call.answer()
 
 
-async def get_user_phone(message: Message):
+async def get_user_phone(message: Message, state: FSMContext):
     _ = message.bot.get('_')
     db = message.bot.get('database')
 
@@ -126,10 +130,15 @@ async def get_user_phone(message: Message):
     else:
         text += _(messages.phone_not_found)
 
-    await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard(_))
+    state_data = await state.get_data()
+    if state_data['payload'] == 'at_start':
+        await message.answer(text, reply_markup=ReplyKeyboardRemove())
+        await send_verification(message, state)
+    else:
+        await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
-async def check_phone(call: CallbackQuery):
+async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     db = call.bot.get('database')
 
@@ -154,7 +163,7 @@ async def check_phone(call: CallbackQuery):
             user.roles.append(roles_dict[roles.authorized])
 
     await call.answer(_(messages.phone_found), show_alert=True)
-    await show_verification(call)
+    await show_verification(call, callback_data, state)
 
 
 def register_verification(dp: Dispatcher):
@@ -166,4 +175,4 @@ def register_verification(dp: Dispatcher):
 
     dp.register_callback_query_handler(send_phone_keyboard, callbacks.navigation.filter(to='send_phone'))
     dp.register_callback_query_handler(check_phone, callbacks.navigation.filter(to='check_phone'))
-    dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT])
+    dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT], state=states.PhoneSendState)

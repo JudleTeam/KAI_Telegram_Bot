@@ -24,7 +24,7 @@ async def cancel(call: CallbackQuery, callback_data: dict, state: FSMContext):
         case 'profile': await show_profile_menu(call, callback_data, state)
         case 'verification':
             logging.info(f'[{call.from_user.id}]: Cancel KAI login')
-            await show_verification(call)
+            await show_verification(call, callback_data, state)
         case 'my_group': await show_my_group(call)
 
 

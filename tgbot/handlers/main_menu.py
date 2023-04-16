@@ -100,8 +100,7 @@ async def send_help_menu(message: Message, state: FSMContext):
 def register_main_menu(dp: Dispatcher):
     dp.register_message_handler(send_schedule_menu, Text(startswith=reply_commands.schedule_symbol), state='*')
 
-    dp.register_callback_query_handler(send_main_menu, callbacks.navigation.filter(to='main_menu'),
-                                       state=states.GroupChoose.waiting_for_group)
+    dp.register_callback_query_handler(send_main_menu, callbacks.navigation.filter(to='main_menu'), state='*')
 
     dp.register_message_handler(send_profile_menu, Text(startswith=reply_commands.profile_symbol), state='*')
     dp.register_callback_query_handler(show_profile_menu, callbacks.navigation.filter(to='profile'), state='*')

@@ -181,37 +181,42 @@ def get_teachers_keyboard(_, group_name):
     return keyboard
 
 
-def get_verification_keyboard(_, user: User):
+def get_verification_keyboard(_, user: User, payload):
     keyboard = InlineKeyboardMarkup()
 
     is_verified = user.has_role(roles.verified)
 
     if not user.phone:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.via_phone), callback_data=callbacks.navigation.new('send_phone', payload=''))
+            InlineKeyboardButton(_(buttons.via_phone), callback_data=callbacks.navigation.new('send_phone', payload))
         )
     elif not is_verified:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.check_phone), callback_data=callbacks.navigation.new('check_phone', payload=''))
+            InlineKeyboardButton(_(buttons.check_phone), callback_data=callbacks.navigation.new('check_phone', payload))
         )
 
     if not (user.has_role(roles.authorized)):
         keyboard.add(
-            InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.navigation.new('start_login', payload=''))
+            InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.navigation.new('start_login', payload))
         )
     else:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.navigation.new('logout', payload=''))
+            InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.navigation.new('logout', payload))
         )
 
     if is_verified:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.unlink_account), callback_data=callbacks.navigation.new('unlink', payload=''))
+            InlineKeyboardButton(_(buttons.unlink_account), callback_data=callbacks.navigation.new('unlink', payload))
         )
 
-    keyboard.add(
-        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new('profile', payload='back'))
-    )
+    if payload == 'at_start':
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.next_), callback_data=callbacks.navigation.new('grp_choose', payload))
+        )
+    else:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new('profile', payload='back'))
+        )
 
     return keyboard
 
