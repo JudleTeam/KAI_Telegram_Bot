@@ -20,6 +20,8 @@ cryptography = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
 aioschedule = "*"
+alembic = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
