@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiogram = "*"
+aiogram = "<3.0"
 aioredis = "*"
 environs = "*"
 asyncpg = "*"
@@ -15,7 +15,6 @@ redis = "*"
 lxml = "*"
 bs4 = "*"
 phonenumbers = "*"
-sqlalchemy-utils = "*"
 cryptography = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
