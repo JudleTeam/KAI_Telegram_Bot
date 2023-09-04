@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from tgbot.services.kai_parser.parser import KaiParser
-from tgbot.services.database.models import Schedule, GroupTeacher, Group
+from tgbot.services.database.models import ScheduleDiscipline, GroupTeacher, Group
 from tgbot.services.kai_parser.schemas import KaiApiError
 
 
@@ -77,43 +77,38 @@ def lesson_type_to_emoji(lesson_type):
     return res
 
 
-schedule_time = (
-    (datetime.time(8, 00), datetime.time(9, 30)),
-    (datetime.time(9, 40), datetime.time(11, 10)),
-    (datetime.time(11, 20), datetime.time(12, 50)),
-    (datetime.time(13, 30), datetime.time(15, 0)),
-    (datetime.time(15, 10), datetime.time(16, 40)),
-    (datetime.time(16, 50), datetime.time(18, 20)),
-    (datetime.time(18, 25), datetime.time(19, 55)),
-    (datetime.time(20, 0), datetime.time(21, 30))
-)
-
-
 def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
+    schedule_time = (
+        (datetime.time(8, 00), datetime.time(9, 30)),
+        (datetime.time(9, 40), datetime.time(11, 10)),
+        (datetime.time(11, 20), datetime.time(12, 50)),
+        (datetime.time(13, 30), datetime.time(15, 0)),
+        (datetime.time(15, 10), datetime.time(16, 40)),
+        (datetime.time(16, 50), datetime.time(18, 20)),
+        (datetime.time(18, 25), datetime.time(19, 55)),
+        (datetime.time(20, 0), datetime.time(21, 30))
+    )
+
     match lesson_type:
         case 'лек' | 'пр':
-            for i in schedule_time:
-                if i[0] == start_time:
-                    return i[1]
+            for lesson_time in schedule_time:
+                if lesson_time[0] == start_time:
+                    return lesson_time[1]
         case 'л.р.':
-            for k, i in enumerate(schedule_time):
-                if i[0] == start_time:
-                    return schedule_time[k + 1][1]
+            for ind, lesson_time in enumerate(schedule_time):
+                if lesson_time[0] == start_time:
+                    return schedule_time[ind + 1][1]
 
 
 async def add_group_schedule(group_id: int, async_session):
     response = await KaiParser.get_group_schedule(group_id)
-    for i in response:
-        for j in i:
-            print(j)
-        print('\n')
 
-    for day in response:
-        for lesson in day:
-            start_time = datetime.datetime.strptime(lesson.start_time, '%H:%M').time()
+    async with async_session.begin() as session:
+        for day in response:
+            for lesson in day:
+                start_time = datetime.datetime.strptime(lesson.start_time, '%H:%M').time()
 
-            async with async_session.begin() as session:
-                new_lesson = Schedule(
+                new_lesson = ScheduleDiscipline(
                     group_id=group_id,
                     number_of_day=lesson.number_of_day,
                     parity_of_week=lesson.parity_of_week,
@@ -148,17 +143,12 @@ async def add_group_teachers(group_id: int, async_session):
 
 async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
     async with db.begin() as session:
-        stm = select(Schedule).where(
-            Schedule.group_id == group_id,
-            Schedule.number_of_day == day_of_week
-        )
-        schedule = (await session.execute(stm)).scalars().all()
+        schedule = await ScheduleDiscipline.get_group_day_schedule(session, group_id, day_of_week)
 
         if not schedule:  # free day
             return None
 
-        schedule = [i for i in schedule if i.int_parity_of_week in (0, parity)]
-
+        schedule = [schedule_item for schedule_item in schedule if schedule_item.int_parity_of_week in (0, parity)]
         schedule = sorted(schedule, key=lambda x: x.start_time)
 
         return schedule
@@ -166,7 +156,8 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
 
 async def get_group_teachers(group_id: int, db_session):
     teachers = await GroupTeacher.get_group_teachers(group_id, db_session)
-    if teachers: return teachers
+    if teachers:
+        return teachers
 
     try:
         await add_group_teachers(group_id, db_session)
@@ -176,12 +167,12 @@ async def get_group_teachers(group_id: int, db_session):
         return await get_group_teachers(group_id, db_session)
 
 
-async def parse_groups(response, db):
+async def parse_groups(parsed_groups, db):
     async with db() as session:
-        for i in response:
+        for parsed_group in parsed_groups:
             new_group = Group(
-                group_id=i['id'],
-                group_name=int(i['group'])
+                group_id=parsed_group['id'],
+                group_name=int(parsed_group['group'])
             )
             session.add(new_group)
             try:
@@ -193,9 +184,9 @@ async def parse_groups(response, db):
 
 async def get_group_id(group_name: int) -> int | None:
     groups = await KaiParser.get_group_ids()
-    for i in groups:
-        if i['group'] == str(group_name):
-            return int(i['id'])
+    for group in groups:
+        if group['group'] == str(group_name):
+            return int(group['id'])
     return None
 
 
