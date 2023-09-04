@@ -6,7 +6,7 @@ from aiogram import Bot
 from sqlalchemy import select, text, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tgbot.services.database.models import User, Schedule
+from tgbot.services.database.models import User, ScheduleDiscipline
 from tgbot.services.kai_parser.utils import add_group_schedule
 
 
@@ -18,6 +18,6 @@ async def update_schedule(bot: Bot, db: AsyncSession):
 
     for group_id in group_ids:
         async with db.begin() as session:
-            await session.execute(delete(Schedule).where(Schedule.group_id == group_id))
+            await session.execute(delete(ScheduleDiscipline).where(ScheduleDiscipline.group_id == group_id))
         await add_group_schedule(group_id, db)
         logging.debug(f'update schedule for group {group_id} done')
