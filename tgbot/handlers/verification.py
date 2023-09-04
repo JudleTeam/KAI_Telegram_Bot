@@ -173,6 +173,6 @@ def register_verification(dp: Dispatcher):
     dp.register_message_handler(get_user_login, state=states.KAILogin.waiting_for_login)
     dp.register_message_handler(get_user_password, state=states.KAILogin.waiting_for_password)
 
-    dp.register_callback_query_handler(send_phone_keyboard, callbacks.navigation.filter(to='send_phone'))
+    dp.register_callback_query_handler(send_phone_keyboard, callbacks.action.filter(name='send_phone'))
     dp.register_callback_query_handler(check_phone, callbacks.action.filter(name='check_phone'))
-    dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT], state=states.PhoneSendState)
+    dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT], state=states.PhoneSendState.waiting_for_phone)
