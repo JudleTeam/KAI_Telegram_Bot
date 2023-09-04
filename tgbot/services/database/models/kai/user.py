@@ -1,21 +1,12 @@
-import os
-
-from environs import Env
 from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String, Date, Boolean
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, Session
-from sqlalchemy_utils import StringEncryptedType
 
 from tgbot.services.database.base import Base
 
 
 class KAIUser(Base):
     __tablename__ = 'kai_user'
-
-    # Да, это костыль
-    env = Env()
-    env.read_env(os.path.join(os.getcwd(), '.env'))
-    SECRET_KEY = env.str('SECRET_KEY')
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     kai_id = Column(Integer, unique=True, nullable=True)
@@ -25,7 +16,7 @@ class KAIUser(Base):
     position = Column(Integer, nullable=True)
     prefix = Column(String(32), nullable=True)
     login = Column(String(64), unique=True, nullable=True)
-    password = Column(StringEncryptedType(key=SECRET_KEY), nullable=True)
+    password = Column(String(64), nullable=True)
     full_name = Column(String(255), nullable=False)
     phone = Column(String(32), nullable=True, unique=True)
     email = Column(String(64), nullable=False, unique=True)
