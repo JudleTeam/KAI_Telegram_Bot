@@ -46,9 +46,8 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
         with_pointer = True
     else:
         with_pointer = False
-    subgroup = user.auto_schedule_subgroup
     with_full_parity = user.is_shown_parity
-    schedule_list = await get_schedule_by_week_day(user.group_id, subgroup, today.isoweekday(), 2 if not week_num % 2 else 1, db)
+    schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(), 2 if not week_num % 2 else 1, db)
     if not schedule_list or not schedule_list[0].lesson_name:
         lessons = _('Day off\n')
     else:
@@ -80,7 +79,6 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
     msg = _(messages.schedule_menu).format(
-        subgroup=user.auto_schedule_subgroup,
         parity='✅' if user.is_shown_parity else '❌',
         week=md.hunderline(week_parity),
     )
@@ -172,19 +170,9 @@ async def switch_show_parity(call: CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-async def switch_subgroup(call: CallbackQuery, state: FSMContext):
-    db = call.bot.get('database')
-    async with db.begin() as session:
-        user = await session.get(User, call.from_user.id)
-        user.auto_schedule_subgroup = 2 if user.auto_schedule_subgroup == 1 else 1
-    await show_schedule_menu(call, state)
-    await call.answer()
-
-
 def register_schedule(dp: Dispatcher):
     dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'), state='*')
     dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
     dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
     dp.register_callback_query_handler(switch_show_parity, callbacks.schedule.filter(action='switch_show_parity'), state='*')
-    dp.register_callback_query_handler(switch_subgroup, callbacks.schedule.filter(action='switch_subgroup'), state='*')
     dp.register_callback_query_handler(change_week_parity, callbacks.change_schedule_week.filter(), state='*')

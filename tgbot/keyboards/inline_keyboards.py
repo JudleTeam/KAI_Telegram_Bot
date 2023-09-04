@@ -125,7 +125,6 @@ def get_main_schedule_keyboard(_, group_name):
         InlineKeyboardButton(_(buttons.full_schedule), callback_data=callbacks.schedule.new(action='full_schedule', payload='')),
         # InlineKeyboardButton(_(buttons.exams), callback_data='pass'),
         InlineKeyboardButton(_(buttons.show_parity), callback_data=callbacks.schedule.new(action='switch_show_parity', payload='')),
-        InlineKeyboardButton(_(buttons.change_subgroup), callback_data=callbacks.schedule.new(action='switch_subgroup', payload='')),
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='main_schedule'))
     )
 

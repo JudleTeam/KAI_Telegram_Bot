@@ -10,7 +10,6 @@ class Schedule(Base):
     number_of_day = Column(Integer, nullable=False)
     parity_of_week = Column(String, nullable=True)
     int_parity_of_week = Column(Integer, nullable=True)
-    subgroup = Column(Integer, nullable=True)
     lesson_name = Column(String, nullable=False)
     auditory_number = Column(String, nullable=True)
     building_number = Column(String, nullable=True)

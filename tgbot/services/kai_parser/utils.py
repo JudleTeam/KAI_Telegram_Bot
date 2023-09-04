@@ -54,51 +54,6 @@ def get_int_parity(parity_raw: str) -> int:
     return parity_of_week
 
 
-def get_subgroups(parity_raw: str):
-    """Return number of subgroup and string for parity of week if had one else return 0"""
-    index_1 = parity_raw.find('подгруппа')
-    index_2 = parity_raw.find('п/г')
-    if index_1 != -1:
-        a = parity_raw[index_1 - 2: index_1 - 1]
-        b = parity_raw[index_1 - 5: index_1 - 4]
-        if a.isdigit():
-            # parity_raw = parity_raw.replace(parity_raw[index_1 - 2: index_1 + 9], '')
-            return int(a)
-        elif b.isdigit():
-            # parity_raw = parity_raw.replace(parity_raw[index_1 - 5: index_1 + 9], '')
-            return int(b)
-    elif index_2 != -1:
-        a = parity_raw[index_2 - 1: index_2]
-        if a.isdigit():
-            # parity_raw = parity_raw.replace(parity_raw[index_2 - 1: index_2 + 3], '')
-            return int(a)
-    elif '/' in parity_raw:
-        a, b = parity_raw.split('/')  # 20.03, 25.03 / 05.04, 15.04 чет
-        if ',' in a:
-            sep = ','
-        else:
-            sep = ' '
-        year = datetime.datetime.now().year
-
-        res_dates = []
-        for i in (a, b):
-            dates = []
-            for j in i.split(sep):
-                try:
-                    try:
-                        date = datetime.datetime.strptime(j, '%d.%m.%Y')
-                    except:
-                        j = j.strip() + f'.{year}'
-                    date = datetime.datetime.strptime(j, '%d.%m.%Y')
-                    dates.append(str(date.date()))
-                except:
-                    pass
-            else:
-                res_dates.append(dates)
-        return (1, res_dates[0]), (2, res_dates[1])
-    return 0
-
-
 def lesson_type_order(lesson_type: str):
     res = []
     if 'лек' in lesson_type:
@@ -163,7 +118,6 @@ async def add_group_schedule(group_id: int, async_session):
                     number_of_day=lesson.number_of_day,
                     parity_of_week=lesson.parity_of_week,
                     int_parity_of_week=get_int_parity(lesson.parity_of_week),
-                    subgroup=get_subgroups(lesson.parity_of_week),
                     lesson_name=lesson.lesson_name,
                     auditory_number=lesson.auditory_number,
                     building_number=lesson.building_number,
@@ -192,21 +146,14 @@ async def add_group_teachers(group_id: int, async_session):
             session.add(new_teacher)
 
 
-async def get_schedule_by_week_day(group_id: int, subgroup: int, day_of_week: int, parity: int, db):
+async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
     async with db.begin() as session:
         stm = select(Schedule).where(
             Schedule.group_id == group_id,
-            Schedule.number_of_day == day_of_week,
-            Schedule.subgroup == subgroup
+            Schedule.number_of_day == day_of_week
         )
         schedule = (await session.execute(stm)).scalars().all()
-        if subgroup:
-            stm = select(Schedule).where(
-                Schedule.group_id == group_id,
-                Schedule.number_of_day == day_of_week,
-                Schedule.subgroup == 0
-            )
-            schedule += (await session.execute(stm)).scalars().all()
+
         if not schedule:  # free day
             return None
 
@@ -258,7 +205,6 @@ async def main():
     for i in res:
         for j in i:
             print(j)
-            print(get_subgroups(j.parity_of_week))
         print('\n')
 
 

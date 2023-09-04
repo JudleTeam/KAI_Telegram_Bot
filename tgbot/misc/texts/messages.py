@@ -17,7 +17,6 @@ language_choose = _('Please select your language')
 
 schedule_menu = _(
     'Schedule menu\n'
-    'Your subgroup: {subgroup}\n'
     'Show full parity: {parity}\n'
     'Now {week} week\n\n'
     '🧪 - Laboratory work\n'
