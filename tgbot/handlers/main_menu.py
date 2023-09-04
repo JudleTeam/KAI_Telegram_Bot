@@ -22,7 +22,6 @@ async def send_schedule_menu(message: Message):
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
     msg = _(messages.schedule_menu).format(
-        subgroup=user.auto_schedule_subgroup,
         parity='✅' if user.is_shown_parity else '❌',
         week=md.hunderline(week_parity),
     )
