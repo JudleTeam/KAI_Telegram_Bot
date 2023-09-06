@@ -138,19 +138,19 @@ async def add_group_schedule(group_id: int, async_session):
 
 
 async def add_group_teachers(group_id: int, async_session):
-    response = await KaiParser.get_group_teachers(group_id)
-    if not response:
+    teachers = await KaiParser.get_group_teachers(group_id)
+    if not teachers:
         raise KaiApiError
 
     async with async_session.begin() as session:
-        for teacher in response:
-            teacher['type'] = lesson_type_order(teacher['type'])
+        for teacher in teachers:
+            teacher.type = lesson_type_order(teacher.type)
 
             new_teacher = GroupTeacher(
                 group_id=group_id,
-                teacher_name=teacher['teacher_name'],
-                lesson_type=teacher['type'],
-                lesson_name=teacher['lesson_name']
+                teacher_name=teacher.teacher_full_name,
+                lesson_type=teacher.type,
+                lesson_name=teacher.lesson_name
             )
             session.add(new_teacher)
 

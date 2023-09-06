@@ -42,4 +42,4 @@ async def show_teachers(call: CallbackQuery):
 
 
 def register_teachers(dp: Dispatcher):
-    dp.register_callback_query_handler(show_teachers, callbacks.schedule.filter(action='teachers'))
+    dp.register_callback_query_handler(show_teachers, callbacks.schedule.filter(action='teachers'), state='*')
