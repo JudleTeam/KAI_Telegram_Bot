@@ -97,34 +97,18 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict):
             await call.answer(_(messages.select_group), show_alert=True)
             return
 
-    today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
-    week_num = int(today.strftime("%V"))
+    if callback_data['payload'] == 'today':
+        today = datetime.datetime.now()
+    else:
+        today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
 
     msg = await form_day(_, db, user, today, with_date=True)
+    keyboard = inline.get_schedule_day_keyboard(_, today, user.group.group_name)
     try:
-        await call.message.edit_text(msg, reply_markup=inline.get_schedule_day_keyboard(_, week_num % 2, today,
-                                                                                        user.group.group_name))
+        await call.message.edit_text(msg, reply_markup=keyboard)
     except MessageNotModified as e:
         pass
 
-    await call.answer()
-
-
-async def change_week_parity(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    if callback_data['action'] == 'day':
-        schedule_day = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
-        schedule_day_week_num = int(schedule_day.strftime("%V"))
-        if schedule_day_week_num % 2 == 0:
-            new_schedule_day = schedule_day + datetime.timedelta(days=7)
-        else:
-            new_schedule_day = schedule_day - datetime.timedelta(days=7)
-        await send_today_schedule(call, dict(action='change_week', payload=str(new_schedule_day.date())), state)
-    elif callback_data['action'] == 'week':
-        week_parity = int(datetime.datetime.now().strftime("%V")) % 2
-        if week_parity != int(callback_data['payload']):
-            await send_full_schedule(call, dict(action='', payload=''))
-        else:
-            await send_full_schedule(call, dict(action='', payload='change'))
     await call.answer()
 
 
@@ -137,15 +121,10 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
             await call.answer(_(messages.select_group), show_alert=True)
             return
 
-    # add 6110 schedule
-    # await add_group_schedule(23325, db)
-    # add 4120 schedule
-    # await add_group_schedule(23551, db)
     today = datetime.datetime.now()
     if callback_data['payload'] == 'change':
         today += datetime.timedelta(days=7)
     today -= datetime.timedelta(days=today.weekday())
-    week_num = int(today.strftime("%V"))
     all_lessons = ''
     for i in range(6):
         try:
@@ -159,7 +138,7 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
             await call.answer(_(messages.kai_error), show_alert=True)
             return
     await call.message.edit_text(all_lessons,
-                                 reply_markup=inline.get_full_schedule_keyboard(_, week_num % 2, user.group.group_name))
+                                 reply_markup=inline.get_full_schedule_keyboard(_, user.group.group_name))
 
     await call.answer()
 
@@ -178,4 +157,3 @@ def register_schedule(dp: Dispatcher):
     dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
     dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
     dp.register_callback_query_handler(switch_show_parity, callbacks.schedule.filter(action='switch_show_parity'), state='*')
-    dp.register_callback_query_handler(change_week_parity, callbacks.change_schedule_week.filter(), state='*')
