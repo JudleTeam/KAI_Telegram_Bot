@@ -17,7 +17,6 @@ language_choose = _('Please select your language')
 
 schedule_menu = _(
     'Schedule menu\n'
-    'Show full parity: {parity}\n'
     'Now {week} week\n\n'
     '🧪 - Laboratory work\n'
     '📝 - Seminar\n'
@@ -48,7 +47,7 @@ schedule_day_template = _(
 )
 
 lesson_template = _(
-    '● {lesson_type} {start_time} - {end_time}  |  {lesson_name}  |  {building} {auditory}'
+    '{start_time} - {end_time}  |  {building} {auditory} | {parity}\n{lesson_type} - {lesson_name}'
 )
 
 full_schedule_pointer = '➤'

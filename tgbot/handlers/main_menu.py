@@ -22,7 +22,6 @@ async def send_schedule_menu(message: Message):
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
     msg = _(messages.schedule_menu).format(
-        parity='✅' if user.is_shown_parity else '❌',
         week=md.hunderline(week_parity),
     )
     await message.answer(msg, reply_markup=inline_keyboards.get_main_schedule_keyboard(_, group_name))

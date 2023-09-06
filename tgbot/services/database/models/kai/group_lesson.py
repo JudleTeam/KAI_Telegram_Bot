@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, BigInteger, Time, select
+from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete
 
 from tgbot.services.database.base import Base
 
 
-class ScheduleDiscipline(Base):
-    __tablename__ = 'schedule'
+class GroupLesson(Base):
+    __tablename__ = 'group_lesson'
     id = Column(BigInteger, primary_key=True)
     group_id = Column(Integer, nullable=False)
     number_of_day = Column(Integer, nullable=False)
@@ -19,10 +19,15 @@ class ScheduleDiscipline(Base):
 
     @classmethod
     async def get_group_day_schedule(cls, session, group_id, day):
-        stmt = select(ScheduleDiscipline).where(
-            ScheduleDiscipline.group_id == group_id,
-            ScheduleDiscipline.number_of_day == day
+        stmt = select(GroupLesson).where(
+            GroupLesson.group_id == group_id,
+            GroupLesson.number_of_day == day
         )
 
         records = await session.execute(stmt)
         return records.scalars().all()
+
+    @classmethod
+    async def clear_group_schedule(cls, session, group_id):
+        stmt = delete(GroupLesson).where(GroupLesson.group_id == group_id)
+        await session.execute(stmt)
