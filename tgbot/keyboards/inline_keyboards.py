@@ -130,19 +130,11 @@ def get_main_schedule_keyboard(_, group_name):
     return keyboard
 
 
-def get_schedule_day_keyboard(_, parity, today, group_name):
+def get_schedule_day_keyboard(_, today, group_name):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
-    if parity == 1:
-        week_button = buttons.odd_week
-    else:
-        week_button = buttons.even_week
     keyboard.add(
-        InlineKeyboardButton(_(week_button), callback_data=callbacks.change_schedule_week.new(action='day', payload=today.date()))
-    )
-
-    keyboard.add(
-        InlineKeyboardButton(_(buttons.today), callback_data=callbacks.schedule.new(action='show_day', payload=datetime.datetime.today().date()))
+        InlineKeyboardButton(_(buttons.today), callback_data=callbacks.schedule.new(action='show_day', payload='today'))
     )
     keyboard.row(
         InlineKeyboardButton(_(buttons.prev_day), callback_data=callbacks.schedule.new(action='show_day', payload=(today - datetime.timedelta(days=1)).date())),
@@ -156,15 +148,10 @@ def get_schedule_day_keyboard(_, parity, today, group_name):
     return keyboard
 
 
-def get_full_schedule_keyboard(_, parity, group_name):
+def get_full_schedule_keyboard(_, group_name):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
-    if parity == 1:
-        week_button = buttons.odd_week
-    else:
-        week_button = buttons.even_week
     keyboard.add(
-        InlineKeyboardButton(_(week_button), callback_data=callbacks.change_schedule_week.new(action='week', payload=parity)),
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='full_schedule')),
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
