@@ -4,38 +4,43 @@ import logging
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
-from aiogram.utils import markdown as md
+from aiogram.utils import markdown as md, markdown
 from aiogram.utils.exceptions import MessageNotModified
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc.texts import messages, buttons
 from tgbot.services.database.models import User
-from tgbot.services.kai_parser.utils import get_schedule_by_week_day, lesson_type_to_emoji, add_group_schedule
+from tgbot.services.kai_parser.utils import (get_schedule_by_week_day, lesson_type_to_emoji, add_group_schedule,
+                                             lesson_type_to_text)
 
 
 def convert_day(today: str):
     return datetime.datetime.strptime(today, '%Y-%m-%d %H:%M:%S')
 
 
-def form_lessons(schedule_list, with_full_parity):
+def form_lessons(schedule_list):
     lessons = []
-    for i in schedule_list:
-        if i.auditory_number == 'КСК КАИ ОЛИМП':
-            i.building_number = 'ОЛИМП'
-            i.auditory_number = ''
-            i.lesson_type = 'физ'
+    for lesson in schedule_list:
+        if lesson.auditory_number == 'КСК КАИ ОЛИМП':
+            lesson.building_number = 'ОЛИМП'
+            lesson.auditory_number = ''
+            lesson.lesson_type = 'физ'
         else:
-            i.building_number += ' зд.'
-        full_parity_msg = f'| {i.parity_of_week}' if with_full_parity else ''
+            lesson.building_number += ' зд.'
+
+        if lesson.auditory_number.isdigit():
+            lesson.auditory_number += ' ауд.'
+
         lessons.append(messages.lesson_template.format(
-            start_time=i.start_time.strftime('%H:%M'),
-            end_time=i.end_time.strftime('%H:%M'),
-            lesson_type=lesson_type_to_emoji(i.lesson_type)[0],
-            lesson_name=i.lesson_name,
-            building=i.building_number,
-            auditory=i.auditory_number
-        ) + full_parity_msg)
+            start_time=lesson.start_time.strftime('%H:%M'),
+            end_time=lesson.end_time.strftime('%H:%M'),
+            lesson_type=lesson_type_to_emoji(lesson.lesson_type)[0],
+            lesson_name=markdown.hbold(lesson.lesson_name),
+            building=lesson.building_number,
+            auditory=lesson.auditory_number,
+            parity=md.hitalic(lesson.parity_of_week or '-')
+        ))
     lessons = '\n\n'.join(lessons) + '\n'
     return lessons
 
@@ -46,12 +51,11 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
         with_pointer = True
     else:
         with_pointer = False
-    with_full_parity = user.is_shown_parity
     schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(), 2 if not week_num % 2 else 1, db)
     if not schedule_list or not schedule_list[0].lesson_name:
         lessons = _('Day off\n')
     else:
-        lessons = form_lessons(schedule_list, with_full_parity)
+        lessons = form_lessons(schedule_list)
     msg = messages.schedule_day_template.format(
         day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
                     (
@@ -79,8 +83,7 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
     msg = _(messages.schedule_menu).format(
-        parity='✅' if user.is_shown_parity else '❌',
-        week=md.hunderline(week_parity),
+        week=md.hunderline(week_parity)
     )
     await call.message.edit_text(msg, reply_markup=inline.get_main_schedule_keyboard(_, group_name))
     await call.answer()

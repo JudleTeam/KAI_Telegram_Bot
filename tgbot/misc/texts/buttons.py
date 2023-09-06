@@ -42,5 +42,3 @@ educational_program = _('Educational program')
 study_schedule = _('Study schedule')
 
 contact_us = _('Contact us')
-
-show_parity = _('Show full parity')

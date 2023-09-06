@@ -23,7 +23,7 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
     keyboard = InlineKeyboardMarkup(row_width=3)
 
     if user.group:
-        if user.group in user.selected_groups:
+        if user.group in user.favorite_groups:
             keyboard.add(
                 InlineKeyboardButton(_(buttons.remove_favorite),
                                      callback_data=callbacks.group_choose.new(id=user.group.group_id, action='remove', payload=payload))
@@ -43,7 +43,7 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
         )
 
     k_buttons = list()
-    for group in user.selected_groups:
+    for group in user.favorite_groups:
         if native_group_name == group.group_name:
             continue
         btn_text = f'● {group.group_name} ●' if user.group_id == group.group_id else group.group_name
@@ -124,7 +124,6 @@ def get_main_schedule_keyboard(_, group_name):
     keyboard.add(
         InlineKeyboardButton(_(buttons.full_schedule), callback_data=callbacks.schedule.new(action='full_schedule', payload='')),
         # InlineKeyboardButton(_(buttons.exams), callback_data='pass'),
-        InlineKeyboardButton(_(buttons.show_parity), callback_data=callbacks.schedule.new(action='switch_show_parity', payload='')),
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='main_schedule'))
     )
 

@@ -1,12 +1,11 @@
 import asyncio
 import datetime
-from fuzzywuzzy import process
+from fuzzywuzzy import process, utils
 
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from tgbot.services.kai_parser.parser import KaiParser
-from tgbot.services.database.models import ScheduleDiscipline, GroupTeacher, Group
+from tgbot.services.database.models import GroupLesson, GroupTeacher, Group
 from tgbot.services.kai_parser.schemas import KaiApiError
 
 
@@ -14,43 +13,46 @@ def get_int_parity(parity_raw: str) -> int:
     templates_odd = ['неч', 'неч.нед.', 'Нечет.нед.', 'неч/-', ]
     templates_even = ['чет', '-/чет', 'четная неделя', 'чет.нед.', ]
 
-    a = process.extractOne(parity_raw, templates_odd)
-    b = process.extractOne(parity_raw, templates_even)
-    # parity_of_week 0 - both, 1 - odd, 2 - even
-    if a[1] > 70 or b[1] > 70:
-        if a[1] > b[1]:
-            parity_of_week = 1
-        elif b[1] > a[1]:
-            parity_of_week = 2
+    if utils.full_process(parity_raw):
+        a = process.extractOne(parity_raw, templates_odd)
+        b = process.extractOne(parity_raw, templates_even)
+
+        # parity_of_week 0 - both, 1 - odd, 2 - even
+        if a[1] > 70 or b[1] > 70:
+            if a[1] > b[1]:
+                return 1
+            elif b[1] > a[1]:
+                return 2
+            else:
+                return 0
+
+    if ',' in parity_raw:
+        sep = ','
+    else:
+        sep = ' '
+    if '/' in parity_raw:
+        parity_raw = parity_raw.replace('/', sep)
+    h = parity_raw.split(sep)
+
+    year = datetime.datetime.now().year
+    sum_k = []
+    for j in h:
+        try:
+            try:
+                date = datetime.datetime.strptime(j, '%d.%m.%Y')
+            except:
+                j = j.strip() + f'.{year}'
+            date = datetime.datetime.strptime(j, '%d.%m.%Y')
+
+            sum_k.append(int(date.strftime("%V")) % 2)  # append 0 or 1
+        except:
+            pass
+    else:
+        if sum_k and len(sum_k) * sum_k[0] == sum(sum_k):
+            parity_of_week = sum_k[0]
         else:
             parity_of_week = 0
-    else:  # dates or nothing
-        if ',' in parity_raw:
-            sep = ','
-        else:
-            sep = ' '
-        if '/' in parity_raw:
-            parity_raw = parity_raw.replace('/', sep)
-        h = parity_raw.split(sep)
 
-        year = datetime.datetime.now().year
-        sum_k = []
-        for j in h:
-            try:
-                try:
-                    date = datetime.datetime.strptime(j, '%d.%m.%Y')
-                except:
-                    j = j.strip() + f'.{year}'
-                date = datetime.datetime.strptime(j, '%d.%m.%Y')
-
-                sum_k.append(int(date.strftime("%V")) % 2)  # append 0 or 1
-            except:
-                pass
-        else:
-            if sum_k and len(sum_k) * sum_k[0] == sum(sum_k):
-                parity_of_week = sum_k[0]
-            else:
-                parity_of_week = 0
     return parity_of_week
 
 
@@ -74,6 +76,18 @@ def lesson_type_to_emoji(lesson_type):
     }
 
     res = [lessons_emoji[el] for el in lesson_type.split(', ')]
+    return res
+
+
+def lesson_type_to_text(lesson_type):
+    lessons_types = {
+        'лек': 'Лекция',
+        'пр': 'Практика',
+        'л.р.': 'Лабораторная',
+        'физ': 'Физра'
+    }
+
+    res = [lessons_types[el] for el in lesson_type.split(', ')]
     return res
 
 
@@ -108,7 +122,7 @@ async def add_group_schedule(group_id: int, async_session):
             for lesson in day:
                 start_time = datetime.datetime.strptime(lesson.start_time, '%H:%M').time()
 
-                new_lesson = ScheduleDiscipline(
+                new_lesson = GroupLesson(
                     group_id=group_id,
                     number_of_day=lesson.number_of_day,
                     parity_of_week=lesson.parity_of_week,
@@ -143,7 +157,7 @@ async def add_group_teachers(group_id: int, async_session):
 
 async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
     async with db.begin() as session:
-        schedule = await ScheduleDiscipline.get_group_day_schedule(session, group_id, day_of_week)
+        schedule = await GroupLesson.get_group_day_schedule(session, group_id, day_of_week)
 
         if not schedule:  # free day
             return None

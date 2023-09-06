@@ -12,7 +12,7 @@ async def start_schedulers(bot: Bot, session: sessionmaker):
     # aioschedule.every(10).seconds.do(update_schedule, bot, session)
 
     # prod
-    aioschedule.every().day.at('01:00').do(update_schedule, bot, session)
+    aioschedule.every().day.at('22:00').do(update_schedule, bot, session)
 
     while True:
         await aioschedule.run_pending()

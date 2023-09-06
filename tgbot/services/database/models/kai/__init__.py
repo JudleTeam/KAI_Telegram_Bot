@@ -1,5 +1,5 @@
 from .group import Group
-from .schedulediscipline import ScheduleDiscipline
+from .group_lesson import GroupLesson
 from .groupteacher import GroupTeacher
 from .institute import Institute
 from .profile import Profile

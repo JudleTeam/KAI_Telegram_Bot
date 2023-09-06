@@ -6,7 +6,7 @@ from tgbot.services.database.base import Base
 
 
 # Избранные группы
-selected_groups = Table(
+favorite_group = Table(
     'selected_group',
     Base.metadata,
     Column('user_id', ForeignKey('telegram_user.telegram_id'), primary_key=True),
@@ -22,6 +22,19 @@ user_roles = Table(
 )
 
 
+# class FavoriteGroup(Base):
+#     __tablename__ = 'favorite_group'
+#
+#     user_id = Column(ForeignKey('telegram_user.telegram_id'), primary_key=True)
+#     group_id = Column(ForeignKey('group.group_id'), primary_key=True)
+#
+#     @classmethod
+#     async def get_all(cls, session):
+#         stmt = select(FavoriteGroup)
+#         records = await session.execute(stmt)
+#         return records.scalars().all()
+
+
 class User(Base):
     __tablename__ = 'telegram_user'
 
@@ -35,11 +48,9 @@ class User(Base):
 
     language = relationship('Language', lazy='selectin')
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
-    selected_groups = relationship('Group', lazy='selectin', secondary=selected_groups)
+    favorite_groups = relationship('Group', lazy='selectin', secondary=favorite_group)
     roles = relationship('Role', lazy='selectin', secondary=user_roles)
     kai_user = relationship('KAIUser', lazy='selectin', uselist=False, back_populates='telegram_user')
-
-    is_shown_parity = Column(Boolean, server_default=text('true'))
 
     def has_role(self, role_title: str):
         return role_title in [role.title for role in self.roles]
@@ -77,3 +88,9 @@ class User(Base):
             users = records.scalars().all()
 
         return users
+
+    @classmethod
+    async def get_all_selected_groups(cls, session):
+        stmt = select(User.group_id)
+        records = await session.execute(stmt)
+        return records.scalars().all()

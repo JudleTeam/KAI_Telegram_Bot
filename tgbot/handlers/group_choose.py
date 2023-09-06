@@ -8,7 +8,7 @@ from sqlalchemy import select
 from tgbot.handlers.profile import show_group_choose
 from tgbot.misc import callbacks, states
 from tgbot.misc.texts import messages
-from tgbot.services.database.models import User, Group, ScheduleDiscipline
+from tgbot.services.database.models import User, Group, GroupLesson
 from tgbot.services.kai_parser.schemas import KaiApiError, ParsingError
 from tgbot.services.kai_parser.utils import add_group_schedule
 
@@ -19,7 +19,7 @@ async def add_to_favorites(call: CallbackQuery, callback_data: dict, state: FSMC
 
     async with db_session.begin() as session:
         user = await session.get(User, call.from_user.id)
-        user.selected_groups.append(user.group)
+        user.favorite_groups.append(user.group)
 
     logging.info(f'[{call.from_user.id}]: Add group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_added))
@@ -32,7 +32,7 @@ async def remove_from_favorites(call: CallbackQuery, callback_data: dict, state:
 
     async with db_session.begin() as session:
         user = await session.get(User, call.from_user.id)
-        user.selected_groups.remove(user.group)
+        user.favorite_groups.remove(user.group)
 
     logging.info(f'[{call.from_user.id}]: Remove group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_removed))
@@ -56,7 +56,7 @@ async def select_group(call: CallbackQuery, callback_data: dict, state: FSMConte
 
     logging.info(f'[{call.from_user.id}]: Changed group to {user.group.group_name} with favorite groups')
     async with db_session() as session:
-        schedule = (await session.execute(select(ScheduleDiscipline).where(ScheduleDiscipline.group_id == user.group_id))).scalars().all()
+        schedule = (await session.execute(select(GroupLesson).where(GroupLesson.group_id == user.group_id))).scalars().all()
         if not schedule:
             try:
                 await add_group_schedule(user.group_id, db_session)
@@ -97,7 +97,7 @@ async def get_group_name(message: Message, state: FSMContext):
 
     logging.info(f'[{message.from_id}]: Changed group to {group_name} with input')
     async with db_session() as session:
-        schedule = (await session.execute(select(ScheduleDiscipline).where(ScheduleDiscipline.group_id == user.group_id))).scalars().all()
+        schedule = (await session.execute(select(GroupLesson).where(GroupLesson.group_id == user.group_id))).scalars().all()
         if not schedule:
             try:
                 await add_group_schedule(user.group_id, db_session)
