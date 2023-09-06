@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from tgbot.services.kai_parser import helper
 from tgbot.services.kai_parser.schemas import (KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials,
-                                               ParsingError, Documents)
+                                               ParsingError, Documents, Teacher)
 
 
 class KaiParser:
@@ -188,7 +188,7 @@ class KaiParser:
         return result
 
     @classmethod
-    async def get_group_teachers(cls, group_id: int) -> list | None:
+    async def get_group_teachers(cls, group_id: int) -> list[Teacher] | None:
         try:
             response = await cls._get_schedule_data(group_id)
         except Exception as e:

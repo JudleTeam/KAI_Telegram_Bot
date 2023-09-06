@@ -70,7 +70,7 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
         )
     elif payload == 'teachers':
         keyboard.add(
-            InlineKeyboardButton(_(buttons.teachers), callback_data=callbacks.schedule.new(action='teachers', payload=''))
+            InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='teachers', payload=''))
         )
     else:
         keyboard.add(
