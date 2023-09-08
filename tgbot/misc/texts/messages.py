@@ -117,7 +117,7 @@ phone_found = _('☑️ Your phone number was found in the database and your pro
 phone_not_found = _('❌ Your phone number was not found in the database')
 credentials_busy = _('❌ Someone is already signed in with these credentials')
 account_unlinked = _('You have successfully unlinked your account')
-channel_advertising = _('Subscribe to the Telegram channel of the project! '
+channel_advertising = _('Subscribe to the Telegram channel of the project!\n'
                         'There will be the latest news on the project and more!')
 kai_account_busy = _('❌ Account with this number already linked to someone else Telegram')
 dont_do = _('You don\'t have to do this!')
@@ -180,3 +180,5 @@ pin_text_input = _('Enter the text of the pinned message')
 documents = _('Documents')
 
 help_menu = _('Help menu')
+
+not_your_phone = _('This is not your phone number! Submit your number using the button below')

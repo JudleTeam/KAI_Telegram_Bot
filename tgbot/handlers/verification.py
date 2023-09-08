@@ -121,6 +121,10 @@ async def get_user_phone(message: Message, state: FSMContext):
     _ = message.bot.get('_')
     db = message.bot.get('database')
 
+    if message.from_id != message.contact.user_id:
+        await message.answer(_(messages.not_your_phone))
+        return
+
     is_verified = await verify_profile_with_phone(message.from_id, message.contact.phone_number, db)
     text = _(messages.phone_verified) + '\n\n'
     if is_verified is None:
