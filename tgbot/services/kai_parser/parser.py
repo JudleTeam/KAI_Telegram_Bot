@@ -26,7 +26,7 @@ class KaiParser:
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    _timeout = 10
+    _timeout = 30
 
     @classmethod
     async def _request(

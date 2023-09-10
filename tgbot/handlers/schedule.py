@@ -45,7 +45,7 @@ def form_lessons(schedule_list):
     return lessons
 
 
-async def form_day(_, db, user, today, with_date=False, with_pointer=False):
+async def form_day(_, db, user, today, with_pointer=False):
     week_num = int(today.strftime('%V'))
     if with_pointer and today.date() == datetime.datetime.now().date():
         with_pointer = True
@@ -71,7 +71,7 @@ async def form_day(_, db, user, today, with_date=False, with_pointer=False):
                         _('Friday'),
                         _('Saturday'),
                         _('Sunday'),
-                    )[today.weekday()] + (f' ({today.date().strftime("%d.%m.%Y")})' if with_date else ''),
+                    )[today.weekday()] + f' ({today.date().strftime("%d.%m.%Y")})',
         lessons=lessons
     )
 
@@ -94,7 +94,7 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-async def send_today_schedule(call: CallbackQuery, callback_data: dict):
+async def show_day_schedule(call: CallbackQuery, callback_data: dict):
     db, _ = call.bot.get('database'), call.bot.get('_')
     async with db() as session:
         user = await session.get(User, call.from_user.id)
@@ -107,17 +107,20 @@ async def send_today_schedule(call: CallbackQuery, callback_data: dict):
     else:
         today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
 
-    msg = await form_day(_, db, user, today, with_date=True)
+    int_parity = 2 if not int(today.strftime('%V')) % 2 else 1
+    parity = f'{_(messages.even_week) if int_parity == 2 else _(messages.odd_week)}'
+
+    text = await form_day(_, db, user, today) + md.hitalic(parity)
     keyboard = inline.get_schedule_day_keyboard(_, today, user.group.group_name)
     try:
-        await call.message.edit_text(msg, reply_markup=keyboard)
+        await call.message.edit_text(text, reply_markup=keyboard)
     except MessageNotModified as e:
         pass
 
     await call.answer()
 
 
-async def send_full_schedule(call: CallbackQuery, callback_data: dict):
+async def send_week_schedule(call: CallbackQuery, callback_data: dict):
     db = call.bot.get('database')
     _ = call.bot.get('_')
     async with db.begin() as session:
@@ -126,29 +129,20 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
             await call.answer(_(messages.select_group), show_alert=True)
             return
 
-    today = datetime.datetime.now()
-    if callback_data['payload'] == 'change':
-        today += datetime.timedelta(days=7)
-    today -= datetime.timedelta(days=today.weekday())
+    week_first_date = datetime.datetime.fromtimestamp(float(callback_data['payload']))
+    week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
+
     all_lessons = ''
-    for i in range(6):
-        try:
-            if callback_data['payload'] == 'change':
-                msg = await form_day(_, db, user, today + datetime.timedelta(days=i), False, True)
-            else:
-                msg = await form_day(_, db, user, today + datetime.timedelta(days=i), True, True)
-            all_lessons += msg
-        except Exception as e:
-            logging.error(f'[{call.from_user.id}]: Error with group {user.group.group_name} full schedule - {e}')
-            await call.answer(_(messages.kai_error), show_alert=True)
-            return
-    await call.message.edit_text(all_lessons,
-                                 reply_markup=inline.get_full_schedule_keyboard(_, user.group.group_name))
+    for week_day in range(6):
+        msg = await form_day(_, db, user, week_first_date + datetime.timedelta(days=week_day), True)
+        all_lessons += msg
+
+    await call.message.edit_text(all_lessons, reply_markup=inline.get_week_schedule_keyboard(_, week_first_date, user.group.group_name))
 
     await call.answer()
 
 
 def register_schedule(dp: Dispatcher):
-    dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'), state='*')
+    dp.register_callback_query_handler(show_day_schedule, callbacks.schedule.filter(action='show_day'), state='*')
     dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
-    dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
+    dp.register_callback_query_handler(send_week_schedule, callbacks.schedule.filter(action='week_schedule'), state='*')
