@@ -213,10 +213,10 @@ def get_verification_keyboard(_, user: User, payload):
         keyboard.add(
             InlineKeyboardButton(_(buttons.kai_login), callback_data=callbacks.action.new('start_login', payload))
         )
-    else:
-        keyboard.add(
-            InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.action.new('logout', payload))
-        )
+    # else:
+    #     keyboard.add(
+    #         InlineKeyboardButton(_(buttons.kai_logout), callback_data=callbacks.action.new('logout', payload))
+    #     )
 
     if is_verified:
         keyboard.add(
