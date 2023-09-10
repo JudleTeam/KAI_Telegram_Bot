@@ -95,7 +95,7 @@ async def main():
     await Role.insert_default_roles(async_sessionmaker)
     await parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
 
-    await parse_all_groups_schedule(async_sessionmaker)
+    # await parse_all_groups_schedule(async_sessionmaker)
     # asyncio.create_task(start_schedulers(bot, async_sessionmaker))
     # await update_schedule(bot, async_sessionmaker)
 
