@@ -25,7 +25,7 @@ class KAIUser(Base):
     is_leader = Column(Boolean, nullable=False)
 
     group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_kai_user_group'), nullable=False)
-    zach_number = Column(Integer, nullable=True)  # Уникальный?
+    zach_number = Column(String(32), nullable=True)  # Уникальный?
     competition_type = Column(String(64), nullable=True)  # Потом вынести типы в отдельную таблицу
     contract_number = Column(BigInteger, nullable=True)  # Уникальный?
     edu_level = Column(String(64), nullable=True)  # Потом вынести в отдельную таблицу
@@ -65,9 +65,8 @@ class KAIUser(Base):
         return record.scalar()
 
     @classmethod
-    async def get_by_email(cls, email: str, db: Session):
-        async with db() as session:
-            record = await session.execute(select(KAIUser).where(KAIUser.email == email))
+    async def get_by_email(cls, session, email: str):
+        record = await session.execute(select(KAIUser).where(KAIUser.email == email))
 
         return record.scalar()
 

@@ -6,51 +6,6 @@ from tgbot.services.kai_parser.schemas import UserInfo, BaseUser, Group, Lesson,
 from tgbot.services.utils import parse_phone_number
 
 
-def parse_teachers(response) -> list[Teacher]:
-    # виды занятий, название дисциплины, фио
-    res = []
-    for key in response:  # дни недели от 1 до 6
-        for el in response[key]:
-            lesson_type = el['disciplType'].strip()
-            lesson_name = el['disciplName'].strip()
-            teacher_name = el['prepodName'].strip()
-            if not teacher_name:
-                teacher_name = 'Не задан'
-            for i in res:
-                if i.lesson_name == lesson_name and i.teacher_full_name == teacher_name.title():
-                    if lesson_type not in i.type:
-                        i.type += f', {lesson_type}'
-                    break
-            else:
-                res.append(Teacher(lesson_type, lesson_name, teacher_name.title()))
-    return res
-
-
-def parse_schedule(response) -> list[list[Lesson]]:
-    res = []  # by days with lessons
-    for key in sorted(response):
-        day = response[key]
-        day_res = []
-        for lesson in day:
-            if '---' in (lesson["audNum"]).rstrip():  # Экранирование множественных тире
-                lesson["audNum"] = "--"
-            if '---' in (lesson["buildNum"]).rstrip():
-                lesson["buildNum"] = "--"
-            day_res.append(
-                Lesson(
-                    number_of_day=int(key),
-                    start_time=lesson["dayTime"][:5].rstrip(),
-                    parity_of_week=lesson["dayDate"][:100].rstrip(),
-                    lesson_name=lesson["disciplName"].rstrip(),
-                    auditory_number=lesson["audNum"].rstrip(),
-                    building_number=lesson["buildNum"].rstrip(),
-                    lesson_type=lesson["disciplType"][:4].rstrip()
-                )
-            )
-        res.append(day_res)
-    return res
-
-
 def parse_user_info(soup: BeautifulSoup):
     last_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_lastName')['value'].strip()
     first_name = soup.find('input', id='_aboutMe_WAR_aboutMe10_firstName')['value'].strip()
@@ -86,15 +41,15 @@ def parse_user_info(soup: BeautifulSoup):
 
 def parse_group_members(soup: BeautifulSoup) -> Group:
     group_members = list()
-    leader_ind = None
+    leader_num = None
     last_table = soup.find_all('table')[-1]
     table_rows = last_table.find_all('tr')
-    for ind, row in enumerate(table_rows[1:]):
+    for num, row in enumerate(table_rows[1:], start=1):
         columns = row.find_all('td')
 
         full_name = columns[1].text.strip()
         if 'Староста' in full_name:
-            leader_ind = ind
+            leader_num = num
             full_name = full_name.replace('Староста', '').strip()
         email = columns[2].text.strip().lower()
         phone = parse_phone_number(columns[3].text.strip())
@@ -102,7 +57,7 @@ def parse_group_members(soup: BeautifulSoup) -> Group:
         user = BaseUser(full_name=full_name, email=email, phone=phone)
         group_members.append(user)
 
-    return Group(members=group_members, leader_index=leader_ind)
+    return Group(members=group_members, leader_num=leader_num)
 
 
 def parse_documents(soup: BeautifulSoup) -> Documents:

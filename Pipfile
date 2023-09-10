@@ -16,11 +16,11 @@ lxml = "*"
 bs4 = "*"
 phonenumbers = "*"
 cryptography = "*"
-fuzzywuzzy = "*"
 python-levenshtein = "*"
 aioschedule = "*"
 alembic = "*"
 psycopg2-binary = "*"
+pydantic = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"

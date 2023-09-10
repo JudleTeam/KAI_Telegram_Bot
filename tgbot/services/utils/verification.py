@@ -12,33 +12,18 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
     user_about = full_user.user_about
     user_info = full_user.user_info
 
-    contract_number = int(user_about.numDog) if user_about.numDog.isdigit() else None
     roles_dict = await Role.get_roles_dict(db)
     prefix = None
 
     async with db.begin() as session:
-        kai_user: KAIUser = await KAIUser.get_by_email(full_user.user_info.email, db)
+        kai_user: KAIUser = await KAIUser.get_by_email(session, full_user.user_info.email)
         already_used = bool(kai_user.telegram_user_id) if kai_user else False
         tg_user: User = await session.get(User, tg_id)
-        speciality = await session.get(Speciality, int(user_about.specId))
-        if not speciality:
-            speciality = Speciality(id=int(user_about.specId), name=user_about.specName, code=user_about.specCode)
-            session.add(speciality)
 
-        departament = await session.get(Departament, int(user_about.kafId))
-        if not departament:
-            departament = Departament(id=int(user_about.kafId), name=user_about.kafName)
-            session.add(departament)
-
-        institute = await session.get(Institute, int(user_about.instId))
-        if not institute:
-            institute = Institute(id=int(user_about.instId), name=user_about.instName)
-            session.add(institute)
-
-        profile = await session.get(Profile, int(user_about.profileId))
-        if not profile:
-            profile = Profile(id=int(user_about.profileId), name=user_about.profileName)
-            session.add(profile)
+        speciality = await Speciality.get_or_create(session, user_about.specId, user_about.specName, user_about.specCode)
+        departament = await Departament.get_or_create(session, user_about.kafId, user_about.kafName)
+        institute = await Institute.get_or_create(session, user_about.instId, user_about.instName)
+        profile = await Profile.get_or_create(session, user_about.profileId, user_about.profileName)
 
         if not already_used:
             if not tg_user.has_role(roles.authorized):
@@ -48,7 +33,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 tg_user.roles.append(roles_dict[roles.verified])
 
             is_leader = False
-            leader_email = full_user.group.members[full_user.group.leader_index].email
+            leader_email = full_user.group.members[full_user.group.leader_num - 1].email
             if leader_email == user_info.email and not tg_user.has_role(roles.group_leader):
                 tg_user.roles.append(roles_dict[roles.group_leader])
                 is_leader = True
@@ -60,10 +45,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 kai_user.telegram_user_id = tg_id
                 kai_user.is_leader = is_leader
 
-            kai_user.kai_id = int(user_about.studId)
+            kai_user.kai_id = user_about.studId
             kai_user.competition_type = user_about.competitionType
-            kai_user.zach_number = int(user_about.zach)
-            kai_user.contract_number = contract_number
+            kai_user.zach_number = user_about.zach
+            kai_user.contract_number = user_about.numDog
             kai_user.edu_level = user_about.eduLevel
             kai_user.edu_cycle = user_about.eduCycle
             kai_user.edu_qualification = user_about.eduQualif
@@ -91,7 +76,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
         else:
             insert_tg_id = None if already_used else tg_id
             kai_user = KAIUser(
-                kai_id=int(user_about.studId),
+                kai_id=user_about.studId,
                 telegram_user_id=insert_tg_id,
                 login=login,
                 password=password,
@@ -102,10 +87,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 birthday=user_info.birthday,
                 is_leader=is_leader,
                 prefix=prefix,
-                group_id=int(user_about.groupId),
-                zach_number=int(user_about.zach),
+                group_id=user_about.groupId,
+                zach_number=user_about.zach,
                 competition_type=user_about.competitionType,
-                contract_number=contract_number,
+                contract_number=user_about.numDog,
                 edu_level=user_about.eduLevel,
                 edu_cycle=user_about.eduCycle,
                 edu_qualification=user_about.eduQualif,
@@ -117,46 +102,50 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 institute=institute
             )
 
-            group = await session.get(Group, int(user_about.groupId))
+            group = await session.get(Group, user_about.groupId)
             group.syllabus = full_user.documents.syllabus
             group.educational_program = full_user.documents.educational_program
             group.study_schedule = full_user.documents.study_schedule
 
             session.add(kai_user)
 
-        for ind, member in enumerate(full_user.group.members):
-            if member.email == user_info.email:
-                kai_user.position = ind + 1
-                await session.merge(kai_user)
-                continue
-
-            if member.phone:
-                member_tg: User = await User.get_by_phone(member.phone, db)
-                if member_tg and not member_tg.has_role(roles.verified):
-                    member_tg_id = member_tg.telegram_id
-                    member_tg.roles.append(roles_dict[roles.verified])
-                    await session.merge(member_tg)
-
-                    logging.info(f'[{tg_id}]: Verified classmate {member_tg_id}')
-                else:
-                    member_tg_id = None
-
-            member_in_db = await KAIUser.get_by_email(member.email, db)
-            if not member_in_db:
-                is_mem_leader = ind == full_user.group.leader_index
-                new_member = KAIUser(
-                    telegram_user_id=member_tg_id,
-                    full_name=member.full_name,
-                    phone=member.phone,
-                    email=member.email,
-                    is_leader=is_mem_leader,
-                    prefix='👨🏻‍💼' if is_mem_leader else None,
-                    position=ind + 1,
-                    group_id=int(user_about.groupId)
-                )
-                session.add(new_member)
+        await update_group_members(session, full_user, kai_user, roles_dict, tg_id)
 
     return not already_used
+
+
+async def update_group_members(session, full_user: FullUserData, kai_user: KAIUser, roles_dict: dict, tg_id: int):
+    for num, member in enumerate(full_user.group.members, start=1):
+        if member.email == full_user.user_info.email:
+            kai_user.position = num
+            await session.merge(kai_user)
+            continue
+
+        if member.phone:
+            member_tg: User = await User.get_by_phone(session, member.phone)
+            if member_tg and not member_tg.has_role(roles.verified):
+                member_tg_id = member_tg.telegram_id
+                member_tg.roles.append(roles_dict[roles.verified])
+                await session.merge(member_tg)
+
+                logging.info(f'[{tg_id}]: Verified classmate {member_tg_id}')
+            else:
+                member_tg_id = None
+
+        member_in_db = await KAIUser.get_by_email(session, member.email)
+        if not member_in_db:
+            is_mem_leader = num == full_user.group.leader_num
+            new_member = KAIUser(
+                telegram_user_id=member_tg_id,
+                full_name=member.full_name,
+                phone=member.phone,
+                email=member.email,
+                is_leader=is_mem_leader,
+                prefix='👨🏻‍💼' if is_mem_leader else None,
+                position=num,
+                group_id=full_user.user_about.groupId
+            )
+            session.add(new_member)
 
 
 async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -> bool | None:

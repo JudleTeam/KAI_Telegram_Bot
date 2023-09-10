@@ -19,10 +19,15 @@ class Group(Base):
     group_leader = relationship('KAIUser', lazy='selectin', foreign_keys=[group_leader_id])
 
     @classmethod
-    async def get_group_by_name(cls, group_name, db_session):
+    async def get_group_by_name(cls, session, group_name):
         if isinstance(group_name, str) and not group_name.isdigit():
             return None
 
-        async with db_session() as session:
-            record = await session.execute(select(Group).where(Group.group_name == int(group_name)))
-            return record.scalar()
+        record = await session.execute(select(Group).where(Group.group_name == int(group_name)))
+        return record.scalar()
+
+    @classmethod
+    async def get_all(cls, session):
+        stmt = select(Group)
+        records = await session.execute(stmt)
+        return records.scalars().all()

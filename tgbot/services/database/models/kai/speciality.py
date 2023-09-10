@@ -9,3 +9,12 @@ class Speciality(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
+
+    @classmethod
+    async def get_or_create(cls, session, spec_id: int, name: str, code: str):
+        spec = await session.get(Speciality, spec_id)
+        if not spec:
+            spec = Speciality(id=spec_id, name=name, code=code)
+            session.add(spec)
+
+        return spec

@@ -18,7 +18,7 @@ from tgbot.services.database.base import Base
 from tgbot.services.database.models import Language, Role
 from tgbot.services.database.models.right import Right
 from tgbot.services.kai_parser import KaiParser
-from tgbot.services.kai_parser.utils import parse_groups
+from tgbot.services.kai_parser.utils import parse_groups, parse_all_groups_schedule
 from tgbot.services.schedulers import start_schedulers, update_schedule
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,8 @@ async def main():
     await Role.insert_default_roles(async_sessionmaker)
     await parse_groups(await KaiParser.get_group_ids(), async_sessionmaker)
 
-    asyncio.create_task(start_schedulers(bot, async_sessionmaker))
+    await parse_all_groups_schedule(async_sessionmaker)
+    # asyncio.create_task(start_schedulers(bot, async_sessionmaker))
     # await update_schedule(bot, async_sessionmaker)
 
     try:
