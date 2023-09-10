@@ -1,5 +1,6 @@
 import datetime
 import logging
+from pprint import pprint
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -10,9 +11,8 @@ from aiogram.utils.exceptions import MessageNotModified
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc.texts import messages, buttons
-from tgbot.services.database.models import User
-from tgbot.services.kai_parser.utils import (get_schedule_by_week_day, lesson_type_to_emoji,
-                                             lesson_type_to_text)
+from tgbot.services.database.models import User, GroupLesson
+from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to_text
 
 
 def convert_day(today: str):
@@ -36,7 +36,7 @@ def form_lessons(schedule_list):
             start_time=lesson.start_time.strftime('%H:%M'),
             end_time=lesson.end_time.strftime('%H:%M'),
             lesson_type=lesson_type_to_emoji(lesson.lesson_type)[0],
-            lesson_name=markdown.hbold(lesson.lesson_name),
+            lesson_name=markdown.hbold(lesson.discipline.name),
             building=lesson.building_number,
             auditory=lesson.auditory_number,
             parity=md.hitalic(lesson.parity_of_week or '-')
@@ -46,16 +46,21 @@ def form_lessons(schedule_list):
 
 
 async def form_day(_, db, user, today, with_date=False, with_pointer=False):
-    week_num = int(today.strftime("%V"))
+    week_num = int(today.strftime('%V'))
     if with_pointer and today.date() == datetime.datetime.now().date():
         with_pointer = True
     else:
         with_pointer = False
-    schedule_list = await get_schedule_by_week_day(user.group_id, today.isoweekday(), 2 if not week_num % 2 else 1, db)
-    if not schedule_list or not schedule_list[0].lesson_name:
+
+    int_parity = 2 if not week_num % 2 else 1
+    async with db() as session:
+        schedule = await GroupLesson.get_group_day_schedule(session, user.group_id, today.isoweekday(), int_parity)
+
+    if not schedule:
         lessons = _('Day off\n')
     else:
-        lessons = form_lessons(schedule_list)
+        lessons = form_lessons(schedule)
+
     msg = messages.schedule_day_template.format(
         day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
                     (
@@ -143,17 +148,7 @@ async def send_full_schedule(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
-async def switch_show_parity(call: CallbackQuery, state: FSMContext):
-    db = call.bot.get('database')
-    async with db.begin() as session:
-        user = await session.get(User, call.from_user.id)
-        user.is_shown_parity = not user.is_shown_parity
-    await show_schedule_menu(call, state)
-    await call.answer()
-
-
 def register_schedule(dp: Dispatcher):
     dp.register_callback_query_handler(send_today_schedule, callbacks.schedule.filter(action='show_day'), state='*')
     dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
     dp.register_callback_query_handler(send_full_schedule, callbacks.schedule.filter(action='full_schedule'), state='*')
-    dp.register_callback_query_handler(switch_show_parity, callbacks.schedule.filter(action='switch_show_parity'), state='*')

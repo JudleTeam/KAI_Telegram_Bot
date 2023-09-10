@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete, ForeignKey
+from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete, ForeignKey, or_
 from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
@@ -22,16 +22,22 @@ class GroupLesson(Base):
     discipline_id = Column(Integer, ForeignKey('discipline.id'), nullable=False)
     teacher_id = Column(String(64), ForeignKey('teacher.login'), nullable=True)
 
-    discipline = relationship('Discipline', backref='lessons')
+    discipline = relationship('Discipline', lazy='selectin', backref='lessons')
     # Если teacher = None, значит стоит "Преподаватель кафедры"
     teacher = relationship('Teacher', backref='lessons')
 
     @classmethod
-    async def get_group_day_schedule(cls, session, group_id, day):
+    async def get_group_day_schedule(cls, session, group_id, day, int_parity=0):
         stmt = select(GroupLesson).where(
             GroupLesson.group_id == group_id,
-            GroupLesson.number_of_day == day
-        )
+            GroupLesson.number_of_day == day,
+            or_(
+                GroupLesson.int_parity_of_week == 0,
+                GroupLesson.int_parity_of_week == int_parity
+            )
+        ).order_by(GroupLesson.start_time)
+
+        print(stmt)
 
         records = await session.execute(stmt)
         return records.scalars().all()
