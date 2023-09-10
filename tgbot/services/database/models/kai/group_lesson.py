@@ -1,10 +1,10 @@
 import datetime
+from pprint import pprint
 
-from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete, ForeignKey, or_
+from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete, ForeignKey, or_, text
 from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
-
 
 class GroupLesson(Base):
     __tablename__ = 'group_lesson'
@@ -25,6 +25,31 @@ class GroupLesson(Base):
     discipline = relationship('Discipline', lazy='selectin', backref='lessons')
     # Если teacher = None, значит стоит "Преподаватель кафедры"
     teacher = relationship('Teacher', backref='lessons')
+
+    @property
+    def lesson_type_emoji(self):
+        lessons_emoji = {
+            'лек': '📢',
+            'пр': '📝',
+            'л.р.': '🧪',
+            'физ': '🏆',
+            'конс': '❓'
+        }
+
+        return lessons_emoji[self.lesson_type]
+
+    @property
+    def lesson_type_text(self):
+        lessons_text = {
+            'лек': 'Лекция',
+            'пр': 'Практика',
+            'л.р.': 'Лабораторная',
+            'физ': 'Физра',
+            'конс': 'Консультация'
+        }
+
+        return lessons_text[self.lesson_type]
+
 
     @classmethod
     async def get_group_day_schedule(cls, session, group_id, day, int_parity=0):

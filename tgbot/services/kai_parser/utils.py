@@ -36,39 +36,28 @@ def parse_parity(parity: str) -> int:
     return 0
 
 
-def lesson_type_order(lesson_type: str):
-    res = []
-    if 'лек' in lesson_type:
-        res.append('лек')
-    if 'пр' in lesson_type:
-        res.append('пр')
-    if 'л.р.' in lesson_type:
-        res.append('л.р.')
-    return ', '.join(res)
-
-
-def lesson_type_to_emoji(lesson_type):
+def lesson_type_to_emoji(lesson_type: str):
     lessons_emoji = {
         'лек': '📢',
         'пр': '📝',
         'л.р.': '🧪',
-        'физ': '🏆'
+        'физ': '🏆',
+        'конс': '❓'
     }
 
-    res = [lessons_emoji[el] for el in lesson_type.split(', ')]
-    return res
+    return lessons_emoji[lesson_type]
 
 
-def lesson_type_to_text(lesson_type):
-    lessons_types = {
+def lesson_type_to_text(lesson_type: str):
+    lessons_text = {
         'лек': 'Лекция',
         'пр': 'Практика',
         'л.р.': 'Лабораторная',
-        'физ': 'Физра'
+        'физ': 'Физра',
+        'конс': 'Консультация'
     }
 
-    res = [lessons_types[el] for el in lesson_type.split(', ')]
-    return res
+    return lessons_text[lesson_type]
 
 
 def get_lesson_end_time(start_time: datetime.time, lesson_type: str) -> datetime.time | None:

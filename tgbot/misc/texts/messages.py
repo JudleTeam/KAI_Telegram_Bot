@@ -61,6 +61,7 @@ teachers_template = _(
 teacher = (
     '{lesson_name} [{lesson_types}]\n'
     '{full_name}\n'
+    '{departament}\n'
     '————————————————\n'
 )
 
