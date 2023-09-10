@@ -106,6 +106,17 @@ class UserAbout(BaseModel):
     kafId: int
     rabTheme: str | None
 
+    @field_validator('numDog', mode='before')
+    @classmethod
+    def validate_num_dog(cls, num_dog: str):
+        num_dog = num_dog.strip()
+        if not num_dog.isdigit():
+            return None
+        return int(num_dog)
+
+    class Config:
+        str_strip_whitespace = True
+
 
 class Group(BaseModel):
     members: list[BaseUser]

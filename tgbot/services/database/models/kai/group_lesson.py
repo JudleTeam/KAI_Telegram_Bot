@@ -37,8 +37,6 @@ class GroupLesson(Base):
             )
         ).order_by(GroupLesson.start_time)
 
-        print(stmt)
-
         records = await session.execute(stmt)
         return records.scalars().all()
 
