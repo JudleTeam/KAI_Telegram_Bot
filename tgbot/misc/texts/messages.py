@@ -183,3 +183,6 @@ documents = _('Documents')
 help_menu = _('Help menu')
 
 not_your_phone = _('This is not your phone number! Submit your number using the button below')
+
+even_week = _('Even week')
+odd_week = _('Odd week')

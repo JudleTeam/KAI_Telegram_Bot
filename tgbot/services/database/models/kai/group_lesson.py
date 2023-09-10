@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
 
+
 class GroupLesson(Base):
     __tablename__ = 'group_lesson'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -49,7 +50,6 @@ class GroupLesson(Base):
         }
 
         return lessons_text[self.lesson_type]
-
 
     @classmethod
     async def get_group_day_schedule(cls, session, group_id, day, int_parity=0):

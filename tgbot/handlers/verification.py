@@ -90,9 +90,9 @@ async def get_user_password(message: Message, state: FSMContext):
     keyboard = inline_keyboards.get_back_keyboard(_, 'verification', payload=state_data['payload'])
     try:
         user_data = await KaiParser.get_full_user_data(login, password)
-    except KaiApiError:
+    except KaiApiError as error:
         await main_call.message.edit_text(_(messages.kai_error), reply_markup=keyboard)
-        logging.info(f'[{message.from_id}]: Got KAI error on login')
+        logging.info(f'[{message.from_id}]: Got KAI error on login - {error}')
     except BadCredentials:
         await main_call.message.edit_text(_(messages.bad_credentials), reply_markup=keyboard)
         logging.info(f'[{message.from_id}]: Bad credentials')
