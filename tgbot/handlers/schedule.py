@@ -11,7 +11,7 @@ import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc.texts import messages, buttons
 from tgbot.services.database.models import User
-from tgbot.services.kai_parser.utils import (get_schedule_by_week_day, lesson_type_to_emoji, add_group_schedule,
+from tgbot.services.kai_parser.utils import (get_schedule_by_week_day, lesson_type_to_emoji,
                                              lesson_type_to_text)
 
 

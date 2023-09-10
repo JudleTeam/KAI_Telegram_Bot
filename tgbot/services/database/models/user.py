@@ -75,9 +75,8 @@ class User(Base):
         return [role.title for role in self.roles]
 
     @classmethod
-    async def get_by_phone(cls, phone, db: Session):
-        async with db() as session:
-            record = await session.execute(select(User).where(User.phone == phone))
+    async def get_by_phone(cls, session, phone):
+        record = await session.execute(select(User).where(User.phone == phone))
 
         return record.scalar()
 

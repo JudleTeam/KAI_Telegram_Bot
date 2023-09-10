@@ -1,14 +1,17 @@
+import asyncio
 import json
 import logging
 from json import JSONDecodeError
+from pprint import pprint
 
 import aiohttp
+from aiohttp import CookieJar
 from aiohttp.abc import AbstractCookieJar
 from bs4 import BeautifulSoup
 
 from tgbot.services.kai_parser import helper
 from tgbot.services.kai_parser.schemas import (KaiApiError, UserAbout, FullUserData, Group, UserInfo, BadCredentials,
-                                               ParsingError, Documents, Teacher)
+                                               ParsingError, Documents, Teacher, GroupsResult, Lesson)
 
 
 class KaiParser:
@@ -26,28 +29,70 @@ class KaiParser:
     _timeout = 10
 
     @classmethod
+    async def _request(
+            cls,
+            method: str,
+            url: str,
+            requires_login: bool = False,
+            login_cookies: CookieJar | None = None,
+            login: str | None = None,
+            password: str | None = None,
+            return_soup: bool = False,
+            return_text: bool = False,
+            return_json: bool = False,
+            **kwargs
+    ):
+
+        if method not in ('POST', 'GET', 'PUT', 'DELETE', 'PATCH'):
+            raise ValueError(f'Unknown method "{method}"')
+
+        if requires_login and not login_cookies:
+            login_cookies = await cls._get_login_cookies(login, password)
+
+        async with aiohttp.ClientSession(headers=cls.base_headers, cookie_jar=login_cookies) as session:
+            match method:
+                case 'POST':
+                    request = session.post
+                case 'GET':
+                    request = session.get
+                case 'PUT':
+                    request = session.put
+                case 'DELETE':
+                    request = session.delete
+                case 'PATCH':
+                    request = session.patch
+
+            try:
+                async with request(url, timeout=cls._timeout, **kwargs) as response:
+                    if not response.ok:
+                        raise KaiApiError(f'{login or ""} {response.status} received from "{url}"')
+
+                    if return_soup:
+                        return BeautifulSoup(await response.text(), 'lxml')
+
+                    if return_text:
+                        return await response.text()
+
+                    if return_json:
+                        return await response.json(content_type='text/html')
+
+                    return response
+
+            except asyncio.TimeoutError:
+                raise KaiApiError(f'Timeout error received from "{url}"')
+
+    @classmethod
     async def get_documents(cls, login, password, login_cookies=None) -> Documents:
-        login_cookies = login_cookies or await cls._get_login_cookies(login, password)
-
-        async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
-            async with session.get(cls.syllabus_url, headers=cls.base_headers) as response:
-                if not response.ok:
-                    raise KaiApiError(f'[{login}]: {response.status} received from syllabus request')
-
-                soup = BeautifulSoup(await response.text(), 'lxml')
+        """Need fix"""
+        soup = await cls._request('GET', cls.syllabus_url, True, login_cookies=login_cookies,
+                                  login=login, password=password, return_soup=True)
 
         return helper.parse_documents(soup)
 
     @classmethod
     async def get_user_info(cls, login, password, login_cookies=None) -> UserInfo:
-        login_cookies = login_cookies or await cls._get_login_cookies(login, password)
-
-        async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
-            async with session.get(cls.about_me_url, headers=cls.base_headers) as response:
-                if not response.ok:
-                    raise KaiApiError(f'[{login}]: {response.status} received from about me request')
-
-                soup = BeautifulSoup(await response.text(), 'lxml')
+        soup = await cls._request('GET', cls.about_me_url, True, login_cookies=login_cookies,
+                                  login=login, password=password, return_soup=True)
 
         return helper.parse_user_info(soup)
 
@@ -102,19 +147,14 @@ class KaiParser:
             'p_p_col_id': 'column-2',
             'p_p_col_count': 1
         }
+        about_me_data = {
+            'login': login,
+            'tab': 'student'
+        }
 
-        login_cookies = login_cookies or await cls._get_login_cookies(login, password)
-
-        async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
-            about_me_data = {
-                'login': login,
-                'tab': 'student'
-            }
-            async with session.post(cls.about_me_url, headers=cls.base_headers,
-                                    data=about_me_data, params=request_params) as response:
-                if not response.ok:
-                    raise KaiApiError(f'[{login}]: {response.status} received from about me request')
-                text = await response.text()
+        text = await cls._request('POST', cls.about_me_url, requires_login=True, login_cookies=login_cookies,
+                                  login=login, password=password, return_text=True, data=about_me_data,
+                                  params=request_params)
 
         text = text.strip()
         try:
@@ -149,58 +189,21 @@ class KaiParser:
 
     @classmethod
     async def get_user_group_members(cls, login, password, login_cookies=None) -> Group:
-        login_cookies = login_cookies or await cls._get_login_cookies(login, password)
-
-        async with aiohttp.ClientSession(cookie_jar=login_cookies) as session:
-            async with session.get(cls.my_group_url, headers=cls.base_headers) as response:
-                if not response.ok:
-                    raise KaiApiError(f'[{login}]: {response.status} received from my group request')
-                soup = BeautifulSoup(await response.text(), 'lxml')
+        soup = await cls._request('GET', cls.my_group_url, True, login_cookies=login_cookies,
+                                  login=login, password=password, return_soup=True)
 
         return helper.parse_group_members(soup)
 
     @classmethod
-    async def get_group_ids(cls) -> dict:
+    async def get_group_ids(cls) -> list[GroupsResult]:
         params = {
             'p_p_id': 'pubStudentSchedule_WAR_publicStudentSchedule10',
             'p_p_lifecycle': 2,
             'p_p_resource_id': 'getGroupsURL'
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(cls.base_url, headers=cls.base_headers,
-                                    params=params, timeout=cls._timeout) as response:
-                response = await response.json(content_type='text/html')
-                return response
 
-    @classmethod
-    async def get_group_schedule(cls, group_id: int) -> list | None:
-        try:
-            response = await cls._get_schedule_data(group_id)
-        except Exception as e:
-            logging.error(e)
-            raise KaiApiError
-
-        try:
-            result = helper.parse_schedule(response)
-        except Exception as e:
-            logging.error(e)
-            raise ParsingError
-        return result
-
-    @classmethod
-    async def get_group_teachers(cls, group_id: int) -> list[Teacher] | None:
-        try:
-            response = await cls._get_schedule_data(group_id)
-        except Exception as e:
-            logging.error(e)
-            raise KaiApiError
-
-        try:
-            result = helper.parse_teachers(response)
-        except Exception as e:
-            logging.error(e)
-            raise ParsingError
-        return result
+        result = await cls._request('POST', cls.base_url, params=params, return_json=True)
+        return [GroupsResult(**group) for group in result]
 
     @classmethod
     async def _get_login_cookies(cls, login, password, retries=1) -> AbstractCookieJar | None:
@@ -251,7 +254,7 @@ class KaiParser:
         return await cls._get_login_cookies(login, password, retries + 1)
 
     @classmethod
-    async def _get_schedule_data(cls, group_id: int) -> list:
+    async def get_group_schedule(cls, group_id: int) -> list[Lesson]:
         params = {
             'p_p_id': 'pubStudentSchedule_WAR_publicStudentSchedule10',
             'p_p_lifecycle': 2,
@@ -260,8 +263,7 @@ class KaiParser:
         data = {
             'groupId': group_id
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(cls.base_url, data=data, headers=cls.base_headers,
-                                    params=params, timeout=cls._timeout) as response:
-                response = await response.json(content_type='text/html')
-                return response
+
+        result = await cls._request('POST', cls.base_url, data=data, params=params, return_json=True)
+        return [Lesson(**lesson) for day_lessons in result.values() for lesson in day_lessons]
+

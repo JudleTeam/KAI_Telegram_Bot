@@ -7,7 +7,6 @@ from sqlalchemy import select, text, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tgbot.services.database.models import User, GroupLesson
-from tgbot.services.kai_parser.utils import add_group_schedule
 
 
 async def update_schedule(bot: Bot, db: AsyncSession):

@@ -1,59 +1,39 @@
 import asyncio
 import datetime
-from fuzzywuzzy import process, utils
+import logging
+from pprint import pprint
 
 from sqlalchemy.exc import IntegrityError
 
 from tgbot.services.kai_parser.parser import KaiParser
-from tgbot.services.database.models import GroupLesson, GroupTeacher, Group
-from tgbot.services.kai_parser.schemas import KaiApiError
+from tgbot.services.database.models import GroupLesson, Group, Departament, Teacher, Discipline
+from tgbot.services.kai_parser.schemas import KaiApiError, GroupsResult
 
 
-def get_int_parity(parity_raw: str) -> int:
-    templates_odd = ['неч', 'неч.нед.', 'Нечет.нед.', 'неч/-', ]
-    templates_even = ['чет', '-/чет', 'четная неделя', 'чет.нед.', ]
+def parse_parity(parity: str) -> int:
+    """
+    0 - any week
+    1 - odd week
+    2 - even week
+    """
 
-    if utils.full_process(parity_raw):
-        a = process.extractOne(parity_raw, templates_odd)
-        b = process.extractOne(parity_raw, templates_even)
+    odd = False
+    even = False
 
-        # parity_of_week 0 - both, 1 - odd, 2 - even
-        if a[1] > 70 or b[1] > 70:
-            if a[1] > b[1]:
-                return 1
-            elif b[1] > a[1]:
-                return 2
-            else:
-                return 0
+    # 'нея' - typo. Check misc/possible_parity.txt
+    if 'нечет' in parity or 'неч' in parity or 'нея' in parity:
+        odd = True
+        parity = parity.replace('нечет', '')
 
-    if ',' in parity_raw:
-        sep = ','
-    else:
-        sep = ' '
-    if '/' in parity_raw:
-        parity_raw = parity_raw.replace('/', sep)
-    h = parity_raw.split(sep)
+    if 'чет' in parity:
+        even = True
 
-    year = datetime.datetime.now().year
-    sum_k = []
-    for j in h:
-        try:
-            try:
-                date = datetime.datetime.strptime(j, '%d.%m.%Y')
-            except:
-                j = j.strip() + f'.{year}'
-            date = datetime.datetime.strptime(j, '%d.%m.%Y')
+    if odd and not even:
+        return 1
+    if even and not odd:
+        return 2
 
-            sum_k.append(int(date.strftime("%V")) % 2)  # append 0 or 1
-        except:
-            pass
-    else:
-        if sum_k and len(sum_k) * sum_k[0] == sum(sum_k):
-            parity_of_week = sum_k[0]
-        else:
-            parity_of_week = 0
-
-    return parity_of_week
+    return 0
 
 
 def lesson_type_order(lesson_type: str):
@@ -91,68 +71,42 @@ def lesson_type_to_text(lesson_type):
     return res
 
 
-def get_lesson_end_time(start_time: datetime.time, lesson_type: str):
-    schedule_time = (
-        (datetime.time(8, 00), datetime.time(9, 30)),
-        (datetime.time(9, 40), datetime.time(11, 10)),
-        (datetime.time(11, 20), datetime.time(12, 50)),
-        (datetime.time(13, 30), datetime.time(15, 0)),
-        (datetime.time(15, 10), datetime.time(16, 40)),
-        (datetime.time(16, 50), datetime.time(18, 20)),
-        (datetime.time(18, 25), datetime.time(19, 55)),
-        (datetime.time(20, 0), datetime.time(21, 30))
+def get_lesson_end_time(start_time: datetime.time, lesson_type: str) -> datetime.time | None:
+    """
+    Время пар не подходит для филиалов. На момент 2023-2024 учебного года на сайте КАИ есть расписание только некоторых
+    филиалов, например группы с номером из 5 цифр или начинающиеся с "8" относятся к каким-то филиалам
+
+    (Возможно стоит сделать адаптивное определение времени - получить всё возможное время начала пары для группы или
+    факультета и на его основе определять время конца пары, т.е. просто собирать отдельно список start_times.
+    А возможно и не стоит думать о других филиалах вообще)
+    """
+    start_times = (
+        datetime.timedelta(hours=8, minutes=00),
+        datetime.timedelta(hours=9, minutes=40),
+        datetime.timedelta(hours=11, minutes=20),
+        datetime.timedelta(hours=13, minutes=30),
+        datetime.timedelta(hours=15, minutes=10),
+        datetime.timedelta(hours=16, minutes=50),
+        datetime.timedelta(hours=18, minutes=25),
+        datetime.timedelta(hours=20, minutes=00)
     )
 
-    match lesson_type:
-        case 'лек' | 'пр':
-            for lesson_time in schedule_time:
-                if lesson_time[0] == start_time:
-                    return lesson_time[1]
-        case 'л.р.':
-            for ind, lesson_time in enumerate(schedule_time):
-                if lesson_time[0] == start_time:
-                    return schedule_time[ind + 1][1]
+    start_time = datetime.timedelta(hours=start_time.hour, minutes=start_time.minute)
 
+    if start_time not in start_times:
+        return None
 
-async def add_group_schedule(group_id: int, async_session):
-    response = await KaiParser.get_group_schedule(group_id)
+    lesson_timedelta = datetime.timedelta(hours=1, minutes=30)
+    if lesson_type == 'л.р.':
+        next_lesson_ind = start_times.index(start_time) + 1
+        if next_lesson_ind > len(start_times) - 1:
+            # Бывают лабораторные работы в 20:00, видимо они длятся одну пару
+            next_lesson_ind = len(start_times) - 1
+        end_time = start_times[next_lesson_ind] + lesson_timedelta
+    else:
+        end_time = start_time + lesson_timedelta
 
-    async with async_session.begin() as session:
-        for day in response:
-            for lesson in day:
-                start_time = datetime.datetime.strptime(lesson.start_time, '%H:%M').time()
-
-                new_lesson = GroupLesson(
-                    group_id=group_id,
-                    number_of_day=lesson.number_of_day,
-                    parity_of_week=lesson.parity_of_week,
-                    int_parity_of_week=get_int_parity(lesson.parity_of_week),
-                    lesson_name=lesson.lesson_name,
-                    auditory_number=lesson.auditory_number,
-                    building_number=lesson.building_number,
-                    lesson_type=lesson.lesson_type,
-                    start_time=start_time,
-                    end_time=get_lesson_end_time(start_time, lesson.lesson_type)
-                )
-                session.add(new_lesson)
-
-
-async def add_group_teachers(group_id: int, async_session):
-    teachers = await KaiParser.get_group_teachers(group_id)
-    if not teachers:
-        raise KaiApiError
-
-    async with async_session.begin() as session:
-        for teacher in teachers:
-            teacher.type = lesson_type_order(teacher.type)
-
-            new_teacher = GroupTeacher(
-                group_id=group_id,
-                teacher_name=teacher.teacher_full_name,
-                lesson_type=teacher.type,
-                lesson_name=teacher.lesson_name
-            )
-            session.add(new_teacher)
+    return (datetime.datetime.min + end_time).time()
 
 
 async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int, db):
@@ -168,25 +122,12 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
         return schedule
 
 
-async def get_group_teachers(group_id: int, db_session):
-    teachers = await GroupTeacher.get_group_teachers(group_id, db_session)
-    if teachers:
-        return teachers
-
-    try:
-        await add_group_teachers(group_id, db_session)
-    except KaiApiError:
-        return None
-    else:
-        return await get_group_teachers(group_id, db_session)
-
-
-async def parse_groups(parsed_groups, db):
+async def parse_groups(parsed_groups: list[GroupsResult], db):
     async with db() as session:
         for parsed_group in parsed_groups:
             new_group = Group(
-                group_id=parsed_group['id'],
-                group_name=int(parsed_group['group'])
+                group_id=parsed_group.id,
+                group_name=int(parsed_group.group)
             )
             session.add(new_group)
             try:
@@ -196,21 +137,55 @@ async def parse_groups(parsed_groups, db):
                 await session.flush()
 
 
-async def get_group_id(group_name: int) -> int | None:
-    groups = await KaiParser.get_group_ids()
-    for group in groups:
-        if group['group'] == str(group_name):
-            return int(group['id'])
-    return None
+async def parse_all_groups_schedule(db):
+    """
+    Обновляет расписание для всех групп из базы. Занимает 5-10 минут
+    """
+    logging.info('Start parsing all groups')
+    async with db.begin() as session:
+        groups = await Group.get_all(session)
+        total = len(groups)
+        for parsed, group in enumerate(groups, start=1):
+            try:
+                group_schedule = await KaiParser.get_group_schedule(group.group_id)
+                new_schedule = list()
+                for lesson in group_schedule:
+                    departament = await Departament.get_or_create(session, lesson.orgUnitId, lesson.orgUnitName)
+                    teacher = await Teacher.get_or_create(session, lesson.prepodLogin, lesson.prepodName, departament)
+                    discipline = await Discipline.get_or_create(session, lesson.disciplNum, lesson.disciplName)
+                    new_lesson = await GroupLesson.update_or_create(
+                        session, group.group_id, lesson, discipline, teacher, parse_parity(lesson.dayDate),
+                        get_lesson_end_time(lesson.dayTime, lesson.disciplType)
+                    )
+                    new_schedule.append(new_lesson)
+
+                deleted_lessons = await GroupLesson.clear_old_schedule(session, group.group_id, new_schedule)
+                # Удаленные пары для отслеживания изменений в расписании
+
+            except Exception as error:
+                logging.error(f'Error with group {group.group_name}: {error}')
+                continue
+
+            if parsed % 50 == 0:
+                logging.info(f'{parsed}/{total} parsed')
+
+    logging.info('All groups parsing complete')
 
 
 async def main():
     k = KaiParser()
-    res = await k.get_group_schedule(23551)  # 23551 - 4120
-    for i in res:
-        for j in i:
-            print(j)
-        print('\n')
+    groups = await k.get_group_ids()
+    possible_parity = set()
+    total = len(groups)
+    for num, group in enumerate(groups[:2], start=1):
+        schedule = await k.get_group_schedule(group.id)  # 23551 - 4120
+
+        pprint(schedule)
+        print(f'{num}/{total}')
+        # pprint(schedule)
+        # print()
+
+    pprint(possible_parity)
 
 
 if __name__ == '__main__':
