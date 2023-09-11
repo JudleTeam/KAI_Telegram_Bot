@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d03a4e7af0a941cc393b2f751e7c3e5f59a6bfc6555adf29eb1494ff878c7f5c"
+            "sha256": "79192fc33a6b9dcbfdd4c1b7fb773954ddcda812b6ecf860e906b474bd2bb901"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -24,6 +24,15 @@
             "index": "pypi",
             "markers": "python_version >= '3.7'",
             "version": "==2.25.1"
+        },
+        "aiogram-broadcaster": {
+            "hashes": [
+                "sha256:739ab68abc39576084c2150d5c577c4f00dded238406f2238e440451da352ec6",
+                "sha256:e372fc5560fd286bd78e45e96bd5ea212dd5171a84ca3fe2fc81c0f2d5d42775"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "version": "==0.0.7"
         },
         "aiohttp": {
             "hashes": [

@@ -21,6 +21,7 @@ alembic = "*"
 pydantic = "*"
 uvloop = "*"
 ujson = "*"
+aiogram-broadcaster = "*"
 
 [dev-packages]
 pipenv-to-requirements = "*"
