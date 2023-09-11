@@ -63,10 +63,10 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             kai_user.sex = user_info.sex
             kai_user.birthday = user_info.birthday
 
-            kai_user.speciality = speciality
-            kai_user.departament = departament
-            kai_user.institute = institute
-            kai_user.profile = profile
+            kai_user.group.speciality = speciality
+            kai_user.group.departament = departament
+            kai_user.group.institute = institute
+            kai_user.group.profile = profile
 
             kai_user.group.syllabus = full_user.documents.syllabus
             kai_user.group.educational_program = full_user.documents.educational_program
@@ -107,6 +107,11 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             group.educational_program = full_user.documents.educational_program
             group.study_schedule = full_user.documents.study_schedule
 
+            group.speciality = speciality
+            group.departament = departament
+            group.institute = institute
+            group.profile = profile
+
             session.add(kai_user)
 
         await update_group_members(session, full_user, kai_user, roles_dict, tg_id)
@@ -121,6 +126,7 @@ async def update_group_members(session, full_user: FullUserData, kai_user: KAIUs
             await session.merge(kai_user)
             continue
 
+        member_tg_id = None
         if member.phone:
             member_tg: User = await User.get_by_phone(session, member.phone)
             if member_tg and not member_tg.has_role(roles.verified):
@@ -129,8 +135,6 @@ async def update_group_members(session, full_user: FullUserData, kai_user: KAIUs
                 await session.merge(member_tg)
 
                 logging.info(f'[{tg_id}]: Verified classmate {member_tg_id}')
-            else:
-                member_tg_id = None
 
         member_in_db = await KAIUser.get_by_email(session, member.email)
         if not member_in_db:
