@@ -83,6 +83,7 @@ class GroupLesson(Base):
     async def clear_old_schedule(cls, session, group_id: int, new_schedule: list) -> list:
         deleted_lessons = list()
         current_schedule = await cls.get_group_schedule(session, group_id)
+        pprint(current_schedule)
         for old_lesson in current_schedule:
             if old_lesson not in new_schedule:
                 deleted_lessons.append(old_lesson)
@@ -97,14 +98,14 @@ class GroupLesson(Base):
             GroupLesson.number_of_day == lesson.dayNum,
             GroupLesson.start_time == lesson.dayTime,
             GroupLesson.teacher == teacher,
-            GroupLesson.discipline == discipline
+            GroupLesson.discipline == discipline,
+            GroupLesson.int_parity_of_week == int_parity
         )
         record = await session.execute(stmt)
         db_lesson: GroupLesson = record.scalar()
 
         if db_lesson:
             db_lesson.parity_of_week = lesson.dayDate
-            db_lesson.int_parity_of_week = int_parity
             db_lesson.lesson_type = lesson.disciplType
             db_lesson.auditory_number = lesson.audNum
             db_lesson.building_number = lesson.buildNum
