@@ -83,7 +83,6 @@ class GroupLesson(Base):
     async def clear_old_schedule(cls, session, group_id: int, new_schedule: list) -> list:
         deleted_lessons = list()
         current_schedule = await cls.get_group_schedule(session, group_id)
-        pprint(current_schedule)
         for old_lesson in current_schedule:
             if old_lesson not in new_schedule:
                 deleted_lessons.append(old_lesson)
