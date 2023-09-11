@@ -25,3 +25,17 @@
 `pybabel compile -d tgbot/locales -D kai_bot`
 
 ---
+
+## Миграции
+
+Для миграций используется alembic
+
+### Первый запуск
+1. Инициализация alembic -`alembic init -t async <path>`\
+В корне проекта появится `alembic.ini`, а по указанному пути появится папка с миграциями.
+В `alembic.ini` нужно в `sqlalchemy.url` вписать ссылку для подключения к БД, а в папке с миграциями в файле `env.py` 
+нужно импортировать `Base` из `tgbot.services.database.base` и в `target_metadata` указать `Base.metadata`
+2. Создание скрипта миграции - `alembic revision -m "<message>" --autogenerate`
+3. Проведение миграций - `alembic upgrade head`
+
+---

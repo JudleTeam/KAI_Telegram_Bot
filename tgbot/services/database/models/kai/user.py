@@ -34,16 +34,6 @@ class KAIUser(Base):
     program_form = Column(String(64), nullable=True)  # Потом вынести в отдельную таблицу
     status = Column(String(64), nullable=True)  # Потом вынести в отдельную таблицу
 
-    speciality_id = Column(Integer, ForeignKey('speciality.id'), nullable=True)
-    profile_id = Column(Integer, ForeignKey('profile.id'), nullable=True)
-    institute_id = Column(Integer, ForeignKey('institute.id'), nullable=True)
-    departament_id = Column(Integer, ForeignKey('departament.id'), nullable=True)
-
-    speciality = relationship('Speciality', lazy='selectin')
-    profile = relationship('Profile', lazy='selectin')
-    departament = relationship('Departament', lazy='selectin')
-    institute = relationship('Institute', lazy='selectin')
-
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     telegram_user = relationship('User', lazy='selectin', uselist=False, back_populates='kai_user')
 

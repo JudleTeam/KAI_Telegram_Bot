@@ -19,18 +19,19 @@ async def show_my_group(call: CallbackQuery):
             await call.answer(_(messages.need_be_verified), show_alert=True)
             return
 
-    inst_add = ' (ВШПИТ)' if user.kai_user.group.group_name in (6110, 6111, 6210) else ''
+    group = user.kai_user.group
+    inst_add = ' (ВШПИТ)' if group.group_name in (6110, 6111, 6210, 6310) else ''
 
-    pinned_text = user.kai_user.group.pinned_text or _(messages.missing)
+    pinned_text = group.pinned_text or _(messages.missing)
     await call.message.edit_text(
         _(messages.my_group_menu).format(
-            year=md.hcode(str(user.kai_user.group.group_name)[1]),
-            faculty=md.hcode(str(user.kai_user.group.group_name)[0]),
-            institute=md.hcode(user.kai_user.institute.name + inst_add),
-            departament=md.hcode(user.kai_user.departament.name),
-            speciality=md.hcode(user.kai_user.speciality.code),
-            profile=md.hcode(user.kai_user.profile.name),
-            group_name=md.hcode(user.kai_user.group.group_name),
+            year=md.hcode(str(group.group_name)[1]),
+            faculty=md.hcode(str(group.group_name)[0]),
+            institute=md.hcode(group.institute.name + inst_add),
+            departament=md.hcode(group.departament.name),
+            speciality=md.hcode(group.speciality.code),
+            profile=md.hcode(group.profile.name),
+            group_name=md.hcode(group.group_name),
             pinned_text=md.hitalic(pinned_text)
         ),
         reply_markup=inline_keyboards.get_my_group_keyboard(_, user)
