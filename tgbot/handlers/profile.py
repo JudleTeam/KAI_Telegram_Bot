@@ -76,6 +76,23 @@ async def send_verification(message: Message, state: FSMContext):
     )
 
 
+async def show_settings(call: CallbackQuery):
+    _, db = call.bot.get('_'), call.bot.get('database')
+
+    async with db() as session:
+        tg_user: User = await session.get(User, call.from_user.id)
+
+    await call.message.edit_text(
+        _(messages.settings).format(
+            emoji_status='✅' if tg_user.use_emoji else '❌',
+            teachers_status='✅' if tg_user.show_teachers_in_schedule else '❌'
+        )
+    )
+
+    await call.answer()
+
+
 def register_profile(dp: Dispatcher):
     dp.register_callback_query_handler(show_group_choose, callbacks.navigation.filter(to='grp_choose'), state='*')
     dp.register_callback_query_handler(show_verification, callbacks.navigation.filter(to='verification'), state='*')
+    dp.register_callback_query_handler(show_settings, callbacks.navigation.filter(to='settings'))

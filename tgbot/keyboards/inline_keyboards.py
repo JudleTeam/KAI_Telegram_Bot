@@ -13,7 +13,36 @@ def get_profile_keyboard(_):
         InlineKeyboardButton(_(buttons.choose_group), callback_data=callbacks.navigation.new('grp_choose', payload='')),
         InlineKeyboardButton(_(buttons.choose_language),
                              callback_data=callbacks.navigation.new('lang_choose', payload='profile')),
-        InlineKeyboardButton(_(buttons.verification), callback_data=callbacks.navigation.new('verification', payload=''))
+        InlineKeyboardButton(_(buttons.verification), callback_data=callbacks.navigation.new('verification', payload='')),
+        InlineKeyboardButton(_(buttons.settings), callback_data=callbacks.navigation.new('settings', payload=''))
+    )
+
+    return keyboard
+
+
+def get_settings_keyboard(_, tg_user: User):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    if tg_user.use_emoji:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.disable_emoji), callback_data=callbacks.settings.new('emoji'))
+        )
+    else:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.enable_emoji), callback_data=callbacks.settings.new('emoji'))
+        )
+
+    if tg_user.show_teachers_in_schedule:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.disable_teachers), callback_data=callbacks.settings.new('teachers'))
+        )
+    else:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.enable_teachers), callback_data=callbacks.settings.new('teachers'))
+        )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new('profile', payload='settings'))
     )
 
     return keyboard

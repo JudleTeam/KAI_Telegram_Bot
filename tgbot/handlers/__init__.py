@@ -10,6 +10,7 @@ from .admin_commands import register_admin_commands
 from .verification import register_verification
 from .education import register_education
 from .my_group import register_my_group
+from .settings import register_settings
 
 register_functions = (
     register_schedule,
@@ -23,6 +24,6 @@ register_functions = (
     register_my_group,
     register_group_choose,
     register_verification,
-
-    register_admin_commands
+    register_admin_commands,
+    register_settings
 )

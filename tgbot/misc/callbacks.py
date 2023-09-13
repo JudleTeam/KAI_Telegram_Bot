@@ -10,3 +10,5 @@ group_choose = CallbackData('grp_chs', 'id', 'action', 'payload')  # actions - '
 
 schedule = CallbackData('schedule', 'action', 'payload')
 change_schedule_week = CallbackData('change_week', 'action', 'payload')
+
+settings = CallbackData('settings', 'action')
