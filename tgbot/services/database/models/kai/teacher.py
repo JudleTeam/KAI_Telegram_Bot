@@ -28,7 +28,7 @@ class Teacher(Base):
     @property
     def short_name(self):
         name_parts = self.name.split()
-        letters = [part[0] for part in name_parts[1:]]
-        short_name = f'{name_parts[0]} {".".join(letters)}'
+        letters = [f'{part[0]}.' for part in name_parts[1:]]
+        short_name = f'{name_parts[0]} {"".join(letters)}'
 
         return short_name

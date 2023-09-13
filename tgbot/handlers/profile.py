@@ -86,7 +86,8 @@ async def show_settings(call: CallbackQuery):
         _(messages.settings).format(
             emoji_status='✅' if tg_user.use_emoji else '❌',
             teachers_status='✅' if tg_user.show_teachers_in_schedule else '❌'
-        )
+        ),
+        reply_markup=inline_keyboards.get_settings_keyboard(_, tg_user)
     )
 
     await call.answer()

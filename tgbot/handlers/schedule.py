@@ -34,8 +34,11 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool):
 
         teacher = ''
         if show_teachers:
-            teacher = templates.teacher_in_schedule.format(name=lesson.teacher.short_name,
-                                                           departamnet=lesson.teacher.departament.short_name)
+            if lesson.teacher:
+                teacher = templates.teacher_in_schedule.format(name=lesson.teacher.short_name,
+                                                               departament=lesson.teacher.departament.short_name)
+            else:
+                teacher = '\nПреподаватель кафедры'
 
         lessons.append(templates.lesson_template.format(
             start_time=lesson.start_time.strftime('%H:%M'),
@@ -66,7 +69,7 @@ async def form_day(_, db, user, today, with_pointer=False):
     if not schedule:
         lessons = _('Day off\n')
     else:
-        lessons = form_lessons(schedule)
+        lessons = form_lessons(schedule, user.show_teachers_in_schedule)
 
     msg = templates.schedule_day_template.format(
         day_of_week=templates.week_day.format(
