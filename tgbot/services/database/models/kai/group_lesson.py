@@ -25,7 +25,7 @@ class GroupLesson(Base):
 
     discipline = relationship('Discipline', lazy='selectin', backref='lessons')
     # Если teacher = None, значит стоит "Преподаватель кафедры"
-    teacher = relationship('Teacher', backref='lessons')
+    teacher = relationship('Teacher', backref='lessons', lazy='selectin')
 
     @property
     def lesson_type_emoji(self):
