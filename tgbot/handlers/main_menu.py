@@ -24,6 +24,8 @@ async def send_schedule_menu(message: Message):
     msg = _(messages.schedule_menu).format(
         week=md.hunderline(week_parity),
     )
+    if user.use_emoji:
+        msg += _(messages.emoji_hint)
     await message.answer(msg, reply_markup=inline_keyboards.get_main_schedule_keyboard(_, group_name))
 
 

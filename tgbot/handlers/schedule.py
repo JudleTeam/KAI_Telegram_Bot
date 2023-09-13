@@ -19,8 +19,11 @@ def convert_day(today: str):
     return datetime.datetime.strptime(today, '%Y-%m-%d %H:%M:%S')
 
 
-def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool):
-    lessons = []
+def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool, use_emoji: bool):
+    lessons = list()
+
+    convert_lesson_type = lesson_type_to_emoji if use_emoji else lesson_type_to_text
+
     for lesson in schedule_list:
         if lesson.auditory_number == 'КСК КАИ ОЛИМП':
             lesson.building_number = 'ОЛИМП'
@@ -43,7 +46,7 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool):
         lessons.append(templates.lesson_template.format(
             start_time=lesson.start_time.strftime('%H:%M'),
             end_time=lesson.end_time.strftime('%H:%M'),
-            lesson_type=lesson_type_to_emoji(lesson.lesson_type)[0],
+            lesson_type=convert_lesson_type(lesson.lesson_type),
             lesson_name=markdown.hbold(lesson.discipline.name),
             building=lesson.building_number,
             auditory=lesson.auditory_number,
@@ -69,7 +72,7 @@ async def form_day(_, db, user, today, with_pointer=False):
     if not schedule:
         lessons = _('Day off\n')
     else:
-        lessons = form_lessons(schedule, user.show_teachers_in_schedule)
+        lessons = form_lessons(schedule, user.show_teachers_in_schedule, user.use_emoji)
 
     msg = templates.schedule_day_template.format(
         day_of_week=templates.week_day.format(
@@ -95,6 +98,8 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     msg = _(messages.schedule_menu).format(
         week=md.hunderline(week_parity)
     )
+    if user.use_emoji:
+        msg += _(messages.emoji_hint)
     await call.message.edit_text(msg, reply_markup=inline.get_main_schedule_keyboard(_, group_name))
     await call.answer()
 

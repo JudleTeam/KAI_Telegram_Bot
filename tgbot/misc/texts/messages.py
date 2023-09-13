@@ -28,10 +28,12 @@ language_choose = _('Please select your language')
 schedule_menu = _(
     'Schedule menu\n'
     'Now {week} week\n\n'
+)
+emoji_hint = _(
     '🧪 - Laboratory work\n'
     '📝 - Seminar\n'
     '📢 - Lecture\n'
-    '❓ - Consultation\n'
+    '❓ - Consultation'
 )
 profile_menu = _(
     'Profile menu\n\n'
