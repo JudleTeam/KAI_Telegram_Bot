@@ -19,7 +19,7 @@ def convert_day(today: str):
     return datetime.datetime.strptime(today, '%Y-%m-%d %H:%M:%S')
 
 
-def form_lessons(schedule_list):
+def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool):
     lessons = []
     for lesson in schedule_list:
         if lesson.auditory_number == 'КСК КАИ ОЛИМП':
@@ -32,6 +32,11 @@ def form_lessons(schedule_list):
         if lesson.auditory_number.isdigit():
             lesson.auditory_number += ' ауд.'
 
+        teacher = ''
+        if show_teachers:
+            teacher = templates.teacher_in_schedule.format(name=lesson.teacher.short_name,
+                                                           departamnet=lesson.teacher.departament.short_name)
+
         lessons.append(templates.lesson_template.format(
             start_time=lesson.start_time.strftime('%H:%M'),
             end_time=lesson.end_time.strftime('%H:%M'),
@@ -39,8 +44,10 @@ def form_lessons(schedule_list):
             lesson_name=markdown.hbold(lesson.discipline.name),
             building=lesson.building_number,
             auditory=lesson.auditory_number,
-            parity=md.hitalic(lesson.parity_of_week or '-')
+            parity=md.hitalic(lesson.parity_of_week or '-'),
+            teacher=teacher
         ))
+
     lessons = '\n\n'.join(lessons) + '\n'
     return lessons
 
