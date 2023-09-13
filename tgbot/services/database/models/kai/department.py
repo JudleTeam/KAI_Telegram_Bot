@@ -17,3 +17,19 @@ class Departament(Base):
             session.add(dep)
 
         return dep
+
+    @property
+    def short_name(self):
+        name_parts = self.name.title().split()
+        short_name = ''
+        for ind, part in enumerate(name_parts):
+            if part.lower() == 'кафедра':
+                continue
+
+            if part.lower() == 'и' and ind < len(name_parts) - 1 and name_parts[ind + 1].lower()[0] != 'и':
+                short_name += 'и'
+                continue
+
+            short_name += part[0]
+
+        return short_name
