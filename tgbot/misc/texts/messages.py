@@ -178,3 +178,9 @@ not_your_phone = _('This is not your phone number! Submit your number using the 
 
 even_week = _('Even week')
 odd_week = _('Odd week')
+
+settings = _(
+    'Settings\n\n'
+    'Use emoji in schedule: {emoji_status}\n'
+    'Show teachers in schedule: {teachers_status}'
+)
