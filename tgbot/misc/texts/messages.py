@@ -1,5 +1,15 @@
 from tgbot.misc.texts import _
 
+week_days = (
+    _('Monday'),
+    _('Tuesday'),
+    _('Wednesday'),
+    _('Thursday'),
+    _('Friday'),
+    _('Saturday'),
+    _('Sunday'),
+)
+
 welcome = _('Welcome to KAI bot! Tap button below to choose your language')
 main_menu = _('Main menu')
 
@@ -39,17 +49,6 @@ group_not_exist = _('❌ No such group exists!')
 
 in_development = _('Functionality in development')
 
-schedule_day_template = _(
-    '               {day_of_week}\n'
-    '————————————————\n'
-    '{lessons}'
-    '————————————————\n\n'
-)
-
-lesson_template = _(
-    '{start_time} - {end_time}  |  {building} {auditory} | {parity}\n{lesson_type} - {lesson_name}'
-)
-
 full_schedule_pointer = '➤'
 
 teachers_template = _(
@@ -58,17 +57,10 @@ teachers_template = _(
     '{teachers}'
 )
 
-teacher = (
-    '{lesson_name} [{lesson_types}]\n'
-    '{full_name}\n'
-    '{departament}\n'
-    '————————————————\n'
-)
-
 kai_error = _('An error occurred on the KAI side. Please, try later')
 base_error = _('Something went wrong')
 
-select_group = _('Select group')
+no_selected_group = _('You need to select a group')
 
 ban_unban_bad_format = _(
     'Invalid {command} command format. After the command, there should be a user\'s Telegram ID. '

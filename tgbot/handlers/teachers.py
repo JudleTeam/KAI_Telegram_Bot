@@ -7,7 +7,7 @@ from aiogram.utils import markdown as md
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
-from tgbot.misc.texts import messages
+from tgbot.misc.texts import messages, templates
 from tgbot.services.database.models import User, GroupLesson
 from tgbot.services.database.utils import get_group_teachers
 from tgbot.services.kai_parser.utils import lesson_type_to_emoji
@@ -22,7 +22,7 @@ def form_teachers_str(teachers: dict):
         else:
             lesson_types = ' '.join(map(lesson_type_to_emoji, teachers[teacher]['lesson_types']))
 
-        teachers_str += messages.teacher.format(
+        teachers_str += templates.teacher.format(
             lesson_name=md.hbold(lesson_name),
             lesson_types=lesson_types,
             departament=teachers[teacher]['departament'],
@@ -40,7 +40,7 @@ async def show_teachers(call: CallbackQuery):
         user = await session.get(User, call.from_user.id)
 
         if not user.group_id:
-            await call.answer(_(messages.select_group), show_alert=True)
+            await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
         teachers = await get_group_teachers(session, user.group_id)

@@ -10,7 +10,7 @@ from aiogram.utils.exceptions import MessageNotModified
 
 import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
-from tgbot.misc.texts import messages, buttons
+from tgbot.misc.texts import messages, buttons, templates
 from tgbot.services.database.models import User, GroupLesson
 from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to_text
 
@@ -32,7 +32,7 @@ def form_lessons(schedule_list):
         if lesson.auditory_number.isdigit():
             lesson.auditory_number += ' ауд.'
 
-        lessons.append(messages.lesson_template.format(
+        lessons.append(templates.lesson_template.format(
             start_time=lesson.start_time.strftime('%H:%M'),
             end_time=lesson.end_time.strftime('%H:%M'),
             lesson_type=lesson_type_to_emoji(lesson.lesson_type)[0],
@@ -61,17 +61,12 @@ async def form_day(_, db, user, today, with_pointer=False):
     else:
         lessons = form_lessons(schedule)
 
-    msg = messages.schedule_day_template.format(
-        day_of_week=(messages.full_schedule_pointer if with_pointer else '') +
-                    (
-                        _('Monday'),
-                        _('Tuesday'),
-                        _('Wednesday'),
-                        _('Thursday'),
-                        _('Friday'),
-                        _('Saturday'),
-                        _('Sunday'),
-                    )[today.weekday()] + f' ({today.date().strftime("%d.%m.%Y")})',
+    msg = templates.schedule_day_template.format(
+        day_of_week=templates.week_day.format(
+            pointer=messages.full_schedule_pointer if with_pointer else '',
+            day=_(messages.week_days[today.weekday()]),
+            date=today.date().strftime("%d.%m.%Y")
+        ),
         lessons=lessons
     )
 
@@ -99,7 +94,7 @@ async def show_day_schedule(call: CallbackQuery, callback_data: dict):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
-            await call.answer(_(messages.select_group), show_alert=True)
+            await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
     if callback_data['payload'] == 'today':
@@ -126,7 +121,7 @@ async def send_week_schedule(call: CallbackQuery, callback_data: dict):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
-            await call.answer(_(messages.select_group), show_alert=True)
+            await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
     week_first_date = datetime.datetime.fromtimestamp(float(callback_data['payload']))
@@ -137,7 +132,8 @@ async def send_week_schedule(call: CallbackQuery, callback_data: dict):
         msg = await form_day(_, db, user, week_first_date + datetime.timedelta(days=week_day), True)
         all_lessons += msg
 
-    await call.message.edit_text(all_lessons, reply_markup=inline.get_week_schedule_keyboard(_, week_first_date, user.group.group_name))
+    await call.message.edit_text(all_lessons, reply_markup=inline.get_week_schedule_keyboard(_, week_first_date,
+                                                                                             user.group.group_name))
 
     await call.answer()
 
