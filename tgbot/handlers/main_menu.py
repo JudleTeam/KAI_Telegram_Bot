@@ -110,6 +110,6 @@ def register_main_menu(dp: Dispatcher):
     dp.register_message_handler(send_shop_menu, Text(startswith=reply_commands.shop_symbol), state='*')
 
     dp.register_message_handler(send_education_menu, Text(startswith=reply_commands.education_symbol), state='*')
-    dp.register_callback_query_handler(show_education_menu, callbacks.navigation.filter(to='education'))
+    dp.register_callback_query_handler(show_education_menu, callbacks.navigation.filter(to='education'), state='*')
 
     dp.register_message_handler(send_help_menu, Text(startswith=reply_commands.help_symbol), state='*')
