@@ -96,10 +96,6 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
                 edu_qualification=user_about.eduQualif,
                 program_form=user_about.programForm,
                 status=user_about.status.strip(),
-                speciality=speciality,
-                profile=profile,
-                departament=departament,
-                institute=institute
             )
 
             group = await session.get(Group, user_about.groupId)
