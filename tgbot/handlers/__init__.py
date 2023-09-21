@@ -11,6 +11,7 @@ from .verification import register_verification
 from .education import register_education
 from .my_group import register_my_group
 from .settings import register_settings
+from .details import register_details
 
 register_functions = (
     register_schedule,
@@ -25,5 +26,6 @@ register_functions = (
     register_group_choose,
     register_verification,
     register_admin_commands,
-    register_settings
+    register_settings,
+    register_details
 )

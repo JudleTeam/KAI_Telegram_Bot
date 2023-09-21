@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
 from tgbot.misc import callbacks
 from tgbot.misc.texts import buttons, roles, rights
-from tgbot.services.database.models import Language, User, Group
+from tgbot.services.database.models import Language, User, Group, GroupLesson
 
 
 def get_profile_keyboard(_):
@@ -175,8 +175,27 @@ def get_schedule_day_keyboard(_, today, group_name):
     )
 
     keyboard.add(
+        InlineKeyboardButton(_(buttons.details), callback_data=callbacks.schedule.new(action='details', payload=today.date()))
+    )
+
+    keyboard.add(
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=today.date())),
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
+    )
+
+    return keyboard
+
+
+def get_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    for lesson in lessons:
+        keyboard.add(
+            InlineKeyboardButton(lesson.discipline.name, callback_data=callbacks.schedule.new(action='details', payload=date))
+        )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='show_day', payload=date))
     )
 
     return keyboard

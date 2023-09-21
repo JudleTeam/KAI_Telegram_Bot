@@ -41,6 +41,14 @@ profile_menu = _(
     'Your roles: {roles}'
     )
 
+lesson_details = _(
+    '{lesson_type} - {lesson_name}\n'
+    'Homework:\n'
+    '{homework}'
+)
+
+no_homework = _('No homework')
+
 group_choose = _('Current group: {group_name}\n\n'
                  'Enter a group number or select from your favorites')
 group_removed = _('Group removed from favorites!')
