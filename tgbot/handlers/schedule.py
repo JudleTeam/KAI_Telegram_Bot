@@ -51,7 +51,8 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool, use_emoj
             building=lesson.building_number,
             auditory=lesson.auditory_number,
             parity=md.hitalic(lesson.parity_of_week or '-'),
-            teacher=teacher
+            teacher=teacher,
+            homework=''
         ))
 
     lessons = '\n\n'.join(lessons) + '\n'

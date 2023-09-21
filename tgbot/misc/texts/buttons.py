@@ -37,6 +37,7 @@ prev_week = _('<<<')
 next_week = _('>>>')
 prev_day = _('<')
 next_day = _('>')
+details = _('Details')
 group = _('Group №{group_name}')
 
 my_group = _('My group')
