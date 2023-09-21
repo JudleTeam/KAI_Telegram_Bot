@@ -18,7 +18,7 @@ class KAIUser(Base):
     login = Column(String(64), unique=True, nullable=True)
     password = Column(String(64), nullable=True)
     full_name = Column(String(255), nullable=False)
-    phone = Column(String(32), nullable=True, unique=True)
+    phone = Column(String(32), nullable=True, unique=False)  # БЫВАЕТ ЧТО У ДВУХ ЛЮДЕЙ ОДИН И ТОТ ЖЕ НОМЕР!!!
     email = Column(String(64), nullable=False, unique=True)
     sex = Column(String(16), nullable=True)  # Потом вынести типы в отдельную таблицу
     birthday = Column(Date, nullable=True)
@@ -50,9 +50,9 @@ class KAIUser(Base):
     @classmethod
     async def get_by_phone(cls, phone: str, db: Session):
         async with db() as session:
-            record = await session.execute(select(KAIUser).where(KAIUser.phone == phone))
+            records = await session.execute(select(KAIUser).where(KAIUser.phone == phone))
 
-        return record.scalar()
+        return records.scalars().all()
 
     @classmethod
     async def get_by_email(cls, session, email: str):
