@@ -148,11 +148,18 @@ async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContex
 
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
-        kai_user = await KAIUser.get_by_phone(user.phone, db)
+        kai_users = await KAIUser.get_by_phone(user.phone, db)
 
-        if not kai_user:
+        if not kai_users:
             await call.answer(_(messages.phone_not_found), show_alert=True)
             return
+
+        if len(kai_users) > 1:
+            # TODO: заменить на отдельное сообщение, пока просто HOTFIX
+            await call.answer(_(messages.phone_not_found), show_alert=True)
+            return
+
+        kai_user = kai_users[0]
 
         if kai_user.telegram_user_id:
             await call.answer(_(messages.kai_account_busy), show_alert=True)

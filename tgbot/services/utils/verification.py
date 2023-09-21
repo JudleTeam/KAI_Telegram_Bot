@@ -156,8 +156,14 @@ async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -
         user.phone = phone
 
         await session.commit()
-        kai_user = await KAIUser.get_by_phone(phone, db)
-        if kai_user:
+        kai_users = await KAIUser.get_by_phone(phone, db)
+        if kai_users:
+            if len(kai_users) > 1:
+                # TODO: возможно какая-то отдельная обработка, но пока просто HOTFIX
+                return False
+
+            kai_user = kai_users[0]
+
             if kai_user.telegram_user_id and kai_user.telegram_user_id != telegram_id:
                 return None
             kai_user.telegram_user_id = telegram_id
