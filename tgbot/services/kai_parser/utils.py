@@ -86,14 +86,18 @@ def get_lesson_end_time(start_time: datetime.time, lesson_type: str) -> datetime
         return None
 
     lesson_timedelta = datetime.timedelta(hours=1, minutes=30)
-    if lesson_type == 'л.р.':
-        next_lesson_ind = start_times.index(start_time) + 1
-        if next_lesson_ind > len(start_times) - 1:
-            # Бывают лабораторные работы в 20:00, видимо они длятся одну пару
-            next_lesson_ind = len(start_times) - 1
-        end_time = start_times[next_lesson_ind] + lesson_timedelta
-    else:
-        end_time = start_time + lesson_timedelta
+
+    """ В этом семестре лабы разделены на 2 пары, по полтора часа """
+    # if lesson_type == 'л.р.':
+    #     next_lesson_ind = start_times.index(start_time) + 1
+    #     if next_lesson_ind > len(start_times) - 1:
+    #         # Бывают лабораторные работы в 20:00, видимо они длятся одну пару
+    #         next_lesson_ind = len(start_times) - 1
+    #     end_time = start_times[next_lesson_ind] + lesson_timedelta
+    # else:
+    #     end_time = start_time + lesson_timedelta
+
+    end_time = start_time + lesson_timedelta
 
     return (datetime.datetime.min + end_time).time()
 
