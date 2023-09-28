@@ -42,11 +42,11 @@ profile_menu = _(
     )
 
 lesson_details = _(
-    '{lesson_type} - {lesson_name}\n'
-    'Homework:\n'
+    '{start_time} | {lesson_type} - {lesson_name}\n'
     '{homework}'
 )
 
+homework = _('Homework:\n{homework}')
 no_homework = _('No homework')
 
 group_choose = _('Current group: {group_name}\n\n'

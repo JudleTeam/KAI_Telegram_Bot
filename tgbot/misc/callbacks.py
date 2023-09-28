@@ -13,4 +13,4 @@ change_schedule_week = CallbackData('change_week', 'action', 'payload')
 
 settings = CallbackData('settings', 'action')
 
-details = CallbackData('details', 'action', 'payload')
+details = CallbackData('details', 'action', 'lesson_id', 'date')
