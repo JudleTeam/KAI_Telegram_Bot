@@ -2,12 +2,13 @@ import datetime
 from pprint import pprint
 
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks
 from tgbot.misc.texts import messages, templates
-from tgbot.services.database.models import User, GroupLesson
+from tgbot.services.database.models import User, GroupLesson, Homework
 from tgbot.services.database.utils import get_lessons_with_homework
 from tgbot.services.kai_parser.utils import lesson_type_to_text, lesson_type_to_emoji
 
@@ -59,8 +60,55 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
     db, _ = call.bot.get('database'), call.bot.get('_')
     date = datetime.date.fromisoformat(callback_data['date'])
     async with db() as session:
-        pass
+        homework = await Homework.get_by_lesson_and_date(session, int(callback_data['lesson_id']), date)
+        if homework is None:
+            lesson = await session.get(GroupLesson, int(callback_data['lesson_id']))
+        else:
+            lesson = homework.lesson
+
+    text = _(messages.lesson_homework_edit).format(
+        date=date.isoformat(),
+        discipline=lesson.discipline.name,
+        parity=lesson.parity_of_week,
+        start_time=lesson.start_time,
+        homework=homework.description if homework else _(messages.no_homework)
+    )
+    keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework)
+
+    await call.message.edit_text(text, reply_markup=keyboard)
+    await call.answer()
+
+
+async def start_homework_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    pass
+
+
+async def start_homework_edit(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    pass
+
+
+async def delete_homework(call: CallbackQuery, callback_data: dict):
+    db, _ = call.bot.get('database'), call.bot.get('_')
+    date = datetime.date.fromisoformat(callback_data['date'])
+    async with db() as session:
+        homework = await Homework.get_by_lesson_and_date(session, int(callback_data['lesson_id']), date)
+        if homework:
+            lesson = homework.lesson
+            await session.delete(homework)
+            homework = None
+        else:
+            lesson = await session.get(GroupLesson, int(callback_data['lesson_id']))
+
+    keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework)
+
+    await call.message.edit_reply_markup(keyboard)
+    await call.answer()
+
 
 
 def register_details(dp: Dispatcher):
     dp.register_callback_query_handler(show_day_details, callbacks.schedule.filter(action='details'))
+    dp.register_callback_query_handler(show_lesson_menu, callbacks.details.filter(action='show'))
+    dp.register_callback_query_handler(start_homework_add, callbacks.details.filter(action='add'))
+    dp.register_callback_query_handler(start_homework_edit, callbacks.details.filter(action='edit'))
+    dp.register_callback_query_handler(delete_homework, callbacks.details.filter(action='delete'))

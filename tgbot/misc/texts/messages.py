@@ -49,6 +49,15 @@ lesson_details = _(
 homework = _('Homework:\n{homework}')
 no_homework = _('No homework')
 
+lesson_homework_edit = _(
+    'Date: {date}\n'
+    'Discipline: {discipline}\n'
+    'Parity: {parity}\n'
+    'Start time: {start_time}\n\n'
+    'Current homework:\n'
+    '{homework}'
+)
+
 group_choose = _('Current group: {group_name}\n\n'
                  'Enter a group number or select from your favorites')
 group_removed = _('Group removed from favorites!')
