@@ -18,3 +18,11 @@ class Homework(Base):
     lesson_id = Column(ForeignKey('group_lesson.id'), nullable=False)
 
     lesson = relationship('GroupLesson', lazy='selectin', backref='homework')
+
+    @classmethod
+    async def get_by_lesson_and_date(cls, session, lesson_id, date):
+        record = await session.execute(
+            select(Homework).where(Homework.lesson_id == lesson_id, Homework.date == date)
+        )
+
+        return record.scalar()

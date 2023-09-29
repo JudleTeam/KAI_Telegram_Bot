@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
 from tgbot.misc import callbacks
 from tgbot.misc.texts import buttons, roles, rights
-from tgbot.services.database.models import Language, User, Group, GroupLesson
+from tgbot.services.database.models import Language, User, Group, GroupLesson, Homework
 
 
 def get_profile_keyboard(_):
@@ -197,6 +197,26 @@ def get_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date):
 
     keyboard.add(
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='show_day', payload=date))
+    )
+
+    return keyboard
+
+
+def get_homework_keyboard(_, lesson_id: int, date: datetime.date, homework: Homework | None):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    if homework is None:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.add), callback_data=callbacks.details.new(action='add', lesson_id=lesson_id, date=date.isoformat()))
+        )
+    else:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.edit), callback_data=callbacks.details.new(action='edit', lesson_id=lesson_id, date=date.isoformat())),
+            InlineKeyboardButton(_(buttons.delete), callback_data=callbacks.details.new(action='delete', lesson_id=lesson_id, date=date.isoformat()))
+        )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data='pass')
     )
 
     return keyboard

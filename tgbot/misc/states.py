@@ -24,3 +24,7 @@ class PhoneSendState(StatesGroup):
     payload - Used to determine where verification occurs
     """
     waiting_for_phone = State()
+
+
+class Homework(StatesGroup):
+    waiting_for_homework = State()
