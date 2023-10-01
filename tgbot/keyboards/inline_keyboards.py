@@ -190,7 +190,7 @@ def get_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     for lesson in lessons:
-        btn_text = f'{lesson.start_time} | {lesson.discipline.name}'
+        btn_text = f'{lesson.start_time.strftime("%H:%M")} | {lesson.discipline.name}'
         keyboard.add(
             InlineKeyboardButton(btn_text, callback_data=callbacks.details.new(action='show', lesson_id=lesson.id, date=date))
         )

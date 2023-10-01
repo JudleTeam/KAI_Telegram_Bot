@@ -3,10 +3,10 @@ from pprint import pprint
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 from tgbot.keyboards import inline_keyboards
-from tgbot.misc import callbacks
+from tgbot.misc import callbacks, states
 from tgbot.misc.texts import messages, templates
 from tgbot.services.database.models import User, GroupLesson, Homework
 from tgbot.services.database.utils import get_lessons_with_homework
@@ -80,30 +80,55 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
 
 
 async def start_homework_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    pass
+    _ = call.bot.get('_')
+    await call.message.edit_text(_(messages.homework_input))  # TODO: cancel keyboard
+    await state.update_data(main_call=call.to_python(), date=callback_data['date'], lesson_id=callback_data['lesson_id'])
+    await states.Homework.waiting_for_homework.set()
+    await call.answer()
 
 
 async def start_homework_edit(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    pass
+    _ = call.bot.get('_')
+    await call.message.edit_text(_(messages.homework_input))  # TODO: cancel keyboard
+    await state.update_data(main_call=call.to_python(), date=callback_data['date'], lesson_id=callback_data['lesson_id'])
+    await states.Homework.waiting_for_homework.set()
+    await call.answer()
+
+
+async def get_homework(message: Message, state: FSMContext):
+    homework_description = message.text
+    db, _ = message.bot.get('database'), message.bot.get('_')
+    state_data = await state.get_data()
+    lesson_id = int(state_data['lesson_id'])
+    date = datetime.date.fromisoformat(state_data['date'])
+    main_call = CallbackQuery(**state_data['main_call'])
+
+    async with db.begin() as session:
+        homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
+        if homework:
+            homework.description = homework_description
+        else:
+            homework = Homework(
+                description=homework_description,
+                date=date,
+                lesson_id=lesson_id
+            )
+            session.add(homework)
+
+    await message.delete()
+    await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat()})
+    await state.finish()
 
 
 async def delete_homework(call: CallbackQuery, callback_data: dict):
     db, _ = call.bot.get('database'), call.bot.get('_')
     date = datetime.date.fromisoformat(callback_data['date'])
-    async with db() as session:
+    async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, int(callback_data['lesson_id']), date)
         if homework:
-            lesson = homework.lesson
             await session.delete(homework)
-            homework = None
-        else:
-            lesson = await session.get(GroupLesson, int(callback_data['lesson_id']))
 
-    keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework)
-
-    await call.message.edit_reply_markup(keyboard)
-    await call.answer()
-
+    await show_lesson_menu(call, callback_data)
 
 
 def register_details(dp: Dispatcher):
@@ -112,3 +137,5 @@ def register_details(dp: Dispatcher):
     dp.register_callback_query_handler(start_homework_add, callbacks.details.filter(action='add'))
     dp.register_callback_query_handler(start_homework_edit, callbacks.details.filter(action='edit'))
     dp.register_callback_query_handler(delete_homework, callbacks.details.filter(action='delete'))
+
+    dp.register_message_handler(get_homework, state=states.Homework.waiting_for_homework)
