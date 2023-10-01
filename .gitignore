@@ -40,7 +40,6 @@ pip-delete-this-directory.txt
 # Translations
 *.mo
 *.pot
-*.po
 
 
 # pyenv
