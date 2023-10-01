@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2023-10-01 19:51+0300\n"
-"PO-Revision-Date: 2023-10-01 19:58+0300\n"
+"PO-Revision-Date: 2023-10-01 20:28+0300\n"
 "Last-Translator: \n"
 "Language-Team: ru <LL@li.org>\n"
 "Language: ru\n"
@@ -154,7 +154,7 @@ msgstr ""
 
 #: tgbot/misc/texts/buttons.py:40
 msgid "Details"
-msgstr ""
+msgstr "Подробнее"
 
 #: tgbot/misc/texts/buttons.py:41 tgbot/misc/texts/reply_commands.py:4
 msgid "Schedule"
