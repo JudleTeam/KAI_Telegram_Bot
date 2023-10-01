@@ -71,7 +71,7 @@ async def form_day(_, db, user, today, with_pointer=False):
         schedule = await GroupLesson.get_group_day_schedule(session, user.group_id, today.isoweekday(), int_parity)
 
     if not schedule:
-        lessons = _('Day off\n')
+        lessons = _(messages.day_off) + '\n'
     else:
         lessons = form_lessons(schedule, user.show_teachers_in_schedule, user.use_emoji)
 
@@ -140,7 +140,7 @@ async def send_week_schedule(call: CallbackQuery, callback_data: dict):
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-    week_first_date = datetime.datetime.fromtimestamp(float(callback_data['payload']))
+    week_first_date = datetime.datetime.fromisoformat(callback_data['payload'])
     week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
 
     all_lessons = ''

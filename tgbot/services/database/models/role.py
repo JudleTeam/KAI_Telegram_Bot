@@ -60,7 +60,8 @@ class Role(Base):
             ]),
             Role(title=roles.verified, to_show=False, rights=[
 
-            ])
+            ]),
+            Role(title=roles.admin, to_show=False, rights=list(rights_dict.values()))
         ]
 
         async with db() as session:

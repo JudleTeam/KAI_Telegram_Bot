@@ -60,6 +60,8 @@ lesson_homework_edit = _(
 
 homework_input = _('Enter homework text')
 
+day_off = _('Day off')
+
 group_choose = _('Current group: {group_name}\n\n'
                  'Enter a group number or select from your favorites')
 group_removed = _('Group removed from favorites!')
