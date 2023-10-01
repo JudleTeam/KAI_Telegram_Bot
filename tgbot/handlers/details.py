@@ -7,7 +7,7 @@ from aiogram.types import CallbackQuery, Message
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
-from tgbot.misc.texts import messages, templates
+from tgbot.misc.texts import messages, templates, rights
 from tgbot.services.database.models import User, GroupLesson, Homework
 from tgbot.services.database.utils import get_lessons_with_homework
 from tgbot.services.kai_parser.utils import lesson_type_to_text, lesson_type_to_emoji
@@ -30,6 +30,9 @@ def form_day_with_details(_, lessons: list[GroupLesson], date, use_emoji: bool):
             homework=homework
         ))
 
+    if not str_lessons:
+        str_lessons = [_(messages.day_off)]
+
     msg = templates.schedule_day_template.format(
         day_of_week=templates.week_day.format(
             pointer='',
@@ -47,11 +50,40 @@ async def show_day_details(call: CallbackQuery, callback_data: dict):
     date = datetime.date.fromisoformat(callback_data['payload'])
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
+        edit_homework_right = tg_user.has_right_to(rights.edit_homework)
         lessons = await get_lessons_with_homework(session, tg_user.group_id, date)
 
     await call.message.edit_text(
         form_day_with_details(_, lessons, date, tg_user.use_emoji),
-        reply_markup=inline_keyboards.get_details_keyboard(_, lessons, date)
+        reply_markup=inline_keyboards.get_day_details_keyboard(_, lessons, date, edit_homework_right)
+    )
+    await call.answer()
+
+
+async def show_week_details(call: CallbackQuery, callback_data: dict):
+    db = call.bot.get('database')
+    _ = call.bot.get('_')
+
+    week_first_date = datetime.datetime.fromisoformat(callback_data['payload'])
+    week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
+
+    all_lessons = list()
+    all_dates = list()
+    async with db.begin() as session:
+        tg_user = await session.get(User, call.from_user.id)
+        edit_homework_right = tg_user.has_right_to(rights.edit_homework)
+
+        all_lessons_text = ''
+        for week_day in range(6):
+            day = week_first_date + datetime.timedelta(days=week_day)
+            lessons = await get_lessons_with_homework(session, tg_user.group_id, day)
+            all_lessons.extend(lessons), all_dates.extend([day.date()] * len(lessons))
+            msg = form_day_with_details(_, lessons, day, tg_user.use_emoji)
+            all_lessons_text += msg
+
+    await call.message.edit_text(
+        all_lessons_text,
+        reply_markup=inline_keyboards.get_week_details_keyboard(_, all_lessons, all_dates, edit_homework_right)
     )
     await call.answer()
 
@@ -70,10 +102,10 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
         date=date.isoformat(),
         discipline=lesson.discipline.name,
         parity=lesson.parity_of_week,
-        start_time=lesson.start_time,
+        start_time=lesson.start_time.strftime('%H:%M'),
         homework=homework.description if homework else _(messages.no_homework)
     )
-    keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework)
+    keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework, callback_data['payload'])
 
     await call.message.edit_text(text, reply_markup=keyboard)
     await call.answer()
@@ -83,7 +115,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, s
     _ = call.bot.get('_')
     keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=f'{callback_data["lesson_id"]};{callback_data["date"]}')
     await call.message.edit_text(_(messages.homework_input), reply_markup=keyboard)
-    await state.update_data(main_call=call.to_python(), date=callback_data['date'], lesson_id=callback_data['lesson_id'])
+    await state.update_data(main_call=call.to_python(), **callback_data)
     await states.Homework.waiting_for_homework.set()
     await call.answer()
 
@@ -109,7 +141,7 @@ async def get_homework(message: Message, state: FSMContext):
             session.add(homework)
 
     await message.delete()
-    await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat()})
+    await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
     await state.finish()
 
 
@@ -125,7 +157,8 @@ async def delete_homework(call: CallbackQuery, callback_data: dict):
 
 
 def register_details(dp: Dispatcher):
-    dp.register_callback_query_handler(show_day_details, callbacks.schedule.filter(action='details'))
+    dp.register_callback_query_handler(show_day_details, callbacks.schedule.filter(action='day_details'))
+    dp.register_callback_query_handler(show_week_details, callbacks.schedule.filter(action='week_details'))
     dp.register_callback_query_handler(show_lesson_menu, callbacks.details.filter(action='show'))
     dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='add'))
     dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='edit'))

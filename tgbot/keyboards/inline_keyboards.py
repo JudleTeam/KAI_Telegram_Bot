@@ -1,3 +1,5 @@
+import calendar
+
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import datetime
@@ -152,7 +154,7 @@ def get_main_schedule_keyboard(_, group_name):
         InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload=(now + datetime.timedelta(days=2)).date())),
     )
     keyboard.add(
-        InlineKeyboardButton(_(buttons.week_schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=now.timestamp())),
+        InlineKeyboardButton(_(buttons.week_schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=now.date())),
         # InlineKeyboardButton(_(buttons.exams), callback_data='pass'),
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='main_schedule'))
     )
@@ -174,26 +176,27 @@ def get_schedule_day_keyboard(_, today, group_name):
         InlineKeyboardButton(_(buttons.next_week), callback_data=callbacks.schedule.new(action='show_day', payload=(today + datetime.timedelta(days=7)).date()))
     )
 
-    keyboard.add(
-        InlineKeyboardButton(_(buttons.details), callback_data=callbacks.schedule.new(action='details', payload=today.date()))
+    keyboard.row(
+        InlineKeyboardButton(_(buttons.details), callback_data=callbacks.schedule.new(action='day_details', payload=today.date())),
+        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=today.date()))
     )
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=today.date())),
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
 
     return keyboard
 
 
-def get_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date):
+def get_day_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date, edit_homework_right: bool):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
-    for lesson in lessons:
-        btn_text = f'{lesson.start_time.strftime("%H:%M")} | {lesson.discipline.name}'
-        keyboard.add(
-            InlineKeyboardButton(btn_text, callback_data=callbacks.details.new(action='show', lesson_id=lesson.id, date=date))
-        )
+    if edit_homework_right:
+        for lesson in lessons:
+            btn_text = f'{lesson.start_time.strftime("%H:%M")} | {lesson.discipline.name}'
+            keyboard.add(
+                InlineKeyboardButton(btn_text, callback_data=callbacks.details.new(action='show', lesson_id=lesson.id, date=date, payload='day_details'))
+            )
 
     keyboard.add(
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='show_day', payload=date))
@@ -202,21 +205,41 @@ def get_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date):
     return keyboard
 
 
-def get_homework_keyboard(_, lesson_id: int, date: datetime.date, homework: Homework | None):
+def get_week_details_keyboard(_, lessons: list[GroupLesson], dates: list[datetime.date], edit_homework_right: bool):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+
+    if edit_homework_right:
+        keyboard_buttons = list()
+        for lesson, date in zip(lessons, dates):
+            btn_text = f'{_(calendar.day_name[date.weekday()])[:2]} | {lesson.start_time.strftime("%H:%M")}'
+            keyboard_buttons.append(
+                InlineKeyboardButton(btn_text, callback_data=callbacks.details.new(action='show', lesson_id=lesson.id, date=date, payload='week_details'))
+            )
+
+        keyboard.add(*keyboard_buttons)
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='week_schedule', payload=dates[0]))
+    )
+
+    return keyboard
+
+
+def get_homework_keyboard(_, lesson_id: int, date: datetime.date, homework: Homework | None, payload: str):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     if homework is None:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.add), callback_data=callbacks.details.new(action='add', lesson_id=lesson_id, date=date.isoformat()))
+            InlineKeyboardButton(_(buttons.add), callback_data=callbacks.details.new(action='add', lesson_id=lesson_id, date=date, payload=payload))
         )
     else:
         keyboard.add(
-            InlineKeyboardButton(_(buttons.edit), callback_data=callbacks.details.new(action='edit', lesson_id=lesson_id, date=date.isoformat())),
-            InlineKeyboardButton(_(buttons.delete), callback_data=callbacks.details.new(action='delete', lesson_id=lesson_id, date=date.isoformat()))
+            InlineKeyboardButton(_(buttons.edit), callback_data=callbacks.details.new(action='edit', lesson_id=lesson_id, date=date, payload=payload)),
+            InlineKeyboardButton(_(buttons.delete), callback_data=callbacks.details.new(action='delete', lesson_id=lesson_id, date=date, payload=payload))
         )
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.back), callback_data='pass')
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action=payload, payload=date))
     )
 
     return keyboard
@@ -240,14 +263,19 @@ def get_week_schedule_keyboard(_, today: datetime.datetime, group_name):
         )
 
     keyboard.row(
-        InlineKeyboardButton(_(buttons.prev_week), callback_data=callbacks.schedule.new(action='week_schedule', payload=prev_week.timestamp())),
-        InlineKeyboardButton(_(buttons.next_week), callback_data=callbacks.schedule.new(action='week_schedule', payload=next_week.timestamp()))
+        InlineKeyboardButton(_(buttons.prev_week), callback_data=callbacks.schedule.new(action='week_schedule', payload=prev_week.date())),
+        InlineKeyboardButton(_(buttons.next_week), callback_data=callbacks.schedule.new(action='week_schedule', payload=next_week.date()))
+    )
+
+    keyboard.row(
+        InlineKeyboardButton(_(buttons.details), callback_data=callbacks.schedule.new(action='week_details', payload=today.date())),
+        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='week_schedule'))
     )
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='week_schedule')),
         InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
+
     return keyboard
 
 
@@ -380,7 +408,7 @@ def get_pin_text_keyboard(_):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.clear), callback_data=callbacks.action.new(to='clear_pin_text', payload='')),
+        InlineKeyboardButton(_(buttons.clear), callback_data=callbacks.action.new(name='clear_pin_text', payload='')),
         InlineKeyboardButton(_(buttons.cancel), callback_data=callbacks.cancel.new(to='my_group', payload=''))
     )
 
