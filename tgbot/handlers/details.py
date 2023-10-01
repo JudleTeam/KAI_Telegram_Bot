@@ -7,7 +7,7 @@ from aiogram.types import CallbackQuery, Message
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
-from tgbot.misc.texts import messages, templates, rights
+from tgbot.misc.texts import messages, templates, rights, roles
 from tgbot.services.database.models import User, GroupLesson, Homework
 from tgbot.services.database.utils import get_lessons_with_homework
 from tgbot.services.kai_parser.utils import lesson_type_to_text, lesson_type_to_emoji
@@ -50,6 +50,15 @@ async def show_day_details(call: CallbackQuery, callback_data: dict):
     date = datetime.date.fromisoformat(callback_data['payload'])
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
+
+        if not tg_user.has_role(roles.verified):
+            await call.answer(_(messages.details_not_verified), show_alert=True)
+            return
+
+        if tg_user.kai_user.group_id != tg_user.group_id:
+            await call.answer(_(messages.details_not_your_group), show_alert=True)
+            return
+
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
         lessons = await get_lessons_with_homework(session, tg_user.group_id, date)
 
@@ -71,6 +80,15 @@ async def show_week_details(call: CallbackQuery, callback_data: dict):
     all_dates = list()
     async with db.begin() as session:
         tg_user = await session.get(User, call.from_user.id)
+
+        if not tg_user.has_role(roles.verified):
+            await call.answer(_(messages.details_not_verified), show_alert=True)
+            return
+
+        if tg_user.kai_user.group_id != tg_user.group_id:
+            await call.answer(_(messages.details_not_your_group), show_alert=True)
+            return
+
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
 
         all_lessons_text = ''
@@ -141,8 +159,8 @@ async def get_homework(message: Message, state: FSMContext):
             session.add(homework)
 
     await message.delete()
-    await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
     await state.finish()
+    await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
 
 
 async def delete_homework(call: CallbackQuery, callback_data: dict):
@@ -157,11 +175,11 @@ async def delete_homework(call: CallbackQuery, callback_data: dict):
 
 
 def register_details(dp: Dispatcher):
-    dp.register_callback_query_handler(show_day_details, callbacks.schedule.filter(action='day_details'))
-    dp.register_callback_query_handler(show_week_details, callbacks.schedule.filter(action='week_details'))
-    dp.register_callback_query_handler(show_lesson_menu, callbacks.details.filter(action='show'))
-    dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='add'))
-    dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='edit'))
-    dp.register_callback_query_handler(delete_homework, callbacks.details.filter(action='delete'))
+    dp.register_callback_query_handler(show_day_details, callbacks.schedule.filter(action='day_details'), state='*')
+    dp.register_callback_query_handler(show_week_details, callbacks.schedule.filter(action='week_details'), state='*')
+    dp.register_callback_query_handler(show_lesson_menu, callbacks.details.filter(action='show'), state='*')
+    dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='add'), state='*')
+    dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='edit'), state='*')
+    dp.register_callback_query_handler(delete_homework, callbacks.details.filter(action='delete'), state='*')
 
     dp.register_message_handler(get_homework, state=states.Homework.waiting_for_homework)

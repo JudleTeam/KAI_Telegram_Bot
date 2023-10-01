@@ -28,6 +28,7 @@ language_choose = _('Please select your language')
 schedule_menu = _(
     'Schedule menu\n'
     'Now {week} week\n\n'
+    '📖 - Homework\n\n'
 )
 emoji_hint = _(
     '🧪 - Laboratory work\n'
@@ -59,6 +60,8 @@ lesson_homework_edit = _(
 )
 
 homework_input = _('Enter homework text')
+details_not_verified = _('To see details you need to be verified!')
+details_not_your_group = _('You can see details only for your group!')
 
 day_off = _('Day off')
 
