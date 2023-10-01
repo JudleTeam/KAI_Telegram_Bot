@@ -58,6 +58,8 @@ lesson_homework_edit = _(
     '{homework}'
 )
 
+homework_input = _('Enter homework text')
+
 group_choose = _('Current group: {group_name}\n\n'
                  'Enter a group number or select from your favorites')
 group_removed = _('Group removed from favorites!')
