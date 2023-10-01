@@ -79,17 +79,10 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
-async def start_homework_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
+async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
-    await call.message.edit_text(_(messages.homework_input))  # TODO: cancel keyboard
-    await state.update_data(main_call=call.to_python(), date=callback_data['date'], lesson_id=callback_data['lesson_id'])
-    await states.Homework.waiting_for_homework.set()
-    await call.answer()
-
-
-async def start_homework_edit(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-    await call.message.edit_text(_(messages.homework_input))  # TODO: cancel keyboard
+    keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=f'{callback_data["lesson_id"]};{callback_data["date"]}')
+    await call.message.edit_text(_(messages.homework_input), reply_markup=keyboard)
     await state.update_data(main_call=call.to_python(), date=callback_data['date'], lesson_id=callback_data['lesson_id'])
     await states.Homework.waiting_for_homework.set()
     await call.answer()
@@ -134,8 +127,8 @@ async def delete_homework(call: CallbackQuery, callback_data: dict):
 def register_details(dp: Dispatcher):
     dp.register_callback_query_handler(show_day_details, callbacks.schedule.filter(action='details'))
     dp.register_callback_query_handler(show_lesson_menu, callbacks.details.filter(action='show'))
-    dp.register_callback_query_handler(start_homework_add, callbacks.details.filter(action='add'))
-    dp.register_callback_query_handler(start_homework_edit, callbacks.details.filter(action='edit'))
+    dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='add'))
+    dp.register_callback_query_handler(start_homework_edit_or_add, callbacks.details.filter(action='edit'))
     dp.register_callback_query_handler(delete_homework, callbacks.details.filter(action='delete'))
 
     dp.register_message_handler(get_homework, state=states.Homework.waiting_for_homework)
