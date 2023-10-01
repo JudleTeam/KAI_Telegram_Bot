@@ -51,13 +51,14 @@ async def show_day_details(call: CallbackQuery, callback_data: dict):
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
 
-        if not tg_user.has_role(roles.verified):
-            await call.answer(_(messages.details_not_verified), show_alert=True)
-            return
+        if not tg_user.has_role(roles.admin):
+            if not tg_user.has_role(roles.verified):
+                await call.answer(_(messages.details_not_verified), show_alert=True)
+                return
 
-        if tg_user.kai_user.group_id != tg_user.group_id:
-            await call.answer(_(messages.details_not_your_group), show_alert=True)
-            return
+            if tg_user.kai_user.group_id != tg_user.group_id:
+                await call.answer(_(messages.details_not_your_group), show_alert=True)
+                return
 
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
         lessons = await get_lessons_with_homework(session, tg_user.group_id, date)
@@ -81,13 +82,14 @@ async def show_week_details(call: CallbackQuery, callback_data: dict):
     async with db.begin() as session:
         tg_user = await session.get(User, call.from_user.id)
 
-        if not tg_user.has_role(roles.verified):
-            await call.answer(_(messages.details_not_verified), show_alert=True)
-            return
+        if not tg_user.has_role(roles.admin):
+            if not tg_user.has_role(roles.verified):
+                await call.answer(_(messages.details_not_verified), show_alert=True)
+                return
 
-        if tg_user.kai_user.group_id != tg_user.group_id:
-            await call.answer(_(messages.details_not_your_group), show_alert=True)
-            return
+            if tg_user.kai_user.group_id != tg_user.group_id:
+                await call.answer(_(messages.details_not_your_group), show_alert=True)
+                return
 
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
 
