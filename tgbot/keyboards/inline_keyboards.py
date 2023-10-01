@@ -87,10 +87,6 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new(to=back_to, payload='back_gc'))
         )
-    elif payload == 'week_schedule':
-        keyboard.add(
-            InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='week_schedule', payload=''))
-        )
     elif payload == 'main_schedule':
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
@@ -103,9 +99,15 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='teachers', payload=''))
         )
-    else:
+    elif 'day_schedule' in payload:
+        payload = payload.split(';')[-1]
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='show_day', payload=payload))
+        )
+    elif 'week_schedule' in payload:
+        payload = payload.split(';')[-1]
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='week_schedule', payload=payload))
         )
 
     return keyboard
@@ -178,7 +180,7 @@ def get_schedule_day_keyboard(_, today, group_name):
 
     keyboard.row(
         InlineKeyboardButton(_(buttons.details), callback_data=callbacks.schedule.new(action='day_details', payload=today.date())),
-        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=today.date()))
+        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=f'day_schedule;{today.date()}'))
     )
 
     keyboard.add(
@@ -288,7 +290,7 @@ def get_week_schedule_keyboard(_, today: datetime.datetime, group_name):
 
     keyboard.row(
         InlineKeyboardButton(_(buttons.details), callback_data=callbacks.schedule.new(action='week_details', payload=today.date())),
-        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='week_schedule'))
+        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=f'week_schedule;{today.date()}'))
     )
 
     keyboard.add(
