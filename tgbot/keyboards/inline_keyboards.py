@@ -198,8 +198,23 @@ def get_day_details_keyboard(_, lessons: list[GroupLesson], date: datetime.date,
                 InlineKeyboardButton(btn_text, callback_data=callbacks.details.new(action='show', lesson_id=lesson.id, date=date, payload='day_details'))
             )
 
+    prev_week = date - datetime.timedelta(days=7)
+    prev_day = date - datetime.timedelta(days=1)
+    next_day = date + datetime.timedelta(days=1)
+    next_week = date + datetime.timedelta(days=7)
+    keyboard.row(
+        InlineKeyboardButton(_(buttons.prev_week), callback_data=callbacks.schedule.new(action='day_details', payload=prev_week)),
+        InlineKeyboardButton(_(buttons.prev_day), callback_data=callbacks.schedule.new(action='day_details', payload=prev_day)),
+        InlineKeyboardButton(_(buttons.next_day), callback_data=callbacks.schedule.new(action='day_details', payload=next_day)),
+        InlineKeyboardButton(_(buttons.next_week), callback_data=callbacks.schedule.new(action='day_details', payload=next_week))
+    )
+
     keyboard.add(
-        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='show_day', payload=date))
+        InlineKeyboardButton(_(buttons.schedule), callback_data=callbacks.schedule.new(action='show_day', payload=date))
+    )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
 
     return keyboard
@@ -219,7 +234,11 @@ def get_week_details_keyboard(_, lessons: list[GroupLesson], dates: list[datetim
         keyboard.add(*keyboard_buttons)
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='week_schedule', payload=dates[0]))
+        InlineKeyboardButton(_(buttons.schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=dates[0]))
+    )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
 
     return keyboard

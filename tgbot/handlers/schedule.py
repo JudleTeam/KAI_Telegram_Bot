@@ -12,6 +12,7 @@ import tgbot.keyboards.inline_keyboards as inline
 import tgbot.misc.callbacks as callbacks
 from tgbot.misc.texts import messages, buttons, templates
 from tgbot.services.database.models import User, GroupLesson
+from tgbot.services.database.utils import get_lessons_with_homework
 from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to_text
 
 
@@ -52,7 +53,7 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool, use_emoj
             auditory=lesson.auditory_number,
             parity=md.hitalic(lesson.parity_of_week or '-'),
             teacher=teacher,
-            homework=''
+            homework=f' 📖' if lesson.homework else ''
         ))
 
     lessons = '\n\n'.join(lessons) + '\n'
@@ -66,9 +67,8 @@ async def form_day(_, db, user, today, with_pointer=False):
     else:
         with_pointer = False
 
-    int_parity = 2 if not week_num % 2 else 1
     async with db() as session:
-        schedule = await GroupLesson.get_group_day_schedule(session, user.group_id, today.isoweekday(), int_parity)
+        schedule = await get_lessons_with_homework(session, user.group_id, today)
 
     if not schedule:
         lessons = _(messages.day_off) + '\n'
