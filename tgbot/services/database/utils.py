@@ -2,7 +2,7 @@ import datetime
 from pprint import pprint
 
 from sqlalchemy import select, text, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Departament, Homework
 
@@ -46,22 +46,17 @@ async def get_lessons_with_homework(session, group_id: int, date: datetime.date)
 
     stmt = (
         select(GroupLesson)
-        .outerjoin(GroupLesson.homework)
-        .options(selectinload(GroupLesson.homework))
+        .options(joinedload(GroupLesson.homework.and_(Homework.date == date)))
         .where(
             GroupLesson.group_id == group_id,
             GroupLesson.number_of_day == date.isoweekday(),
             or_(
                 GroupLesson.int_parity_of_week == int_parity,
                 GroupLesson.int_parity_of_week == 0
-            ),
-            or_(
-                GroupLesson.homework == None,
-                Homework.date == date
             )
         )
         .order_by(GroupLesson.start_time)
     )
 
     records = await session.execute(stmt)
-    return records.scalars().all()
+    return records.unique().scalars().all()

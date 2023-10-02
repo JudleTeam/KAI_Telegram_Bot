@@ -27,6 +27,9 @@ class GroupLesson(Base):
     # Если teacher = None, значит стоит "Преподаватель кафедры"
     teacher = relationship('Teacher', backref='lessons', lazy='selectin')
 
+    def __repr__(self):
+        return f'{self.parity_of_week} | {self.start_time.strftime("%H:%M")} | {self.discipline.name}'
+
     @property
     def lesson_type_emoji(self):
         lessons_emoji = {
