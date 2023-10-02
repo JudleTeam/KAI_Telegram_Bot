@@ -1,6 +1,7 @@
 from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String, Date, Boolean
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.future import select
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
 
@@ -37,7 +38,7 @@ class KAIUser(Base):
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     telegram_user = relationship('User', lazy='selectin', uselist=False, back_populates='kai_user')
 
-    async def get_classmates(self, db: Session):
+    async def get_classmates(self, db: async_sessionmaker):
         async with db() as session:
             records = await session.execute(select(KAIUser).where(KAIUser.group_id == self.group_id).order_by(KAIUser.position))
 
@@ -48,7 +49,7 @@ class KAIUser(Base):
         return bool(self.kai_id)
 
     @classmethod
-    async def get_by_phone(cls, phone: str, db: Session):
+    async def get_by_phone(cls, phone: str, db: async_sessionmaker):
         async with db() as session:
             records = await session.execute(select(KAIUser).where(KAIUser.phone == phone))
 
@@ -61,7 +62,7 @@ class KAIUser(Base):
         return record.scalar()
 
     @classmethod
-    async def get_by_telegram_id(cls, telegram_id: int, db: Session):
+    async def get_by_telegram_id(cls, telegram_id: int, db: async_sessionmaker):
         async with db() as session:
             record = await session.execute(select(KAIUser).where(KAIUser.telegram_user_id == telegram_id))
 

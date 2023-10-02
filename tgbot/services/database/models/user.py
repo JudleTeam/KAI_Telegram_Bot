@@ -1,5 +1,8 @@
+from typing import Sequence
+
 from sqlalchemy import Column, BigInteger, Integer, ForeignKey, DateTime, Boolean, Table, select, String
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
 
 from tgbot.services.database.base import Base
@@ -20,19 +23,6 @@ user_roles = Table(
     Column('user_id', ForeignKey('telegram_user.telegram_id'), primary_key=True),
     Column('role_id', ForeignKey('role.id'), primary_key=True)
 )
-
-
-# class FavoriteGroup(Base):
-#     __tablename__ = 'favorite_group'
-#
-#     user_id = Column(ForeignKey('telegram_user.telegram_id'), primary_key=True)
-#     group_id = Column(ForeignKey('group.group_id'), primary_key=True)
-#
-#     @classmethod
-#     async def get_all(cls, session):
-#         stmt = select(FavoriteGroup)
-#         records = await session.execute(stmt)
-#         return records.scalars().all()
 
 
 class User(Base):
@@ -84,7 +74,7 @@ class User(Base):
         return record.scalar()
 
     @classmethod
-    async def get_all(cls, db: Session) -> list:
+    async def get_all(cls, db: async_sessionmaker) -> Sequence['User']:
         async with db() as session:
             records = await session.execute(select(User))
             users = records.scalars().all()

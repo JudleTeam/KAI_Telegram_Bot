@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.misc.texts import rights
 from tgbot.services.database.base import Base
@@ -13,7 +13,7 @@ class Right(Base):
     title = Column(String(255), unique=True)
 
     @classmethod
-    async def insert_default_rights(cls, db: Session):
+    async def insert_default_rights(cls, db: async_sessionmaker):
         rights_to_insert = [Right(title=right) for right in rights.rights_list]
 
         async with db() as session:
@@ -26,7 +26,7 @@ class Right(Base):
                     await session.flush()
 
     @classmethod
-    async def get_rights_dict(cls, db: Session) -> dict:
+    async def get_rights_dict(cls, db: async_sessionmaker) -> dict:
         async with db() as session:
             records = await session.execute(select(Right))
             db_rights = records.scalars().all()

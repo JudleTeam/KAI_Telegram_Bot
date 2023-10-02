@@ -2,12 +2,12 @@ import asyncio
 
 import aioschedule
 from aiogram import Bot
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.services.schedulers.update_schedule import update_schedule
 
 
-async def start_schedulers(bot: Bot, session: sessionmaker):
+async def start_schedulers(bot: Bot, session: async_sessionmaker):
     # prod
     aioschedule.every().day.at('3:00').do(update_schedule, bot, session)
 
