@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.misc.texts import roles
 from tgbot.services.database.models import Role, KAIUser, User, Speciality, Departament, Profile, Institute, Group
@@ -8,7 +8,7 @@ from tgbot.services.kai_parser.schemas import FullUserData
 from tgbot.services.utils.other import parse_phone_number
 
 
-async def add_full_user_to_db(full_user: FullUserData, login: str, password: str, tg_id: int, db: Session) -> bool:
+async def add_full_user_to_db(full_user: FullUserData, login: str, password: str, tg_id: int, db: async_sessionmaker) -> bool:
     user_about = full_user.user_about
     user_info = full_user.user_info
 
@@ -18,7 +18,7 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
     async with db.begin() as session:
         kai_user: KAIUser = await KAIUser.get_by_email(session, full_user.user_info.email)
         already_used = bool(kai_user.telegram_user_id) if kai_user else False
-        tg_user: User = await session.get(User, tg_id)
+        tg_user = await session.get(User, tg_id)
 
         speciality = await Speciality.get_or_create(session, user_about.specId, user_about.specName, user_about.specCode)
         departament = await Departament.get_or_create(session, user_about.kafId, user_about.kafName)
@@ -148,7 +148,7 @@ async def update_group_members(session, full_user: FullUserData, kai_user: KAIUs
             session.add(new_member)
 
 
-async def verify_profile_with_phone(telegram_id: int, phone: str, db: Session) -> bool | None:
+async def verify_profile_with_phone(telegram_id: int, phone: str, db: async_sessionmaker) -> bool | None:
     phone = parse_phone_number(phone)
     is_verified = False
     async with db() as session:

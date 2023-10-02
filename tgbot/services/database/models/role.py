@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Table, ForeignKey, select, Boolean
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import relationship
 
 from tgbot.misc.texts import roles, rights
 from tgbot.services.database.base import Base
@@ -28,7 +29,7 @@ class Role(Base):
         return [right.title for right in self.rights]
 
     @classmethod
-    async def get_roles_dict(cls, db: Session):
+    async def get_roles_dict(cls, db: async_sessionmaker):
         async with db() as session:
             records = await session.execute(select(Role))
             db_roles = records.scalars().all()
@@ -36,7 +37,7 @@ class Role(Base):
         return {role.title: role for role in db_roles}
 
     @classmethod
-    async def get_by_title(cls, role: str, db: Session):
+    async def get_by_title(cls, role: str, db: async_sessionmaker):
         async with db() as session:
             record = await session.execute(select(Role).where(Role.title == role))
             role = record.scalar()
@@ -44,7 +45,7 @@ class Role(Base):
         return role
 
     @classmethod
-    async def insert_default_roles(cls, db: Session):
+    async def insert_default_roles(cls, db: async_sessionmaker):
         rights_dict = await Right.get_rights_dict(db)
         roles_to_insert = [
             Role(title=roles.student, to_show=True, rights=[
