@@ -113,10 +113,15 @@ async def show_day_schedule(call: CallbackQuery, callback_data: dict):
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-    if callback_data['payload'] == 'today':
-        today = datetime.datetime.now()
-    else:
-        today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
+    match callback_data['payload']:
+        case 'today':
+            today = datetime.datetime.now()
+        case 'tomorrow':
+            today = datetime.datetime.now() + datetime.timedelta(days=1)
+        case 'after_tomorrow':
+            today = datetime.datetime.now() + datetime.timedelta(days=2)
+        case _:
+            today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
 
     int_parity = 2 if not int(today.strftime('%V')) % 2 else 1
     parity = f'{_(messages.even_week) if int_parity == 2 else _(messages.odd_week)}'

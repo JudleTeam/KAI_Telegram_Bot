@@ -149,11 +149,11 @@ def get_main_schedule_keyboard(_, group_name):
     now = datetime.datetime.now()
 
     keyboard.add(
-        InlineKeyboardButton(_(buttons.today), callback_data=callbacks.schedule.new(action='show_day', payload=now.date())),
+        InlineKeyboardButton(_(buttons.today), callback_data=callbacks.schedule.new(action='show_day', payload='today')),
     )
     keyboard.row(
-        InlineKeyboardButton(_(buttons.tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload=(now + datetime.timedelta(days=1)).date())),
-        InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload=(now + datetime.timedelta(days=2)).date())),
+        InlineKeyboardButton(_(buttons.tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload='tomorrow')),
+        InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload='after_tomorrow')),
     )
     keyboard.add(
         InlineKeyboardButton(_(buttons.week_schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=now.date())),
