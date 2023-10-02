@@ -47,6 +47,8 @@ lesson_details = _(
     '{homework}'
 )
 
+no_document = _('This document is not available on the website...')
+
 homework = _('📖 Homework:\n{homework}')
 no_homework = _('No homework')
 

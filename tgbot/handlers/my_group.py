@@ -6,7 +6,7 @@ from aiogram.utils import markdown as md
 from tgbot.handlers.education import show_my_group
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
-from tgbot.misc.texts import messages
+from tgbot.misc.texts import messages, buttons
 from tgbot.services.database.models import User
 
 
@@ -95,15 +95,32 @@ async def send_document(call: CallbackQuery, callback_data: dict):
         user = await session.get(User, call.from_user.id)
 
     match callback_data['payload']:
-        case 'syllabus': file_url = user.kai_user.group.syllabus
-        case 'program': file_url = user.kai_user.group.educational_program
-        case 'schedule': file_url = user.kai_user.group.study_schedule
+        case 'syllabus':
+            file_url = user.kai_user.group.syllabus
+            caption = _(buttons.syllabus)
+        case 'program':
+            file_url = user.kai_user.group.educational_program
+            caption = _(buttons.educational_program)
+        case 'schedule':
+            file_url = user.kai_user.group.study_schedule
+            caption = _(buttons.study_schedule)
         case _:
             await call.answer(_(messages.base_error), show_alert=True)
             return
 
-    await call.message.answer_document(InputFile.from_url(file_url))
+    if not file_url:
+        await call.answer(_(messages.no_document), show_alert=True)
+        return
+
+    redis = call.bot.get('redis')
+    file_id = await redis.get(file_url)
+    file = file_id.decode() if file_id else InputFile.from_url(file_url)
+
+    msg = await call.message.answer_document(file, caption=caption)
     await call.answer()
+
+    if not file_id:
+        await redis.set(file_url, msg.document.file_id)
 
 
 def register_my_group(dp: Dispatcher):

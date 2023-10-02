@@ -1,4 +1,5 @@
 from datetime import datetime
+from pprint import pprint
 
 from bs4 import BeautifulSoup
 
@@ -62,10 +63,28 @@ def parse_group_members(soup: BeautifulSoup) -> Group:
 
 def parse_documents(soup: BeautifulSoup) -> Documents:
     content = soup.find('div', class_='row div_container')
-    urls = content.find_all('a', limit=3)
+
+    def check_edu(text):
+        if text is None or text.name != 'a':
+            return False
+        return 'Образовательная программа' in text
+
+    def check_syllabus(text):
+        if text is None or text.name != 'a':
+            return False
+        return 'Учебный план' in text
+
+    def check_schedule(text):
+        if text is None or text.name != 'a':
+            return False
+        return 'Календарный график' in text
+
+    edu_program_raw = content.find(name=check_edu)
+    syllabus_raw = content.find(name='a', string=check_syllabus)
+    study_schedule_raw = content.find(name='a', string=check_schedule)
 
     return Documents(
-        syllabus=urls[1]['href'],
-        educational_program=urls[0]['href'],
-        study_schedule=urls[2]['href']
+        syllabus=syllabus_raw['href'] if syllabus_raw else None,
+        educational_program=edu_program_raw['href'] if edu_program_raw else None,
+        study_schedule=study_schedule_raw['href'] if study_schedule_raw else None
     )
