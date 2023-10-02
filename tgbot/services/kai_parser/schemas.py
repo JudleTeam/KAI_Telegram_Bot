@@ -124,9 +124,9 @@ class Group(BaseModel):
 
 
 class Documents(BaseModel):
-    syllabus: str
-    educational_program: str
-    study_schedule: str
+    syllabus: str | None
+    educational_program: str | None
+    study_schedule: str | None
 
 
 class FullUserData(BaseModel):
