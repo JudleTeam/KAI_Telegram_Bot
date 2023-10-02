@@ -61,14 +61,13 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool, use_emoj
 
 
 async def form_day(_, db, user, today, with_pointer=False):
-    week_num = int(today.strftime('%V'))
     if with_pointer and today.date() == datetime.datetime.now().date():
         with_pointer = True
     else:
         with_pointer = False
 
     async with db() as session:
-        schedule = await get_lessons_with_homework(session, user.group_id, today)
+        schedule = await get_lessons_with_homework(session, user.group_id, today.date())
 
     if not schedule:
         lessons = _(messages.day_off) + '\n'
