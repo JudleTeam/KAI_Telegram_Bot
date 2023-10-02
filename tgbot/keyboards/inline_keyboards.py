@@ -235,8 +235,27 @@ def get_week_details_keyboard(_, lessons: list[GroupLesson], dates: list[datetim
 
         keyboard.add(*keyboard_buttons)
 
+    date = dates[0]
+
+    int_parity = 2 if not int(date.strftime('%V')) % 2 else 1
+    if int_parity == 1:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.odd_week), callback_data='pass')
+        )
+    else:
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.even_week), callback_data='pass')
+        )
+
+    next_week = date + datetime.timedelta(weeks=1)
+    prev_week = date - datetime.timedelta(weeks=1)
+    keyboard.row(
+        InlineKeyboardButton(_(buttons.prev_week), callback_data=callbacks.schedule.new(action='week_details', payload=prev_week)),
+        InlineKeyboardButton(_(buttons.next_week), callback_data=callbacks.schedule.new(action='week_details', payload=next_week))
+    )
+
     keyboard.add(
-        InlineKeyboardButton(_(buttons.schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=dates[0]))
+        InlineKeyboardButton(_(buttons.schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=date))
     )
 
     keyboard.add(
