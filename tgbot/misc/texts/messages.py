@@ -47,7 +47,7 @@ lesson_details = _(
     '{homework}'
 )
 
-homework = _('Homework:\n{homework}')
+homework = _('📖 Homework:\n{homework}')
 no_homework = _('No homework')
 
 lesson_homework_edit = _(
