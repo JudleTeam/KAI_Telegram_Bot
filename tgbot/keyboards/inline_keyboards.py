@@ -415,7 +415,6 @@ def get_my_group_keyboard(_, user: User):
 
     keyboard.add(
         InlineKeyboardButton(_(buttons.classmates), callback_data=callbacks.navigation.new(to='classmates', payload='')),
-        InlineKeyboardButton(_(buttons.homework), callback_data='dev'),
         InlineKeyboardButton(_(buttons.documents), callback_data=callbacks.navigation.new(to='documents', payload=''))
     )
 
