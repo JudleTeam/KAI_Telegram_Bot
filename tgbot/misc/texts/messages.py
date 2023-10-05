@@ -85,6 +85,12 @@ teachers_template = _(
     '{teachers}'
 )
 
+unknown_group = _(
+    'Your faculty is not currently supported...\n'
+    'If you want your faculty to have full functionality, write to us through the "Help" section\n\n'
+    'Pinned text:\n{pinned_text}'
+)
+
 kai_error = _('An error occurred on the KAI side. Please, try later')
 base_error = _('Something went wrong')
 

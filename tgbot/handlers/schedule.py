@@ -46,7 +46,7 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool, use_emoj
 
         lessons.append(templates.lesson_template.format(
             start_time=lesson.start_time.strftime('%H:%M'),
-            end_time=lesson.end_time.strftime('%H:%M'),
+            end_time=lesson.end_time.strftime('%H:%M') if lesson.end_time else '??:??',
             lesson_type=convert_lesson_type(lesson.lesson_type),
             lesson_name=markdown.hbold(lesson.discipline.name),
             building=lesson.building_number,
