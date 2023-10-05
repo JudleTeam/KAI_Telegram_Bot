@@ -75,6 +75,7 @@ def load_config(path: str = None):
             rate_limit=env.float('RATE_LIMIT'),
             write_logs=env.bool('WRITE_LOGS'),
             channel_link=env.str('CHANNEL_LINK'),
-            contact_link=env.str('CONTACT_LINK')
+            contact_link=env.str('CONTACT_LINK'),
+            donate_link=env.str('DONATE_LINK')
         )
     )
