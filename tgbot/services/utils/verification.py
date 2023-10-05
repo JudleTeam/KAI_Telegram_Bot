@@ -153,9 +153,11 @@ async def verify_profile_with_phone(telegram_id: int, phone: str, db: async_sess
     is_verified = False
     async with db() as session:
         user = await session.get(User, telegram_id)
-        user.phone = phone
+        if not user.phone:
+            user.phone = phone
+            await session.commit()
+            logging.info(f'[{telegram_id}]: Added phone number')
 
-        await session.commit()
         kai_users = await KAIUser.get_by_phone(phone, db)
         if kai_users:
             if len(kai_users) > 1:
@@ -172,6 +174,17 @@ async def verify_profile_with_phone(telegram_id: int, phone: str, db: async_sess
             if not user.has_role(roles.verified):
                 verified_role = await Role.get_by_title(roles.verified, db)
                 user.roles.append(verified_role)
+                logging.info(f'[{telegram_id}]: Verified by phone')
+
+            if kai_user.password and not user.has_role(roles.authorized):
+                authorized_role = await Role.get_by_title(roles.authorized, db)
+                user.roles.append(authorized_role)
+                logging.info(f'[{telegram_id}]: Password found - user authorized')
+
+            if kai_user.is_leader and not user.has_role(roles.group_leader):
+                leader_role = await Role.get_by_title(roles.group_leader, db)
+                user.roles.append(leader_role)
+                logging.info(f'[{telegram_id}]: Appointed as group {kai_user.group.group_name} leader by phone number')
 
             await session.commit()
 

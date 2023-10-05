@@ -88,25 +88,31 @@ async def get_user_password(message: Message, state: FSMContext):
     await main_call.message.edit_text(_(messages.authorization_process))
 
     keyboard = inline_keyboards.get_back_keyboard(_, 'verification', payload=state_data['payload'])
+    # Привести это в порядок надо бы
     try:
-        user_data = await KaiParser.get_full_user_data(login, password)
+        try:
+            user_data = await KaiParser.get_full_user_data(login, password)
 
-    except KaiApiError as error:
-        await main_call.message.edit_text(_(messages.kai_error), reply_markup=keyboard)
-        logging.info(f'[{message.from_id}]: Got KAI error on login - {error}')
+        except KaiApiError as error:
+            await main_call.message.edit_text(_(messages.kai_error), reply_markup=keyboard)
+            logging.info(f'[{message.from_id}]: Got KAI error on login - {error}')
 
-    except BadCredentials:
-        await main_call.message.edit_text(_(messages.bad_credentials), reply_markup=keyboard)
-        logging.info(f'[{message.from_id}]: Bad credentials')
+        except BadCredentials:
+            await main_call.message.edit_text(_(messages.bad_credentials), reply_markup=keyboard)
+            logging.info(f'[{message.from_id}]: Bad credentials')
 
-    else:
-        result = await add_full_user_to_db(user_data, login, password, message.from_id, db)
-        if result:
-            await main_call.message.edit_text(_(messages.success_login), reply_markup=keyboard)
-            logging.info(f'[{message.from_id}]: Success login')
         else:
-            await main_call.message.edit_text(_(messages.credentials_busy), reply_markup=keyboard)
-            logging.info(f'[{message.from_id}]: Tried to login to someone else\'s account ({login})')
+            result = await add_full_user_to_db(user_data, login, password, message.from_id, db)
+            if result:
+                await main_call.message.edit_text(_(messages.success_login), reply_markup=keyboard)
+                logging.info(f'[{message.from_id}]: Success login')
+            else:
+                await main_call.message.edit_text(_(messages.credentials_busy), reply_markup=keyboard)
+                logging.info(f'[{message.from_id}]: Tried to login to someone else\'s account ({login})')
+
+    except Exception as error:
+        await main_call.message.edit_text(_(messages.base_error))
+        logging.error(f'[{message.from_id}]: Everything broke during login - {error}')
 
     await state.finish()
 
@@ -149,35 +155,20 @@ async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContex
     _ = call.bot.get('_')
     db = call.bot.get('database')
 
-    async with db.begin() as session:
+    async with db() as session:
         user = await session.get(User, call.from_user.id)
-        kai_users = await KAIUser.get_by_phone(user.phone, db)
 
-        if not kai_users:
-            await call.answer(_(messages.phone_not_found), show_alert=True)
-            return
+    is_verified = await verify_profile_with_phone(call.from_user.id, user.phone, db)
 
-        if len(kai_users) > 1:
-            # TODO: заменить на отдельное сообщение, пока просто HOTFIX
-            await call.answer(_(messages.phone_not_found), show_alert=True)
-            return
+    if is_verified is None:
+        await call.answer(_(messages.kai_account_busy), show_alert=True)
+        return
 
-        kai_user = kai_users[0]
-
-        if kai_user.telegram_user_id:
-            await call.answer(_(messages.kai_account_busy), show_alert=True)
-            return
-
-        kai_user.telegram_user_id = call.from_user.id
-        kai_user = await session.merge(kai_user)
-
-        roles_dict = await Role.get_roles_dict(db)
-        user.roles.append(roles_dict[roles.verified])
-        if kai_user.password:
-            user.roles.append(roles_dict[roles.authorized])
-
-    await call.answer(_(messages.phone_found), show_alert=True)
-    await show_verification(call, callback_data, state)
+    if is_verified:
+        await call.answer(_(messages.phone_found), show_alert=True)
+        await show_verification(call, callback_data, state)
+    else:
+        await call.answer(_(messages.phone_not_found), show_alert=True)
 
 
 def register_verification(dp: Dispatcher):
