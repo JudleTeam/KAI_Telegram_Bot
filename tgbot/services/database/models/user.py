@@ -35,6 +35,7 @@ class User(Base):
     is_blocked_bot = Column(Boolean, nullable=False, server_default=text('false'))
     is_blocked = Column(Boolean, nullable=False, server_default=text('false'))
     phone = Column(String(32), nullable=True, unique=True)
+    source = Column(String(64), nullable=True)
 
     use_emoji = Column(Boolean, nullable=False, server_default=text('true'))
     show_teachers_in_schedule = Column(Boolean, nullable=False, server_default=text('true'))
