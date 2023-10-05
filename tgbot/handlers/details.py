@@ -3,6 +3,7 @@ from pprint import pprint
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.handler import CancelHandler
 from aiogram.types import CallbackQuery, Message
 
 from tgbot.keyboards import inline_keyboards
@@ -45,20 +46,24 @@ def form_day_with_details(_, lessons: list[GroupLesson], date, use_emoji: bool):
     return msg
 
 
+async def check_access(_, call, tg_user):
+    if not tg_user.has_role(roles.admin):
+        if not tg_user.has_role(roles.verified):
+            await call.answer(_(messages.details_not_verified), show_alert=True)
+            raise CancelHandler()
+
+        if tg_user.kai_user.group_id != tg_user.group_id:
+            await call.answer(_(messages.details_not_your_group), show_alert=True)
+            raise CancelHandler()
+
+
 async def show_day_details(call: CallbackQuery, callback_data: dict):
     db, _ = call.bot.get('database'), call.bot.get('_')
     date = datetime.date.fromisoformat(callback_data['payload'])
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
 
-        if not tg_user.has_role(roles.admin):
-            if not tg_user.has_role(roles.verified):
-                await call.answer(_(messages.details_not_verified), show_alert=True)
-                return
-
-            if tg_user.kai_user.group_id != tg_user.group_id:
-                await call.answer(_(messages.details_not_your_group), show_alert=True)
-                return
+        await check_access(_, call, tg_user)
 
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
         lessons = await get_lessons_with_homework(session, tg_user.group_id, date)
@@ -82,14 +87,7 @@ async def show_week_details(call: CallbackQuery, callback_data: dict):
     async with db.begin() as session:
         tg_user = await session.get(User, call.from_user.id)
 
-        if not tg_user.has_role(roles.admin):
-            if not tg_user.has_role(roles.verified):
-                await call.answer(_(messages.details_not_verified), show_alert=True)
-                return
-
-            if tg_user.kai_user.group_id != tg_user.group_id:
-                await call.answer(_(messages.details_not_your_group), show_alert=True)
-                return
+        await check_access(_, call, tg_user)
 
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
 
