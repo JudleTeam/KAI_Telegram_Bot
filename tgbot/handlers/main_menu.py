@@ -97,8 +97,10 @@ async def send_help_menu(message: Message, state: FSMContext):
     config = message.bot.get('config')
 
     await state.finish()
-    await message.answer(_(messages.help_menu),
-                         reply_markup=inline_keyboards.get_help_keyboard(_, config.misc.contact_link))
+    await message.answer(
+        _(messages.help_menu),
+        reply_markup=inline_keyboards.get_help_keyboard(_, config.misc.contact_link, config.misc.channel_link, config.misc.donate_link)
+    )
 
 
 def register_main_menu(dp: Dispatcher):

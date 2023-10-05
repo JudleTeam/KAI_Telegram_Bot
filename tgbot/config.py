@@ -34,6 +34,7 @@ class Miscellaneous:
     write_logs: bool
     channel_link: str
     contact_link: str
+    donate_link: str
 
 
 @dataclass
