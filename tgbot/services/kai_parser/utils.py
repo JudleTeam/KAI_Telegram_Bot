@@ -143,6 +143,8 @@ async def parse_all_groups_schedule(db):
                 group_schedule = await KaiParser.get_group_schedule(group.group_id)
                 new_schedule = list()
                 for lesson in group_schedule:
+                    if lesson.prepodName.lower() == 'преподаватель кафедры':
+                        lesson.prepodLogin = ''
                     departament = await Departament.get_or_create(session, lesson.orgUnitId, lesson.orgUnitName)
                     teacher = await Teacher.get_or_create(session, lesson.prepodLogin, lesson.prepodName, departament)
                     discipline = await Discipline.get_or_create(session, lesson.disciplNum, lesson.disciplName)
