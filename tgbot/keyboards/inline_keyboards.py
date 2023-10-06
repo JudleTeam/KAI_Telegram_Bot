@@ -109,6 +109,11 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='week_schedule', payload=payload))
         )
+    elif 'full_schedule' in payload:
+        parity = payload.split(';')[-1]
+        keyboard.add(
+            InlineKeyboardButton(_(buttons.back), callback_data=callbacks.full_schedule.new(parity=parity))
+        )
 
     return keyboard
 
@@ -155,10 +160,47 @@ def get_main_schedule_keyboard(_, group_name):
         InlineKeyboardButton(_(buttons.tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload='tomorrow')),
         InlineKeyboardButton(_(buttons.day_after_tomorrow), callback_data=callbacks.schedule.new(action='show_day', payload='after_tomorrow')),
     )
-    keyboard.add(
+    keyboard.row(
         InlineKeyboardButton(_(buttons.week_schedule), callback_data=callbacks.schedule.new(action='week_schedule', payload=now.date())),
-        # InlineKeyboardButton(_(buttons.exams), callback_data='pass'),
+        InlineKeyboardButton(_(buttons.full_schedule), callback_data=callbacks.full_schedule.new(parity='0'))
+    )
+
+    keyboard.add(
         InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload='main_schedule'))
+    )
+
+    return keyboard
+
+
+def get_full_schedule_keyboard(_, parity: int, group_name):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    even = _(buttons.even_week)
+    odd = _(buttons.odd_week)
+    any_week = _(buttons.any_week)
+
+    if int(parity) == 1:
+        odd = '> ' + odd
+    elif int(parity) == 2:
+        even = '> ' + even
+    else:
+        any_week = '> ' + any_week
+
+    keyboard.row(
+        InlineKeyboardButton(even, callback_data=callbacks.full_schedule.new(parity='2')),
+        InlineKeyboardButton(odd, callback_data=callbacks.full_schedule.new(parity='1')),
+    )
+
+    keyboard.add(
+        InlineKeyboardButton(any_week, callback_data=callbacks.full_schedule.new(parity='0'))
+    )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.group).format(group_name=group_name), callback_data=callbacks.navigation.new(to='grp_choose', payload=f'full_schedule;{parity}'))
+    )
+
+    keyboard.add(
+        InlineKeyboardButton(_(buttons.back), callback_data=callbacks.schedule.new(action='main_menu', payload=''))
     )
 
     return keyboard

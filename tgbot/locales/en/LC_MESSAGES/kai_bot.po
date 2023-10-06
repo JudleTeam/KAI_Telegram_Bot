@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-10-05 21:22+0300\n"
+"POT-Creation-Date: 2023-10-06 13:51+0300\n"
 "PO-Revision-Date: 2023-02-18 16:19+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -115,7 +115,7 @@ msgid "Week schedule"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:30
-msgid "Full schedule"
+msgid "Full"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:31
@@ -135,86 +135,90 @@ msgid "1️⃣ Odd"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:36
-msgid "<<<"
+msgid "Any week"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:37
-msgid ">>>"
+msgid "<<<"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:38
-msgid "<"
+msgid ">>>"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:39
-msgid ">"
+msgid "<"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:40
+msgid ">"
+msgstr ""
+
+#: tgbot/misc/texts/buttons.py:41
 msgid "Details"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:41 tgbot/misc/texts/reply_commands.py:4
+#: tgbot/misc/texts/buttons.py:42 tgbot/misc/texts/reply_commands.py:4
 msgid "Schedule"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:42
+#: tgbot/misc/texts/buttons.py:43
 msgid "Group №{group_name}"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:44
+#: tgbot/misc/texts/buttons.py:45
 msgid "My group"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:45
+#: tgbot/misc/texts/buttons.py:46
 msgid "Classmates"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:46
+#: tgbot/misc/texts/buttons.py:47
 msgid "Edit pinned text"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:47
+#: tgbot/misc/texts/buttons.py:48
 msgid "Homework"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:48
+#: tgbot/misc/texts/buttons.py:49
 msgid "Edit"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:49
+#: tgbot/misc/texts/buttons.py:50
 msgid "Delete"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:50
+#: tgbot/misc/texts/buttons.py:51
 msgid "Add"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:51
+#: tgbot/misc/texts/buttons.py:52
 msgid "Clear"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:53 tgbot/misc/texts/messages.py:207
+#: tgbot/misc/texts/buttons.py:54 tgbot/misc/texts/messages.py:207
 msgid "Documents"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:54
+#: tgbot/misc/texts/buttons.py:55
 msgid "Syllabus"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:55
+#: tgbot/misc/texts/buttons.py:56
 msgid "Educational program"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:56
+#: tgbot/misc/texts/buttons.py:57
 msgid "Study schedule"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:58
+#: tgbot/misc/texts/buttons.py:59
 msgid "Contact us"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:59
+#: tgbot/misc/texts/buttons.py:60
 msgid "Support project"
 msgstr ""
 
@@ -965,5 +969,8 @@ msgstr ""
 #~ msgid ""
 #~ "Homework:\n"
 #~ "{homework}"
+#~ msgstr ""
+
+#~ msgid "Full schedule"
 #~ msgstr ""
 

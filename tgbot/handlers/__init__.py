@@ -1,4 +1,5 @@
 from .commands import register_commands
+from .full_schedule import register_full_schedule
 from .other import register_other
 from .user import register_user
 from .main_menu import register_main_menu
@@ -27,5 +28,6 @@ register_functions = (
     register_verification,
     register_admin_commands,
     register_settings,
-    register_details
+    register_details,
+    register_full_schedule
 )
