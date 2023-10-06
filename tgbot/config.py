@@ -35,6 +35,7 @@ class Miscellaneous:
     channel_link: str
     contact_link: str
     donate_link: str
+    guide_link: str
 
 
 @dataclass
@@ -76,6 +77,7 @@ def load_config(path: str = None):
             write_logs=env.bool('WRITE_LOGS'),
             channel_link=env.str('CHANNEL_LINK'),
             contact_link=env.str('CONTACT_LINK'),
-            donate_link=env.str('DONATE_LINK')
+            donate_link=env.str('DONATE_LINK'),
+            guide_link=env.str('GUIDE_LINK')
         )
     )

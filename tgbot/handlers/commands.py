@@ -3,8 +3,10 @@ import logging
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
+from aiogram.utils import markdown as md
 from aiogram.utils.deep_linking import decode_payload
 
+from tgbot.config import Config
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User, Role
@@ -38,6 +40,18 @@ async def command_start(message: Message):
             session.add(user)
 
             await redis.set(name=f'{message.from_id}:exists', value='1')
+
+            config: Config = message.bot.get('config')
+            start_guide = (
+                f'Перед началом использования бота настоятельно рекомендуем ознакомиться с {md.hlink("инструкцией", config.misc.guide_link)}. '
+                'В случае чего её можно будет посмотреть позже\n\n'
+                '---\n\n'
+                f'Before starting to use the bot, we strongly recommend that you read {md.hlink("guide", config.misc.guide_link)}. '
+                'If something happens, you can watch it later\n\n'
+            )
+
+            await message.answer(start_guide)
+
             await message.answer(_(messages.welcome), reply_markup=inline_keyboards.get_start_keyboard(_))
             logging.info(f'New user: {message.from_user.mention} {message.from_user.full_name} [{message.from_id}]')
         else:
