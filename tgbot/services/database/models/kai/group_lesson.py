@@ -13,7 +13,7 @@ class GroupLesson(Base):
     group_id = Column(Integer, nullable=False)
     number_of_day = Column(Integer, nullable=False)
     parity_of_week = Column(String, nullable=True)
-    int_parity_of_week = Column(Integer, nullable=True)
+    int_parity_of_week = Column(Integer, nullable=False)
     auditory_number = Column(String, nullable=True)
     building_number = Column(String, nullable=True)
     lesson_type = Column(String, nullable=True)
@@ -55,7 +55,7 @@ class GroupLesson(Base):
         return lessons_text[self.lesson_type]
 
     @classmethod
-    async def get_group_day_schedule(cls, session, group_id, day, int_parity=0):
+    async def get_group_day_schedule(cls, session, group_id, day, int_parity: int = 0):
         stmt = select(GroupLesson).where(
             GroupLesson.group_id == group_id,
             GroupLesson.number_of_day == day,
@@ -63,6 +63,16 @@ class GroupLesson(Base):
                 GroupLesson.int_parity_of_week == 0,
                 GroupLesson.int_parity_of_week == int_parity
             )
+        ).order_by(GroupLesson.start_time)
+
+        records = await session.execute(stmt)
+        return records.scalars().all()
+
+    @classmethod
+    async def get_group_day_schedule_with_any_parity(cls, session, group_id, day):
+        stmt = select(GroupLesson).where(
+            GroupLesson.group_id == group_id,
+            GroupLesson.number_of_day == day
         ).order_by(GroupLesson.start_time)
 
         records = await session.execute(stmt)

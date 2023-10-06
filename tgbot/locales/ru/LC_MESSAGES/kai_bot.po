@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-10-05 21:22+0300\n"
-"PO-Revision-Date: 2023-10-05 21:24+0300\n"
+"POT-Creation-Date: 2023-10-06 13:51+0300\n"
+"PO-Revision-Date: 2023-10-06 13:53+0300\n"
 "Last-Translator: PrinterOMG <PrinterOMG@ya.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Language: ru\n"
@@ -117,8 +117,8 @@ msgid "Week schedule"
 msgstr "На неделю"
 
 #: tgbot/misc/texts/buttons.py:30
-msgid "Full schedule"
-msgstr "Полное расписание"
+msgid "Full"
+msgstr "Полное"
 
 #: tgbot/misc/texts/buttons.py:31
 msgid "Teachers"
@@ -137,86 +137,90 @@ msgid "1️⃣ Odd"
 msgstr "1️⃣ Нечётная"
 
 #: tgbot/misc/texts/buttons.py:36
+msgid "Any week"
+msgstr "Чётная / нечётная"
+
+#: tgbot/misc/texts/buttons.py:37
 msgid "<<<"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:37
+#: tgbot/misc/texts/buttons.py:38
 msgid ">>>"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:38
+#: tgbot/misc/texts/buttons.py:39
 msgid "<"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:39
+#: tgbot/misc/texts/buttons.py:40
 msgid ">"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:40
+#: tgbot/misc/texts/buttons.py:41
 msgid "Details"
 msgstr "Подробнее"
 
-#: tgbot/misc/texts/buttons.py:41 tgbot/misc/texts/reply_commands.py:4
+#: tgbot/misc/texts/buttons.py:42 tgbot/misc/texts/reply_commands.py:4
 msgid "Schedule"
 msgstr "Расписание"
 
-#: tgbot/misc/texts/buttons.py:42
+#: tgbot/misc/texts/buttons.py:43
 msgid "Group №{group_name}"
 msgstr "Группа №{group_name}"
 
-#: tgbot/misc/texts/buttons.py:44
+#: tgbot/misc/texts/buttons.py:45
 msgid "My group"
 msgstr "Моя группа"
 
-#: tgbot/misc/texts/buttons.py:45
+#: tgbot/misc/texts/buttons.py:46
 msgid "Classmates"
 msgstr "Одногруппники"
 
-#: tgbot/misc/texts/buttons.py:46
+#: tgbot/misc/texts/buttons.py:47
 msgid "Edit pinned text"
 msgstr "Изменить закреплённое сообщение"
 
-#: tgbot/misc/texts/buttons.py:47
+#: tgbot/misc/texts/buttons.py:48
 msgid "Homework"
 msgstr "Домашняя работа"
 
-#: tgbot/misc/texts/buttons.py:48
+#: tgbot/misc/texts/buttons.py:49
 msgid "Edit"
 msgstr "Изменить"
 
-#: tgbot/misc/texts/buttons.py:49
+#: tgbot/misc/texts/buttons.py:50
 msgid "Delete"
 msgstr "Удалить"
 
-#: tgbot/misc/texts/buttons.py:50
+#: tgbot/misc/texts/buttons.py:51
 msgid "Add"
 msgstr "Добавить"
 
-#: tgbot/misc/texts/buttons.py:51
+#: tgbot/misc/texts/buttons.py:52
 msgid "Clear"
 msgstr "Очистить"
 
-#: tgbot/misc/texts/buttons.py:53 tgbot/misc/texts/messages.py:207
+#: tgbot/misc/texts/buttons.py:54 tgbot/misc/texts/messages.py:207
 msgid "Documents"
 msgstr "Документы"
 
-#: tgbot/misc/texts/buttons.py:54
+#: tgbot/misc/texts/buttons.py:55
 msgid "Syllabus"
 msgstr "Учебный план"
 
-#: tgbot/misc/texts/buttons.py:55
+#: tgbot/misc/texts/buttons.py:56
 msgid "Educational program"
 msgstr "Образовательная программа"
 
-#: tgbot/misc/texts/buttons.py:56
+#: tgbot/misc/texts/buttons.py:57
 msgid "Study schedule"
 msgstr "Учебный график"
 
-#: tgbot/misc/texts/buttons.py:58
+#: tgbot/misc/texts/buttons.py:59
 msgid "Contact us"
 msgstr "Связаться с нами"
 
-#: tgbot/misc/texts/buttons.py:59
+#: tgbot/misc/texts/buttons.py:60
 msgid "Support project"
 msgstr "Поддержать проект"
 
@@ -813,3 +817,6 @@ msgstr "Админ"
 
 #~ msgid "Select group"
 #~ msgstr "Выберите группу"
+
+#~ msgid "Full schedule"
+#~ msgstr "Полное расписание"

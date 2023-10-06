@@ -9,6 +9,7 @@ language_choose = CallbackData('lang_chs', 'lang_id', 'code', 'payload')
 group_choose = CallbackData('grp_chs', 'id', 'action', 'payload')  # actions - 'select', 'add', 'remove'
 
 schedule = CallbackData('schedule', 'action', 'payload')
+full_schedule = CallbackData('full_schedule', 'parity')
 change_schedule_week = CallbackData('change_week', 'action', 'payload')
 
 settings = CallbackData('settings', 'action')
