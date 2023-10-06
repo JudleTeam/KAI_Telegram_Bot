@@ -496,7 +496,7 @@ def get_pin_text_keyboard(_):
     return keyboard
 
 
-def get_help_keyboard(_, contact_url, channel_url, donate_url):
+def get_help_keyboard(_, contact_url, channel_url, donate_url, guide_link):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     keyboard.row(
@@ -505,5 +505,6 @@ def get_help_keyboard(_, contact_url, channel_url, donate_url):
     )
 
     keyboard.add(InlineKeyboardButton(_(buttons.support_project), url=donate_url))
+    keyboard.add(InlineKeyboardButton(_(buttons.guide), url=guide_link))
 
     return keyboard
