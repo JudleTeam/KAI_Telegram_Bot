@@ -78,8 +78,10 @@ async def show_full_schedule(call: CallbackQuery, callback_data: dict):
             all_lessons_text += msg
 
     try:
-        await call.message.edit_text(all_lessons_text,
-                                    reply_markup=inline_keyboards.get_full_schedule_keyboard(_, callback_data['parity'], tg_user.group.group_name))
+        await call.message.edit_text(
+            all_lessons_text,
+            reply_markup=inline_keyboards.get_full_schedule_keyboard(_, callback_data['parity'], tg_user.group.group_name)
+        )
     except MessageNotModified:
         pass
 

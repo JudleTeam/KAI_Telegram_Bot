@@ -1,4 +1,5 @@
 from .commands import register_commands
+from .errors import register_errors
 from .full_schedule import register_full_schedule
 from .other import register_other
 from .user import register_user
@@ -29,5 +30,6 @@ register_functions = (
     register_admin_commands,
     register_settings,
     register_details,
-    register_full_schedule
+    register_full_schedule,
+    register_errors
 )

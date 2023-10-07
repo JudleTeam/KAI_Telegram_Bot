@@ -20,13 +20,10 @@ async def show_group_choose(call: CallbackQuery, callback_data: dict, state: FSM
     keyboard = inline_keyboards.get_group_choose_keyboard(_, user, 'profile', callback_data['payload'])
     message = await call.message.edit_text(_(messages.group_choose).format(group_name=group_name), reply_markup=keyboard)
 
-    try:
-        await call.answer()
-    except InvalidQueryID:
-        pass
-
     await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data['payload'])
     await states.GroupChoose.waiting_for_group.set()
+
+    await call.answer()
 
 
 async def show_verification(call: CallbackQuery, callback_data: dict, state: FSMContext):
