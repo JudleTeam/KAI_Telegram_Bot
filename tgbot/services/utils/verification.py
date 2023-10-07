@@ -17,7 +17,11 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
 
     async with db.begin() as session:
         kai_user: KAIUser = await KAIUser.get_by_email(session, full_user.user_info.email)
-        already_used = bool(kai_user.telegram_user_id) if kai_user else False
+        if kai_user and kai_user.telegram_user_id and kai_user.telegram_user_id != tg_id:
+            already_used = True
+        else:
+            already_used = False
+
         tg_user = await session.get(User, tg_id)
 
         speciality = await Speciality.get_or_create(session, user_about.specId, user_about.specName, user_about.specCode)
