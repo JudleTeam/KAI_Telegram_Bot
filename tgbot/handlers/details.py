@@ -9,9 +9,10 @@ from aiogram.types import CallbackQuery, Message
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
 from tgbot.misc.texts import messages, templates, rights, roles
-from tgbot.services.database.models import User, GroupLesson, Homework
+from tgbot.services.database.models import User, GroupLesson, Homework, KAIUser
 from tgbot.services.database.utils import get_lessons_with_homework
 from tgbot.services.kai_parser.utils import lesson_type_to_text, lesson_type_to_emoji
+from tgbot.services.utils.other import broadcast_text
 
 
 def form_day_with_details(_, lessons: list[GroupLesson], date, use_emoji: bool):
@@ -132,7 +133,20 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
 async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
     keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=f'{callback_data["lesson_id"]};{callback_data["date"]}')
-    await call.message.edit_text(_(messages.homework_input), reply_markup=keyboard)
+    if callback_data['action'] == 'add':
+        text = _(messages.homework_input)
+    else:
+        db = call.bot.get('database')
+        date, lesson_id = datetime.date.fromisoformat(callback_data['date']), int(callback_data['lesson_id'])
+        async with db() as session:
+            homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
+        if homework:
+            text = _(messages.edit_homework).format(homework=homework)
+        else:
+            callback_data['action'] = 'add'
+            text = _(messages.homework_input)
+
+    await call.message.edit_text(text, reply_markup=keyboard)
     await state.update_data(main_call=call.to_python(), **callback_data)
     await states.Homework.waiting_for_homework.set()
     await call.answer()
@@ -151,6 +165,8 @@ async def get_homework(message: Message, state: FSMContext):
         if homework:
             homework.description = homework_description
         else:
+            lesson = await session.get(GroupLesson, lesson_id)
+            chats_ids = await KAIUser.get_telegram_ids_by_group(session, lesson.group_id)
             homework = Homework(
                 description=homework_description,
                 date=date,
@@ -161,6 +177,20 @@ async def get_homework(message: Message, state: FSMContext):
     await message.delete()
     await state.finish()
     await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
+
+    if state_data['action'] == 'add':
+        await broadcast_text(
+            _,
+            chats=chats_ids,
+            text=messages.new_homework,
+            format_kwargs={
+                'date': homework.date,
+                'discipline': lesson.discipline.name,
+                'homework': homework.description
+            },
+            bot=message.bot,
+            db=db
+        )
 
 
 async def delete_homework(call: CallbackQuery, callback_data: dict):
