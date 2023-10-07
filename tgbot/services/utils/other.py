@@ -46,19 +46,24 @@ def parse_phone_number(phone_number) -> str | None:
     return phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
 
 
-async def send_message(bot: Bot, chat_id: int, text: str, **kwargs) -> None:
+async def send_message(bot: Bot, chat_id: int, text: str, **kwargs) -> bool:
     try:
         await bot.send_message(chat_id, text, **kwargs)
 
     except RetryAfter as error:
         await asyncio.sleep(error.timeout)
-        await send_message(bot, chat_id, text)
+        return await send_message(bot, chat_id, text)
 
     except TelegramAPIError as error:
         logging.error(f'[{chat_id}] Something went wrong with TelegramAPI: {error}')
 
     except Exception as error:
         logging.error(f'[{chat_id}] Something went wrong: {error}')
+
+    else:
+        return True
+
+    return False
 
 
 async def broadcast_text(
@@ -73,11 +78,17 @@ async def broadcast_text(
 
     logging.info('Start broadcasting')
 
+    total = len(chats)
     async with db() as session:
-        for chat_id in chats:
+        for num, chat_id in enumerate(chats, start=1):
             user_locale = await get_user_locale(session, chat_id)
             text_to_send = _.gettext(text, locale=user_locale).format(**format_kwargs)
-            await send_message(bot, chat_id, text_to_send, **kwargs)
+            result = await send_message(bot, chat_id, text_to_send, **kwargs)
+
+            if result:
+                logging.info(f'[{num} / {total}] Message has been sent to {chat_id}')
+            else:
+                logging.info(f'[{num} / {total}] Message was not sent to {chat_id}')
 
             await asyncio.sleep(timeout)
 

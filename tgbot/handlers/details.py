@@ -1,4 +1,5 @@
 import datetime
+import logging
 from pprint import pprint
 
 from aiogram import Dispatcher
@@ -163,8 +164,10 @@ async def get_homework(message: Message, state: FSMContext):
     async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
         if homework:
+            logging.info(f'[{message.from_user.id}] Edited homework {date} {homework.lesson.start_time} - {homework_description}')
             homework.description = homework_description
         else:
+            logging.info(f'[{message.from_user.id}] Added homework {date} {homework.lesson.start_time} - {homework_description}')
             lesson = await session.get(GroupLesson, lesson_id)
             chats_ids = await KAIUser.get_telegram_ids_by_group(session, lesson.group_id)
             homework = Homework(
@@ -199,6 +202,7 @@ async def delete_homework(call: CallbackQuery, callback_data: dict):
     async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, int(callback_data['lesson_id']), date)
         if homework:
+            logging.info(f'[{call.from_user.id}] Deleted homework {date} {homework.lesson.start_time}')
             await session.delete(homework)
 
     await show_lesson_menu(call, callback_data)
