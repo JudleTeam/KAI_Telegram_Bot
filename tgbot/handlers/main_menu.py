@@ -88,8 +88,8 @@ async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMCon
                                   reply_markup=inline_keyboards.get_channel_keyboard(_, config.misc.channel_link))
 
     await call.message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
-    await call.answer()
     await state.finish()
+    await call.answer()
 
 
 async def send_help_menu(message: Message, state: FSMContext):

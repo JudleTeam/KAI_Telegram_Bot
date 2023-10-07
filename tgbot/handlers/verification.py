@@ -102,8 +102,8 @@ async def get_user_password(message: Message, state: FSMContext):
             logging.info(f'[{message.from_id}]: Bad credentials')
 
         else:
-            result = await add_full_user_to_db(user_data, login, password, message.from_id, db)
-            if result:
+            is_available = await add_full_user_to_db(user_data, login, password, message.from_id, db)
+            if is_available:
                 await main_call.message.edit_text(_(messages.success_login), reply_markup=keyboard)
                 logging.info(f'[{message.from_id}]: Success login')
             else:
