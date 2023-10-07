@@ -40,7 +40,7 @@ profile_menu = _(
     'Profile menu\n\n'
     'Selected group: {s_group_name}\n'
     'Your roles: {roles}'
-    )
+)
 
 lesson_details = _(
     '{start_time} | {lesson_type} - {lesson_name}\n'
@@ -52,6 +52,11 @@ no_document = _('This document is not available on the website...')
 homework = _('📖 Homework:\n{homework}')
 no_homework = _('No homework')
 
+new_homework = _(
+    'New homework has appeared for {date} in the discipline "{discipline}":\n\n'
+    '{homework}'
+)
+
 lesson_homework_edit = _(
     'Date: {date}\n'
     'Discipline: {discipline}\n'
@@ -62,6 +67,10 @@ lesson_homework_edit = _(
 )
 
 homework_input = _('Enter homework text')
+edit_homework = _(
+    'Current homework:\n{homework}\n\n'
+    'Enter new homework text'
+)
 details_not_verified = _('To see details you need to be verified!')
 details_not_your_group = _('You can see details only for your group!')
 
@@ -153,13 +162,13 @@ group_chat_error = _('Sorry, I don\'t know how to work in group chats yet')
 education_menu = _('Education menu')
 my_group_menu = _(
     'My group ({group_name})\n\n'
-    
+
     'Year: {year} | Faculty: {faculty}\n'
     'Institute: {institute}\n'
     'Departament: {departament}\n'
     'Speciality: {speciality}\n'
     'Profile: {profile}\n\n'
-    
+
     'Pinned text:\n{pinned_text}'
 )
 need_be_verified = _('You need to be verified to access')
