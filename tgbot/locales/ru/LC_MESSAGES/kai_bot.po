@@ -7,18 +7,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-10-07 23:15+0300\n"
+"POT-Creation-Date: 2023-10-08 23:06+0300\n"
 "PO-Revision-Date: 2023-10-07 23:21+0300\n"
 "Last-Translator: PrinterOMG <PrinterOMG@ya.ru>\n"
-"Language-Team: ru <LL@li.org>\n"
 "Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 "
-"&& (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "Generated-By: Babel 2.9.1\n"
-"X-Generator: Poedit 3.3.2\n"
 
 #: tgbot/misc/texts/buttons.py:4
 msgid "Back"
@@ -279,7 +278,8 @@ msgstr "Вы были разблокированы, можете продолж�
 #: tgbot/misc/texts/messages.py:21
 msgid "It looks like you aren't registered in the bot. Type \"/start\" to fix it"
 msgstr ""
-"Похоже вы не зарегистрированы в боте. Напишите \"/start\" чтобы исправить это"
+"Похоже вы не зарегистрированы в боте. Напишите \"/start\" чтобы исправить"
+" это"
 
 #: tgbot/misc/texts/messages.py:22
 msgid "You are blocked in the bot! If this is an error, contact the administrator"
@@ -287,11 +287,11 @@ msgstr "Вы заблокированы в боте! Если это ошибк�
 
 #: tgbot/misc/texts/messages.py:24
 msgid ""
-"The language you are using is no longer available. Contact the administrator or "
-"change the language"
+"The language you are using is no longer available. Contact the "
+"administrator or change the language"
 msgstr ""
-"Язык, который вы использовали, больше не доступен. Свяжитесь с администратором "
-"или измените язык"
+"Язык, который вы использовали, больше не доступен. Свяжитесь с "
+"администратором или измените язык"
 
 #: tgbot/misc/texts/messages.py:26
 msgid "Please select your language"
@@ -462,15 +462,15 @@ msgstr ""
 #: tgbot/misc/texts/messages.py:97
 msgid ""
 "Your faculty is not currently supported...\n"
-"If you want your faculty to have full functionality, write to us through the "
-"\"Help\" section\n"
+"If you want your faculty to have full functionality, write to us through "
+"the \"Help\" section\n"
 "\n"
 "Pinned text:\n"
 "{pinned_text}"
 msgstr ""
 "Ваш факультет сейчас не поддерживается...\n"
-"Если хотите чтобы у вашего был полный функционал, напишите нам через раздел "
-"\"Помощь\"\n"
+"Если хотите чтобы у вашего был полный функционал, напишите нам через "
+"раздел \"Помощь\"\n"
 "\n"
 "Закреплённый текст:\n"
 "{pinned_text}"
@@ -489,8 +489,8 @@ msgstr "Сначала нужно выбрать группу"
 
 #: tgbot/misc/texts/messages.py:108
 msgid ""
-"Invalid {command} command format. After the command, there should be a user's "
-"Telegram ID. Example: \"{command} 393867797\""
+"Invalid {command} command format. After the command, there should be a "
+"user's Telegram ID. Example: \"{command} 393867797\""
 msgstr ""
 "Неверный формат команды {command}. После команды должен быть Telegram ID "
 "пользователя. Пример: \"{command} 393867797\""
@@ -587,7 +587,8 @@ msgstr "✅ Ваш номер телефона был подтверждён!"
 
 #: tgbot/misc/texts/messages.py:152
 msgid ""
-"☑️ Your phone number was found in the database and your profile is now verified"
+"☑️ Your phone number was found in the database and your profile is now "
+"verified"
 msgstr "☑️ Ваш номер телефона был найден в базе и ваш профиль теперь верифицирован"
 
 #: tgbot/misc/texts/messages.py:153
@@ -613,7 +614,8 @@ msgstr ""
 #: tgbot/misc/texts/messages.py:158
 msgid "❌ Account with this number already linked to someone else Telegram"
 msgstr ""
-"❌ Аккаунт с этим номеров телефона уже привязан к какому-то Telegram аккаунту"
+"❌ Аккаунт с этим номеров телефона уже привязан к какому-то Telegram "
+"аккаунту"
 
 #: tgbot/misc/texts/messages.py:159
 msgid "You don't have to do this!"
@@ -673,13 +675,13 @@ msgstr ""
 
 #: tgbot/misc/texts/messages.py:181
 msgid ""
-"Invalid /set_prefix command format. The command should be followed by the user's "
-"Telegram ID, then a new prefix (can be empty, limit 32 symbols). Example: \"/"
-"set_prefix 393867797 💩\""
+"Invalid /set_prefix command format. The command should be followed by the"
+" user's Telegram ID, then a new prefix (can be empty, limit 32 symbols). "
+"Example: \"/set_prefix 393867797 💩\""
 msgstr ""
-"Неверный формат команды /set_prefix. После команды должен идти Telegram ID "
-"пользователя, затем новый префикс (может быть пустым, лимит 32 символа). Пример: "
-"\"/set_prefix 393867797 💩\""
+"Неверный формат команды /set_prefix. После команды должен идти Telegram "
+"ID пользователя, затем новый префикс (может быть пустым, лимит 32 "
+"символа). Пример: \"/set_prefix 393867797 💩\""
 
 #: tgbot/misc/texts/messages.py:185
 msgid "User {user_id} does not exist or is not verified"
@@ -691,13 +693,13 @@ msgstr "Пользователю {user_id} был установлен преф�
 
 #: tgbot/misc/texts/messages.py:188
 msgid ""
-"Invalid /send_message command format. The command must be a reply to a message "
-"that you must send. The command should be followed by the user's Telegram ID, to "
-"whom the message will be sent"
+"Invalid /send_message command format. The command must be a reply to a "
+"message that you must send. The command should be followed by the user's "
+"Telegram ID, to whom the message will be sent"
 msgstr ""
-"Неверный формат команды /send_message. Команда должна быть ответом на сообщение. "
-"После команды должен идти Telegram ID пользователя, которому будет отправлено "
-"сообщение"
+"Неверный формат команды /send_message. Команда должна быть ответом на "
+"сообщение. После команды должен идти Telegram ID пользователя, которому "
+"будет отправлено сообщение"
 
 #: tgbot/misc/texts/messages.py:192
 msgid "The message was sent to user {user_id}"
@@ -846,3 +848,4 @@ msgstr "Админ"
 
 #~ msgid "Full schedule"
 #~ msgstr "Полное расписание"
+
