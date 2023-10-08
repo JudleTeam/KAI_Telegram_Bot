@@ -6,6 +6,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.types import CallbackQuery, Message
+from aiogram.utils import markdown as md
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
@@ -133,7 +134,8 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
 
 async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
     _ = call.bot.get('_')
-    keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=f'{callback_data["lesson_id"]};{callback_data["date"]}')
+    payload = f'{callback_data["lesson_id"]};{callback_data["date"]};{callback_data["payload"]}'
+    keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=payload)
     if callback_data['action'] == 'add':
         text = _(messages.homework_input)
     else:
@@ -142,7 +144,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, s
         async with db() as session:
             homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
         if homework:
-            text = _(messages.edit_homework).format(homework=homework)
+            text = _(messages.edit_homework).format(homework=md.hcode(homework.description))
         else:
             callback_data['action'] = 'add'
             text = _(messages.homework_input)
@@ -167,8 +169,8 @@ async def get_homework(message: Message, state: FSMContext):
             logging.info(f'[{message.from_user.id}] Edited homework {date} {homework.lesson.start_time} - {homework_description}')
             homework.description = homework_description
         else:
-            logging.info(f'[{message.from_user.id}] Added homework {date} {homework.lesson.start_time} - {homework_description}')
             lesson = await session.get(GroupLesson, lesson_id)
+            logging.info(f'[{message.from_user.id}] Added homework {date} {lesson.start_time} - {homework_description}')
             chats_ids = await KAIUser.get_telegram_ids_by_group(session, lesson.group_id)
             homework = Homework(
                 description=homework_description,

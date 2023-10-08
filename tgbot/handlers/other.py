@@ -32,8 +32,8 @@ async def cancel(call: CallbackQuery, callback_data: dict, state: FSMContext):
             await show_verification(call, callback_data, state)
         case 'my_group': await show_my_group(call)
         case 'homework':
-            lesson_id, date = callback_data['payload'].split(';')
-            await show_lesson_menu(call, {'lesson_id': lesson_id, 'date': date})
+            lesson_id, date, payload = callback_data['payload'].split(';')
+            await show_lesson_menu(call, {'lesson_id': lesson_id, 'date': date, 'payload': payload})
 
 
 def register_other(dp: Dispatcher):
