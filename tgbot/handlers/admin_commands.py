@@ -2,21 +2,24 @@ import logging
 import os
 from pathlib import Path
 
-from aiogram import Dispatcher
-from aiogram.types import Message, InputFile
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import Message, FSInputFile
 from aiogram.utils import markdown as md
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from tgbot.config import Config
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 from tgbot.services.utils import get_user_description
 
 
-async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str):
-    _ = message.bot.get('_')
-    db_session = message.bot.get('database')
-    redis = message.bot.get('redis')
-    config = message.bot.get('config')
+admin_commands_router = Router()
 
+
+async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str,
+                                       _, db: async_sessionmaker, redis: Redis, config: Config):
     args = message.text.split()
     if len(args) != 2:
         await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
@@ -32,7 +35,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
         await message.answer(_(messages.dont_do))
         return
 
-    async with db_session.begin() as session:
+    async with db.begin() as session:
         user_to_update = await session.get(User, user_id_to_update)
         if not user_to_update:
             await message.answer(_(messages.user_not_exist).format(user_id=md.hcode(user_id_to_update)))
@@ -56,28 +59,31 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
     )
 
 
-async def pardon_user(message: Message):
+@admin_commands_router.message(Command('pardon', 'unban', 'unblock'))
+async def pardon_user(message: Message, _, db: async_sessionmaker, redis: Redis, config: Config):
     await update_user_block_and_notify(
         message,
         is_blocked=False,
         blocked_msg=messages.admin_unblock,
-        unblocked_msg=messages.user_has_been_unblocked
+        unblocked_msg=messages.user_has_been_unblocked,
+        _=_, db=db, redis=redis, config=config
     )
 
 
-async def block_user(message: Message):
+@admin_commands_router.message(Command('ban', 'block'))
+async def block_user(message: Message,  _, db: async_sessionmaker, redis: Redis, config: Config):
     await update_user_block_and_notify(
         message,
         is_blocked=True,
         blocked_msg=messages.admin_block,
-        unblocked_msg=messages.user_has_been_blocked
+        unblocked_msg=messages.user_has_been_blocked,
+        _=_, db=db, redis=redis, config=config
     )
 
 
-async def send_users(message: Message):
-    db_session = message.bot.get('database')
-
-    all_users = await User.get_all(db_session)
+@admin_commands_router.message(Command('users', 'block'))
+async def send_users(message: Message, db: async_sessionmaker):
+    all_users = await User.get_all(db)
 
     formatted_users = list()
     for user in all_users:
@@ -89,10 +95,8 @@ async def send_users(message: Message):
     logging.info(f'Admin {message.from_id} used "/users"')
 
 
-async def set_prefix(message: Message):
-    _ = message.bot.get('_')
-    db = message.bot.get('database')
-
+@admin_commands_router.message(Command('set_prefix'))
+async def set_prefix(message: Message, _, db: async_sessionmaker):
     args = message.text.split()
     if len(args) not in (2, 3) or not args[1].isdigit() or (len(args) == 3 and len(args[2]) > 32):
         await message.answer(_(messages.set_prefix_bad_format))
@@ -111,14 +115,13 @@ async def set_prefix(message: Message):
     await message.answer(_(messages.prefix_set).format(user_id=md.hcode(user_id), prefix=prefix))
 
 
-async def send_last_log(message: Message):
-    await message.answer_document(InputFile(Path(os.getcwd()).joinpath(message.bot.get('log_file'))))
+@admin_commands_router.message(Command('last_log'))
+async def send_last_log(message: Message, log_file):
+    await message.answer_document(FSInputFile(Path(os.getcwd()).joinpath(log_file)))
 
 
-async def send_user_info(message: Message):
-    _ = message.bot.get('_')
-    db = message.bot.get('database')
-
+@admin_commands_router.message(Command('user_info'))
+async def send_user_info(message: Message, _, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2:
         await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
@@ -141,10 +144,8 @@ async def send_user_info(message: Message):
     await message.answer(text)
 
 
-async def send_message(message: Message):
-    _ = message.bot.get('_')
-    db = message.bot.get('database')
-
+@admin_commands_router.message(Command('send_message'))
+async def send_message(message: Message, _, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2 or not message.reply_to_message:
         await message.answer(_(messages.send_message_bad_format))
@@ -163,13 +164,3 @@ async def send_message(message: Message):
 
     await message.reply_to_message.send_copy(chat_id=user_to_send_id)
     await message.reply_to_message.reply(_(messages.message_sent).format(user_id=md.hcode(user_to_send_id)))
-
-
-def register_admin_commands(dp: Dispatcher):
-    dp.register_message_handler(block_user, commands=['ban', 'block'], is_admin=True)
-    dp.register_message_handler(pardon_user, commands=['pardon', 'unban', 'unblock'], is_admin=True)
-    dp.register_message_handler(send_users, commands=['users'], is_admin=True)
-    dp.register_message_handler(set_prefix, commands=['set_prefix'], is_admin=True)
-    dp.register_message_handler(send_last_log, commands=['last_log'], is_admin=True)
-    dp.register_message_handler(send_user_info, commands=['user_info'], is_admin=True)
-    dp.register_message_handler(send_message, commands=['send_message'], is_admin=True)

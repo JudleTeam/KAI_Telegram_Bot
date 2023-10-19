@@ -1,4 +1,4 @@
-from .commands import register_commands
+from .commands import commands_router
 from .errors import register_errors
 from .full_schedule import register_full_schedule
 from .other import register_other
@@ -8,7 +8,7 @@ from .schedule import register_schedule
 from .teachers import register_teachers
 from .profile import register_profile
 from .group_choose import register_group_choose
-from .admin_commands import register_admin_commands
+from .admin_commands import admin_commands_router
 from .verification import register_verification
 from .education import register_education
 from .my_group import register_my_group
@@ -18,7 +18,7 @@ from .details import register_details
 register_functions = (
     register_schedule,
     register_main_menu,
-    register_commands,
+    # register_commands,
     register_other,
     register_user,
     register_teachers,
@@ -27,9 +27,14 @@ register_functions = (
     register_my_group,
     register_group_choose,
     register_verification,
-    register_admin_commands,
+    # register_admin_commands,
     register_settings,
     register_details,
     register_full_schedule,
     register_errors
+)
+
+routers = (
+    commands_router,
+    admin_commands_router,
 )

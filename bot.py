@@ -4,8 +4,8 @@ import os
 import datetime
 
 from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.contrib.fsm_storage.redis import RedisStorage2
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -68,13 +68,10 @@ async def main():
     )
     async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-    storage = RedisStorage2() if config.bot.use_redis else MemoryStorage()
     redis = Redis()
+    storage = RedisStorage(redis=redis) if config.bot.use_redis else MemoryStorage()
     bot = Bot(token=config.bot.token, parse_mode='HTML')
-    dp = Dispatcher(bot, storage=storage)
-
-    bot_info = await bot.me
-    logger.info(f'Bot: {bot_info.username} [{bot_info.mention}]')
+    dp = Dispatcher(storage=storage)
 
     bot['config'] = config
     bot['redis'] = redis
@@ -93,14 +90,11 @@ async def main():
     # await parse_all_groups_schedule(async_session)
     asyncio.create_task(start_schedulers(bot, async_session))
 
-    try:
-        await dp.start_polling()
-    finally:
-        await dp.storage.close()
-        await dp.storage.wait_closed()
-
-        bot_session = await bot.get_session()
-        await bot_session.close()
+    await dp.start_polling(bot,
+                           config=config,
+                           redis=redis,
+                           database=async_session,
+                           log_file=log_file)
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 import datetime
 import logging
-from pprint import pprint
 
 from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.handler import CancelHandler
+from aiogram.dispatcher.event.bases import CancelHandler
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
@@ -60,8 +60,7 @@ async def check_access(_, call, tg_user):
             raise CancelHandler()
 
 
-async def show_day_details(call: CallbackQuery, callback_data: dict):
-    db, _ = call.bot.get('database'), call.bot.get('_')
+async def show_day_details(call: CallbackQuery, callback_data: dict, _, db: async_sessionmaker):
     date = datetime.date.fromisoformat(callback_data['payload'])
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
@@ -78,10 +77,7 @@ async def show_day_details(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
-async def show_week_details(call: CallbackQuery, callback_data: dict):
-    db = call.bot.get('database')
-    _ = call.bot.get('_')
-
+async def show_week_details(call: CallbackQuery, callback_data: dict, _, db: async_sessionmaker):
     week_first_date = datetime.datetime.fromisoformat(callback_data['payload'])
     week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
 
@@ -109,8 +105,7 @@ async def show_week_details(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
-async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
-    db, _ = call.bot.get('database'), call.bot.get('_')
+async def show_lesson_menu(call: CallbackQuery, callback_data: dict, _, db: async_sessionmaker):
     date = datetime.date.fromisoformat(callback_data['date'])
     async with db() as session:
         homework = await Homework.get_by_lesson_and_date(session, int(callback_data['lesson_id']), date)
@@ -132,14 +127,13 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
     await call.answer()
 
 
-async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
+async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, state: FSMContext, _,
+                                     db: async_sessionmaker):
     payload = f'{callback_data["lesson_id"]};{callback_data["date"]};{callback_data["payload"]}'
     keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=payload)
     if callback_data['action'] == 'add':
         text = _(messages.homework_input)
     else:
-        db = call.bot.get('database')
         date, lesson_id = datetime.date.fromisoformat(callback_data['date']), int(callback_data['lesson_id'])
         async with db() as session:
             homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
@@ -155,9 +149,8 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, s
     await call.answer()
 
 
-async def get_homework(message: Message, state: FSMContext):
+async def get_homework(message: Message, state: FSMContext, _, db: async_sessionmaker):
     homework_description = message.text
-    db, _ = message.bot.get('database'), message.bot.get('_')
     state_data = await state.get_data()
     lesson_id = int(state_data['lesson_id'])
     date = datetime.date.fromisoformat(state_data['date'])
@@ -180,7 +173,7 @@ async def get_homework(message: Message, state: FSMContext):
             session.add(homework)
 
     await message.delete()
-    await state.finish()
+    await state.clear()
     await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
 
     if state_data['action'] == 'add':
@@ -198,8 +191,7 @@ async def get_homework(message: Message, state: FSMContext):
         )
 
 
-async def delete_homework(call: CallbackQuery, callback_data: dict):
-    db, _ = call.bot.get('database'), call.bot.get('_')
+async def delete_homework(call: CallbackQuery, callback_data: dict, _, db: async_sessionmaker):
     date = datetime.date.fromisoformat(callback_data['date'])
     async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, int(callback_data['lesson_id']), date)

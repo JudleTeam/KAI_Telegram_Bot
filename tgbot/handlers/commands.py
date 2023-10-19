@@ -1,10 +1,12 @@
 import logging
 
-from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram import Router
+from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.utils import markdown as md
 from aiogram.utils.deep_linking import decode_payload
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.config import Config
 from tgbot.keyboards import inline_keyboards, reply_keyboards
@@ -12,10 +14,12 @@ from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User, Role
 
 
-async def command_start(message: Message):
-    db = message.bot.get('database')
-    _ = message.bot.get('_')
 
+commands_router = Router()
+
+@commands_router.message(CommandStart())
+async def command_start(message: Message, _, db: async_sessionmaker):
+    # TODO: update work with deep link
     args = message.get_args()
     try:
         payload = decode_payload(args)
@@ -58,13 +62,7 @@ async def command_start(message: Message):
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
-async def command_menu(message: Message, state: FSMContext):
-    _ = message.bot.get('_')
-
+@commands_router.message(Command('menu'))
+async def command_menu(message: Message, state: FSMContext, _):
     await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
-    await state.finish()
-
-
-def register_commands(dp: Dispatcher):
-    dp.register_message_handler(command_start, commands=['start'])
-    dp.register_message_handler(command_menu, commands=['menu'], state='*')
+    await state.clear()
