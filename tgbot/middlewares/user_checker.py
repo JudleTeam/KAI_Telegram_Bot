@@ -3,6 +3,7 @@ import logging
 from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
+from aiogram.types import ContentType
 
 from tgbot.services.database.models import User
 from tgbot.misc.texts import messages
@@ -27,8 +28,9 @@ class UserCheckerMiddleware(BaseMiddleware):
         redis = message.bot.get('redis')
         _ = message.bot.get('_')
 
-        if message.chat.type != 'private':
-            await message.answer(_(messages.group_chat_error))
+        if message.chat.type != 'private' and message.content_type == ContentType.NEW_CHAT_MEMBERS:
+            if any(message.bot.id == new_member.id for new_member in message.new_chat_members):
+                await message.answer(_(messages.group_chat_error))
             raise CancelHandler()
 
         cached_is_user_exists = await redis.get(f'{message.chat.id}:exists')
