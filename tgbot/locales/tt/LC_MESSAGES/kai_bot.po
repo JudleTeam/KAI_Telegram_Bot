@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2023-10-20 12:54+0300\n"
-"PO-Revision-Date: 2023-09-17 16:19+0300\n"
-"Last-Translator: Khabirov Rail\n"
-"Language: tt\n"
+"PO-Revision-Date: 2023-10-20 13:50+0300\n"
+"Last-Translator: PrinterOMG <PrinterOMG@ya.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Language: tt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 "
+"&& (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "Generated-By: Babel 2.9.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: tgbot/misc/texts/buttons.py:4
 msgid "Back"
@@ -41,7 +42,7 @@ msgstr "🌍  Тел сайлау"
 
 #: tgbot/misc/texts/buttons.py:9
 msgid "Settings"
-msgstr ""
+msgstr "Караклар"
 
 #: tgbot/misc/texts/buttons.py:10
 msgid "👥 Choose group"
@@ -85,20 +86,19 @@ msgstr "Канал"
 
 #: tgbot/misc/texts/buttons.py:21
 msgid "Enable emoji"
-msgstr ""
+msgstr "Эмодзи кабызырга"
 
 #: tgbot/misc/texts/buttons.py:22
 msgid "Disable emoji"
-msgstr ""
+msgstr "Эмодзыны сүндерергә"
 
 #: tgbot/misc/texts/buttons.py:23
-#, fuzzy
 msgid "Enable teachers"
-msgstr "Укытучылар"
+msgstr "Укытучыларны кабызырга"
 
 #: tgbot/misc/texts/buttons.py:24
 msgid "Disable teachers"
-msgstr ""
+msgstr "Укытучыларны сүндерергә"
 
 #: tgbot/misc/texts/buttons.py:26
 msgid "Today"
@@ -118,7 +118,7 @@ msgstr "Бу атнага"
 
 #: tgbot/misc/texts/buttons.py:30
 msgid "Full"
-msgstr ""
+msgstr "Тулы"
 
 #: tgbot/misc/texts/buttons.py:31
 msgid "Teachers"
@@ -137,9 +137,8 @@ msgid "1️⃣ Odd"
 msgstr "1️⃣ Нечётная"
 
 #: tgbot/misc/texts/buttons.py:36
-#, fuzzy
 msgid "Any week"
-msgstr "Чёт атнасы"
+msgstr "Теләсә нинди атна"
 
 #: tgbot/misc/texts/buttons.py:37
 msgid "<<<"
@@ -159,7 +158,7 @@ msgstr ""
 
 #: tgbot/misc/texts/buttons.py:41
 msgid "Details"
-msgstr ""
+msgstr "Тулырак"
 
 #: tgbot/misc/texts/buttons.py:42 tgbot/misc/texts/reply_commands.py:4
 msgid "Schedule"
@@ -187,15 +186,15 @@ msgstr "Өй эше"
 
 #: tgbot/misc/texts/buttons.py:49
 msgid "Edit"
-msgstr ""
+msgstr "Үзгәртергә"
 
 #: tgbot/misc/texts/buttons.py:50
 msgid "Delete"
-msgstr ""
+msgstr "Җибәрергә"
 
 #: tgbot/misc/texts/buttons.py:51
 msgid "Add"
-msgstr ""
+msgstr "Өстәп әйтү"
 
 #: tgbot/misc/texts/buttons.py:52
 msgid "Clear"
@@ -223,11 +222,11 @@ msgstr "Безгә хат язарга"
 
 #: tgbot/misc/texts/buttons.py:60
 msgid "Support project"
-msgstr ""
+msgstr "Проектны хупларга"
 
 #: tgbot/misc/texts/buttons.py:61
 msgid "Guide"
-msgstr ""
+msgstr "Күрсәтмәләр"
 
 #: tgbot/misc/texts/messages.py:4
 msgid "Monday"
@@ -275,7 +274,7 @@ msgstr "Без сезнең профильне бан бүлекгә күчер�
 
 #: tgbot/misc/texts/messages.py:19
 msgid "Unlocked, you can continue to use the bot"
-msgstr "Без сезнең профильне бан бүлектән азат иттердек."
+msgstr "Без сезнең профильне бан бүлектән азат иттердек"
 
 #: tgbot/misc/texts/messages.py:21
 msgid "It looks like you aren't registered in the bot. Type \"/start\" to fix it"
@@ -284,16 +283,16 @@ msgstr "Сезнең регистрация үтелмәгән. Эш башла�
 #: tgbot/misc/texts/messages.py:22
 msgid "You are blocked in the bot! If this is an error, contact the administrator"
 msgstr ""
-"Сез ботка керә алмыйсыз! Әгәр сез моны хата дип саныйсыз икән, "
-"администраторга хат языгыз!"
+"Сез ботка керә алмыйсыз! Әгәр сез моны хата дип саныйсыз икән, администраторга "
+"хат языгыз"
 
 #: tgbot/misc/texts/messages.py:24
 msgid ""
-"The language you are using is no longer available. Contact the "
-"administrator or change the language"
+"The language you are using is no longer available. Contact the administrator or "
+"change the language"
 msgstr ""
-"Сез кулланган тел башка мөмкин түгел. Администраторга хат языгыз, яки "
-"икенче тел сайлагыз!"
+"Сез кулланган тел башка мөмкин түгел. Администраторга хат языгыз, яки икенче тел "
+"сайлагыз"
 
 #: tgbot/misc/texts/messages.py:26
 msgid "Please select your language"
@@ -307,22 +306,23 @@ msgid ""
 "📖 - Homework\n"
 "\n"
 msgstr ""
+"Расписание менюсы\n"
+"Хәзер {week} атна\n"
+"📖 - Өй эше\n"
+"\n"
+"\n"
 
 #: tgbot/misc/texts/messages.py:33
-#, fuzzy
 msgid ""
 "🧪 - Laboratory work\n"
 "📝 - Seminar\n"
 "📢 - Lecture\n"
 "❓ - Consultation"
 msgstr ""
-"Расписание менюсы\n"
-"Хәзер {week} атнасы\n"
-"\n"
 "🧪 - Лаборатория эше\n"
 "📝 - Практика\n"
 "📢 - Лекция\n"
-"❓ - Консультация\n"
+"❓ - Консультация"
 
 #: tgbot/misc/texts/messages.py:39
 msgid ""
@@ -344,18 +344,19 @@ msgstr ""
 
 #: tgbot/misc/texts/messages.py:50
 msgid "This document is not available on the website..."
-msgstr ""
+msgstr "Бу документ сайтта юк..."
 
 #: tgbot/misc/texts/messages.py:52
 msgid ""
 "📖 Homework:\n"
 "{homework}"
 msgstr ""
+"📖 - Homework:\n"
+"{homework}"
 
 #: tgbot/misc/texts/messages.py:53
-#, fuzzy
 msgid "No homework"
-msgstr "Өй эше"
+msgstr "Өй эше юк"
 
 #: tgbot/misc/texts/messages.py:55
 msgid ""
@@ -363,6 +364,9 @@ msgid ""
 "\n"
 "{homework}"
 msgstr ""
+"\"{discipline}\" дисциплинасы буенча {date} елга яңа йорт эше:\n"
+"\n"
+"{homework}"
 
 #: tgbot/misc/texts/messages.py:60
 msgid ""
@@ -374,30 +378,42 @@ msgid ""
 "Current homework:\n"
 "{homework}"
 msgstr ""
+"Дата: {date}\n"
+"Тәртип: {discipline}\n"
+"Чётность: {parity}\n"
+"Вакыт: {start_time}\n"
+"\n"
+"Хәзерге өй эше:\n"
+"{homework}"
 
 #: tgbot/misc/texts/messages.py:69
 msgid ""
 "Welcome to KAI Bot!\n"
 "\n"
-"The language selected for you is \"{language}\" based on your Telegram "
-"settings\n"
-"It can be changed after registration in the settings, which are available"
-" in the profile section"
+"The language selected for you is \"{language}\" based on your Telegram settings\n"
+"It can be changed after registration in the settings, which are available in the "
+"profile section"
 msgstr ""
+"КАИда ботага рәхим итегез!\n"
+"\n"
+"Сезнең өчен тел сайланган \"{language}\", сезнең Telegram төзелешенә нигезләнеп\n"
+"Аны \"Профиль\" бүлегендә теркәлгәннән соң үзгәртергә мөмкин булачак"
 
 #: tgbot/misc/texts/messages.py:81
 msgid "❕ This step can be skipped, just click \"Next\" button"
-msgstr ""
+msgstr "Бу адымны \"Алга\" төймәсенә басып кына уздырырга мөмкин"
 
 #: tgbot/misc/texts/messages.py:85
 msgid ""
 "Group \"{group_name}\" has been automatically selected for you.\n"
 "The group can be changed in the profile and from the schedule"
 msgstr ""
+"Сезнең өчен автомат рәвештә группа сайлап алынды\"{group_name}\"\n"
+"Төркемне профильдә һәм расписаниедән үзгәртергә мөмкин"
 
 #: tgbot/misc/texts/messages.py:90
 msgid "Enter homework text"
-msgstr ""
+msgstr "Өй эше өчен текст җибәрегез"
 
 #: tgbot/misc/texts/messages.py:91
 msgid ""
@@ -406,20 +422,22 @@ msgid ""
 "\n"
 "Enter new homework text"
 msgstr ""
+"Хәзерге өй эше:\n"
+"{homework}\n"
+"\n"
+"Яңа өй эше текстын җибәрегез"
 
 #: tgbot/misc/texts/messages.py:95
-#, fuzzy
 msgid "To see details you need to be verified!"
-msgstr "Керү өчен профильне тикшерергә кирәк (Верификация кирәк)"
+msgstr "Керү өчен аккаунтны верификацияләргә кирәк!"
 
 #: tgbot/misc/texts/messages.py:96
 msgid "You can see details only for your group!"
-msgstr ""
+msgstr "Бөтен нечкәлекләрне үз төркемеңдә генә карарга мөмкин!"
 
 #: tgbot/misc/texts/messages.py:98
-#, fuzzy
 msgid "Day off"
-msgstr "Ял көне\n"
+msgstr "Ял көне"
 
 #: tgbot/misc/texts/messages.py:100
 msgid ""
@@ -429,7 +447,7 @@ msgid ""
 msgstr ""
 "Агымдагы төркем: {group_name}\n"
 "\n"
-"Төркемнең номерын языгыз яки сайланганнардан төркемне сайлагыз!"
+"Төркемнең номерын языгыз яки сайланганнардан төркемне сайлагыз"
 
 #: tgbot/misc/texts/messages.py:102
 msgid "Group removed from favorites!"
@@ -470,16 +488,21 @@ msgstr ""
 #: tgbot/misc/texts/messages.py:118
 msgid ""
 "Your faculty is not currently supported...\n"
-"If you want your faculty to have full functionality, write to us through "
-"the \"Help\" section\n"
+"If you want your faculty to have full functionality, write to us through the "
+"\"Help\" section\n"
 "\n"
 "Pinned text:\n"
 "{pinned_text}"
 msgstr ""
+"Сезнең факультет хәзер хупланмый...\n"
+"Әгәр сезнең тулы функционал булуын телисез икән, \"Ярдәм\" бүлеге аша языгыз.\n"
+"\n"
+"Куелган текст:\n"
+"{pinned_text}"
 
 #: tgbot/misc/texts/messages.py:124
 msgid "An error occurred on the KAI side. Please, try later"
-msgstr "КАИ ягыннан хата булган. Соңрак сынап карагыз зинhар."
+msgstr "КАИ ягыннан хата булган. Соңрак сынап карагыз зинhар"
 
 #: tgbot/misc/texts/messages.py:125
 msgid "Something went wrong"
@@ -487,19 +510,19 @@ msgstr "Ниндидер хата булды"
 
 #: tgbot/misc/texts/messages.py:127
 msgid "You need to select a group"
-msgstr ""
+msgstr "Башта группаны сайларга кирәк"
 
 #: tgbot/misc/texts/messages.py:129
 msgid ""
-"Invalid {command} command format. After the command, there should be a "
-"user's Telegram ID. Example: \"{command} 393867797\""
+"Invalid {command} command format. After the command, there should be a user's "
+"Telegram ID. Example: \"{command} 393867797\""
 msgstr ""
-"{command} команданың кире форматы. Командадан соң кулланучы Telegram ID "
-"булырга тиеш. Үрнәк: \"{command} 393867797\""
+"{command} команданың кире форматы. Командадан соң кулланучы Telegram ID булырга "
+"тиеш. Үрнәк: \"{command} 393867797\""
 
 #: tgbot/misc/texts/messages.py:134
 msgid "User {user_id} does not exist"
-msgstr "{user_id} юк!"
+msgstr "{user_id} юк"
 
 #: tgbot/misc/texts/messages.py:135
 msgid "User {user_id} has been blocked"
@@ -539,7 +562,7 @@ msgid ""
 msgstr ""
 "Верификация\n"
 "\n"
-"Зинhар, үзегезнең логиныгызны языгыз!"
+"Зинhар, үзегезнең логиныгызны языгыз"
 
 #: tgbot/misc/texts/messages.py:153
 msgid ""
@@ -549,7 +572,7 @@ msgid ""
 msgstr ""
 "Верификация\n"
 "\n"
-"Зинһар, паролегезне языгыз!"
+"Зинһар, паролегезне языгыз"
 
 #: tgbot/misc/texts/messages.py:158
 msgid ""
@@ -589,8 +612,7 @@ msgstr "✅ Сезнең телефон номеры расланды!"
 
 #: tgbot/misc/texts/messages.py:173
 msgid ""
-"☑️ Your phone number was found in the database and your profile is now "
-"verified"
+"☑️ Your phone number was found in the database and your profile is now verified"
 msgstr "☑️ Сезнең телефон номеры базада табылды һәм сезнең профиль тикшерелде"
 
 #: tgbot/misc/texts/messages.py:174
@@ -616,8 +638,7 @@ msgstr ""
 #: tgbot/misc/texts/messages.py:179
 msgid "❌ Account with this number already linked to someone else Telegram"
 msgstr ""
-"❌ Бу телефон номеры белән аккаунт ниндидер Telegram аккаунтына бәйләнгән "
-"инде."
+"❌ Бу телефон номеры белән аккаунт ниндидер Telegram аккаунтына бәйләнгән инде"
 
 #: tgbot/misc/texts/messages.py:180
 msgid "You don't have to do this!"
@@ -625,7 +646,7 @@ msgstr "Моны эшләргә кирәкми!"
 
 #: tgbot/misc/texts/messages.py:181
 msgid "Sorry, I don't know how to work in group chats yet"
-msgstr "Гафу итегез, мин әлегә төркемле чатларда эшли белмим."
+msgstr "Гафу итегез, мин әлегә төркемле чатларда эшли белмим"
 
 #: tgbot/misc/texts/messages.py:183
 msgid "Education menu"
@@ -677,13 +698,13 @@ msgstr ""
 
 #: tgbot/misc/texts/messages.py:202
 msgid ""
-"Invalid /set_prefix command format. The command should be followed by the"
-" user's Telegram ID, then a new prefix (can be empty, limit 32 symbols). "
-"Example: \"/set_prefix 393867797 💩\""
+"Invalid /set_prefix command format. The command should be followed by the user's "
+"Telegram ID, then a new prefix (can be empty, limit 32 symbols). Example: \"/"
+"set_prefix 393867797 💩\""
 msgstr ""
-"/set_prefix команданың кире форматы. Командадан соң Telegram ID барырга "
-"тиеш,аннары яңа префикс (буш булырга мөмкин, 32 символ лимиты). Үрнәк: "
-"\"/set_prefix 393867797 💩\""
+"/set_prefix команданың кире форматы. Командадан соң Telegram ID барырга тиеш,"
+"аннары яңа префикс (буш булырга мөмкин, 32 символ лимиты). Үрнәк: \"/set_prefix "
+"393867797 💩\""
 
 #: tgbot/misc/texts/messages.py:206
 msgid "User {user_id} does not exist or is not verified"
@@ -695,13 +716,12 @@ msgstr "{user_id}'ка {prefix} префикс урнаштырылды"
 
 #: tgbot/misc/texts/messages.py:209
 msgid ""
-"Invalid /send_message command format. The command must be a reply to a "
-"message that you must send. The command should be followed by the user's "
-"Telegram ID, to whom the message will be sent"
+"Invalid /send_message command format. The command must be a reply to a message "
+"that you must send. The command should be followed by the user's Telegram ID, to "
+"whom the message will be sent"
 msgstr ""
-"/send_message команданың кире форматы. Команда хәбәргә җавап булырга "
-"тиеш. Командадан соң Telegram ID кулланучы барырга тиеш, аңа хәбәр "
-"җибәреләчәк"
+"/send_message команданың кире форматы. Команда хәбәргә җавап булырга тиеш. "
+"Командадан соң Telegram ID кулланучы барырга тиеш, аңа хәбәр җибәреләчәк"
 
 #: tgbot/misc/texts/messages.py:213
 msgid "The message was sent to user {user_id}"
@@ -758,8 +778,8 @@ msgstr "Ярдәм менюсы"
 #: tgbot/misc/texts/messages.py:241
 msgid "This is not your phone number! Submit your number using the button below"
 msgstr ""
-"Бу сезнең телефон номеры түгел! Безгә сезнең номерны астан кнопка "
-"ярдәмендә җибәрегез!"
+"Бу сезнең телефон номеры түгел! Безгә сезнең номерны астан кнопка ярдәмендә "
+"җибәрегез"
 
 #: tgbot/misc/texts/messages.py:243
 msgid "Even week"
@@ -776,6 +796,10 @@ msgid ""
 "Use emoji in schedule: {emoji_status}\n"
 "Show teachers in schedule: {teachers_status}"
 msgstr ""
+"Настройка\n"
+"\n"
+"Эмодзын расписаниедә кулланырга: {emoji_status}\n"
+"Укытучыларны расписаниедә күрсәтергә: {teachers_status}"
 
 #: tgbot/misc/texts/reply_commands.py:7
 msgid "Education"
@@ -815,7 +839,7 @@ msgstr "Верификация үтелгән"
 
 #: tgbot/misc/texts/roles.py:8
 msgid "Admin"
-msgstr ""
+msgstr "Админ"
 
 #~ msgid "Profile menu"
 #~ msgstr "Меню профиля"
@@ -846,29 +870,5 @@ msgstr ""
 #~ msgid "Next day >"
 #~ msgstr "Киләсе көн >"
 
-#~ msgid ""
-#~ "               {day_of_week}\n"
-#~ "————————————————\n"
-#~ "{lessons}————————————————\n"
-#~ "\n"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "{start_time} - {end_time}  |  {building} {auditory} | {parity}\n"
-#~ "{lesson_type} - {lesson_name}"
-#~ msgstr ""
-
 #~ msgid "Select group"
 #~ msgstr "Төркемне сайлагыз"
-
-#~ msgid ""
-#~ "Welcome to KAI Bot!\n"
-#~ "\n"
-#~ "The language selected for you is "
-#~ "\"English\" as default language because "
-#~ "your language was not found\n"
-#~ "It can be changed after registration "
-#~ "in the settings, which are available "
-#~ "in the profile section"
-#~ msgstr ""
-
