@@ -7,6 +7,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
+from aiogram.utils.exceptions import InvalidQueryID
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import callbacks, states
@@ -131,7 +132,11 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: dict):
     keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework, callback_data['payload'])
 
     await call.message.edit_text(text, reply_markup=keyboard)
-    await call.answer()
+    # Hotfix - Need a better solution
+    try:
+        await call.answer()
+    except InvalidQueryID:
+        pass
 
 
 async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, state: FSMContext):
