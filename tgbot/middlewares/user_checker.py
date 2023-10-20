@@ -4,6 +4,7 @@ from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.types import ContentType
+from redis.asyncio import Redis
 
 from tgbot.services.database.models import User
 from tgbot.misc.texts import messages
@@ -25,7 +26,7 @@ class UserCheckerMiddleware(BaseMiddleware):
     @staticmethod 
     async def check(message: types.Message):
         db_session = message.bot.get('database')
-        redis = message.bot.get('redis')
+        redis: Redis = message.bot.get('redis')
         _ = message.bot.get('_')
 
         if message.chat.type != 'private' and message.content_type == ContentType.NEW_CHAT_MEMBERS:
@@ -39,19 +40,19 @@ class UserCheckerMiddleware(BaseMiddleware):
             async with db_session() as session:
                 database_user = await session.get(User, message.from_user.id)
                 if database_user:
-                    await redis.set(name=f'{message.chat.id}:exists', value='1')
+                    await redis.set(name=f'{message.chat.id}:exists', value='1', ex=3600)
                     if database_user.is_blocked:
-                        await redis.set(name=f'{message.chat.id}:blocked', value='1')
+                        await redis.set(name=f'{message.chat.id}:blocked', value='1', ex=3600)
 
                         await message.answer(_(messages.user_blocked))
                         raise CancelHandler()
                     else:
-                        await redis.set(name=f'{message.chat.id}:blocked', value='')
+                        await redis.set(name=f'{message.chat.id}:blocked', value='', ex=3600)
                 else:
                     if message.text == '/start':
                         return
 
-                    await redis.set(name=f'{message.chat.id}:exists', value='')
+                    await redis.set(name=f'{message.chat.id}:exists', value='', ex=3600)
 
                     logging.error(f'[{message.chat.id}]: Unregistered')
                     await message.answer(messages.user_unregistered)

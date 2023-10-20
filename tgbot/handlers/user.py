@@ -33,7 +33,7 @@ async def choose_language(call: CallbackQuery, callback_data: dict, state: FSMCo
         user = await session.get(User, call.from_user.id)
         user.language_id = int(callback_data['lang_id'])
 
-    await redis.set(name=f'{user.telegram_id}:lang', value=callback_data['code'])
+    await redis.set(name=f'{user.telegram_id}:lang', value=callback_data['code'], ex=3600)
     _.ctx_locale.set(callback_data['code'])
 
     logging.info(f'[{call.from_user.id}]: Changed language to {callback_data["code"]}')

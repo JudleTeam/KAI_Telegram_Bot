@@ -41,7 +41,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
         user_to_update.is_blocked = is_blocked
 
     redis_value = '1' if is_blocked else ''
-    await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value)
+    await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value, ex=3600)
     logging.info(f'Admin {message.from_id} {args[0][1:]} user {user_to_update.telegram_id}')
 
     if is_blocked:
