@@ -154,7 +154,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, s
 
 
 async def get_homework(message: Message, state: FSMContext):
-    homework_description = message.text
+    homework_description = message.parse_entities()
     db, _ = message.bot.get('database'), message.bot.get('_')
     state_data = await state.get_data()
     lesson_id = int(state_data['lesson_id'])
