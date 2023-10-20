@@ -14,6 +14,11 @@ class DatabaseConfig:
 
 
 @dataclass
+class RedisConfig:
+    db: int
+
+
+@dataclass
 class TelegramBot:
     token: str
     admin_ids: set[int]
@@ -44,6 +49,7 @@ class Config:
     database: DatabaseConfig
     misc: Miscellaneous
     i18n: I18N
+    redis: RedisConfig
 
 
 def load_config(path: str = None):
@@ -79,5 +85,8 @@ def load_config(path: str = None):
             contact_link=env.str('CONTACT_LINK'),
             donate_link=env.str('DONATE_LINK'),
             guide_link=env.str('GUIDE_LINK')
+        ),
+        redis=RedisConfig(
+            db=env.int('REDIS_DB')
         )
     )
