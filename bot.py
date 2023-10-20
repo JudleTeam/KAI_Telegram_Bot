@@ -68,8 +68,8 @@ async def main():
     )
     async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-    storage = RedisStorage2() if config.bot.use_redis else MemoryStorage()
-    redis = Redis()
+    storage = RedisStorage2(db=config.redis.db) if config.bot.use_redis else MemoryStorage()
+    redis = Redis(db=config.redis.db)
     bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
