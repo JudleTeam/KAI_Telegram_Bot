@@ -5,6 +5,7 @@ from pathlib import Path
 from aiogram import Dispatcher
 from aiogram.types import Message, InputFile
 from aiogram.utils import markdown as md
+from aiogram.utils.exceptions import ChatNotFound
 
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
@@ -81,9 +82,13 @@ async def send_users(message: Message):
 
     formatted_users = list()
     for user in all_users:
-        tg_user = await message.bot.get_chat(user.telegram_id)
-        user_tag = tg_user.mention if tg_user.mention else tg_user.full_name
-        formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
+        try:
+            tg_user = await message.bot.get_chat(user.telegram_id)
+        except ChatNotFound:
+            pass
+        else:
+            user_tag = tg_user.mention if tg_user.mention else tg_user.full_name
+            formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
 
     await message.answer('\n'.join(formatted_users))
     logging.info(f'Admin {message.from_id} used "/users"')
