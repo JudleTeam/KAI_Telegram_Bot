@@ -36,6 +36,9 @@ async def add_full_user_to_db(full_user: FullUserData, login: str, password: str
             if not tg_user.has_role(roles.verified):
                 tg_user.roles.append(roles_dict[roles.verified])
 
+            if not tg_user.group_id:
+                tg_user.group_id = user_about.groupId
+
             is_leader = False
             leader_email = full_user.group.members[full_user.group.leader_num - 1].email
             if leader_email == user_info.email and not tg_user.has_role(roles.group_leader):
@@ -174,6 +177,9 @@ async def verify_profile_with_phone(telegram_id: int, phone: str, db: async_sess
                 return None
             kai_user.telegram_user_id = telegram_id
             await session.merge(kai_user)
+
+            if not user.group_id:
+                user.group_id = kai_user.group_id
 
             if not user.has_role(roles.verified):
                 verified_role = await Role.get_by_title(roles.verified, db)

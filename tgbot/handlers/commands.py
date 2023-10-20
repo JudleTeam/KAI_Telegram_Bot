@@ -7,12 +7,13 @@ from aiogram.utils import markdown as md
 from aiogram.utils.deep_linking import decode_payload
 
 from tgbot.config import Config
+from tgbot.handlers.profile import send_verification
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc.texts import messages, roles
-from tgbot.services.database.models import User, Role
+from tgbot.services.database.models import User, Role, Language
 
 
-async def command_start(message: Message):
+async def command_start(message: Message, state: FSMContext):
     db = message.bot.get('database')
     _ = message.bot.get('_')
 
@@ -22,13 +23,20 @@ async def command_start(message: Message):
     except UnicodeDecodeError:
         payload = None
 
-    async with db.begin() as session:
+    async with db() as session:
         user = await session.get(User, message.from_id)
         if not user:
             redis = message.bot.get('redis')
             roles_dict = await Role.get_roles_dict(db)
-            user = User(telegram_id=message.from_id, source=payload, roles=[roles_dict[roles.student]])
+            language = await Language.get_by_code(session, str(message.from_user.locale))
+            user = User(telegram_id=message.from_id, source=payload, roles=[roles_dict[roles.student]],
+                        language=language)
             session.add(user)
+            await session.commit()
+
+            if language:
+                _.ctx_locale.set(language.code)
+                await redis.set(name=f'{message.from_id}:lang', value=language.code)
 
             await redis.set(name=f'{message.from_id}:exists', value='1')
 
@@ -43,7 +51,14 @@ async def command_start(message: Message):
 
             await message.answer(start_guide)
 
-            await message.answer(_(messages.welcome), reply_markup=inline_keyboards.get_start_keyboard(_))
+            if language:
+                welcome = _(messages.language_found).format(language=language.title)
+            else:
+                welcome = messages.language_not_found
+
+            await state.update_data(payload='at_start')
+            await message.answer(welcome)
+            await send_verification(message, state)
             logging.info(f'New user: {message.from_user.mention} {message.from_user.full_name} [{message.from_id}]')
         else:
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))

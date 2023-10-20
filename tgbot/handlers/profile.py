@@ -18,7 +18,12 @@ async def show_group_choose(call: CallbackQuery, callback_data: dict, state: FSM
 
     group_name = md.hcode(user.group.group_name) if user.group else '❌'
     keyboard = inline_keyboards.get_group_choose_keyboard(_, user, 'profile', callback_data['payload'])
-    message = await call.message.edit_text(_(messages.group_choose).format(group_name=group_name), reply_markup=keyboard)
+    if callback_data['payload'] == 'at_start':
+        text = _(messages.can_be_skipped) + '\n\n' + _(messages.group_choose).format(group_name=group_name)
+    else:
+        text = _(messages.group_choose).format(group_name=group_name)
+
+    message = await call.message.edit_text(text, reply_markup=keyboard)
 
     await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data['payload'])
     await states.GroupChoose.waiting_for_group.set()
@@ -59,16 +64,26 @@ async def send_verification(message: Message, state: FSMContext):
     async with db_session() as session:
         user = await session.get(User, message.from_id)
 
-    verified_status = '✅' if user.has_role(roles.verified) else '❌'
+    is_verified = user.has_role(roles.verified)
+    verified_status = '✅' if is_verified else '❌'
     phone_status = '✅' if user.phone else '❌'
     authorized_status = '✅' if user.has_role(roles.authorized) else '❌'
 
-    await message.answer(
-        _(messages.verification_menu).format(
+    if (payload := state_data.get('payload')) and payload == 'at_start':
+        text = _(messages.can_be_skipped) + '\n\n' + _(messages.verification_menu).format(
             phone_status=phone_status,
             kai_status=authorized_status,
             profile_status=verified_status
-        ),
+        )
+    else:
+        text = _(messages.verification_menu).format(
+            phone_status=phone_status,
+            kai_status=authorized_status,
+            profile_status=verified_status
+        )
+
+    await message.answer(
+        text,
         reply_markup=inline_keyboards.get_verification_keyboard(_, user, state_data['payload'])
     )
 

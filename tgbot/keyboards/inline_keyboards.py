@@ -400,9 +400,14 @@ def get_verification_keyboard(_, user: User, payload):
         )
 
     if payload == 'at_start':
-        keyboard.add(
-            InlineKeyboardButton(_(buttons.next_), callback_data=callbacks.navigation.new('grp_choose', payload))
-        )
+        if user.group_id:
+            keyboard.add(
+                InlineKeyboardButton(_(buttons.next_), callback_data=callbacks.navigation.new(to='main_menu', payload=payload))
+            )
+        else:
+            keyboard.add(
+                InlineKeyboardButton(_(buttons.next_), callback_data=callbacks.navigation.new('grp_choose', payload))
+            )
     else:
         keyboard.add(
             InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new('profile', payload='back'))

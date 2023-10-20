@@ -83,6 +83,11 @@ async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMCon
 
     await call.message.delete()
     if callback_data['payload'] == 'at_start':
+        db = call.bot.get('database')
+        async with db() as session:
+            user = await session.get(User, call.from_user.id)
+        if user.group_id and user.has_role(roles.verified):
+            await call.answer(_(messages.group_selected_auto).format(group_name=user.group.group_name), show_alert=True)
         config = call.bot.get('config')
         await call.message.answer(_(messages.channel_advertising),
                                   reply_markup=inline_keyboards.get_channel_keyboard(_, config.misc.channel_link))

@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Optional
 
 from iso_language_codes import language_dictionary
 from sqlalchemy import Column, Integer, Boolean, String, text
@@ -14,6 +14,13 @@ class Language(Base):
     title = Column(String(20), nullable=False)
     code = Column(String(2), unique=True, nullable=False)
     is_available = Column(Boolean, server_default=text('true'))
+
+    @classmethod
+    async def get_by_code(cls, session, code: str) -> Optional['Language']:
+        if code is None:
+            return
+        record = await session.execute(select(Language).where(Language.code == code))
+        return record.scalar()
 
     @classmethod
     async def get_available_languages(cls, db_session):

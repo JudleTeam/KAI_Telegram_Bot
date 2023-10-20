@@ -66,6 +66,27 @@ lesson_homework_edit = _(
     '{homework}'
 )
 
+language_found = _(
+    'Welcome to KAI Bot!\n\n'
+    'The language selected for you is "{language}" based on your Telegram settings\n'
+    'It can be changed after registration in the settings, which are available in the profile section'
+)
+
+language_not_found = (
+    'Welcome to KAI Bot!\n\n'
+    'The language selected for you is "English" as default language because your language was not found\n'
+    'It can be changed after registration in the settings, which are available in the profile section'
+)
+
+can_be_skipped = _(
+    '❕ This step can be skipped, just click "Next" button'
+)
+
+group_selected_auto = _(
+    'Group "{group_name}" has been automatically selected for you.\n'
+    'The group can be changed in the profile and from the schedule'
+)
+
 homework_input = _('Enter homework text')
 edit_homework = _(
     'Current homework:\n{homework}\n\n'
