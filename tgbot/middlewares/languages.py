@@ -19,6 +19,7 @@ class ACLMiddleware(I18nMiddleware):
 
         cached_lang = await redis.get(name=f'{telegram_user.id}:lang')
 
+        default_lang = 'en'
         lang = 'en'
         if cached_lang:
             lang = cached_lang.decode()
@@ -27,7 +28,7 @@ class ACLMiddleware(I18nMiddleware):
                 database_user = await session.get(User, telegram_user.id)
 
             if database_user:
-                lang = database_user.language.code
+                lang = database_user.language.code if database_user.language else default_lang
 
             await redis.set(name=f'{telegram_user.id}:lang', value=lang, ex=3600)
 
