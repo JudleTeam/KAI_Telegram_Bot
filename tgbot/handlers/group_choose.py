@@ -1,11 +1,15 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
+from sqlalchemy import select
 
 from tgbot.handlers.profile import show_group_choose
 from tgbot.misc import callbacks, states
 from tgbot.misc.texts import messages
-from tgbot.services.database.models import User, Group
+from tgbot.services.database.models import User, Group, GroupLesson
+from tgbot.services.kai_parser.schemas import KaiApiError, ParsingError
 
 
 async def add_to_favorites(call: CallbackQuery, callback_data: dict, state: FSMContext):
@@ -14,8 +18,9 @@ async def add_to_favorites(call: CallbackQuery, callback_data: dict, state: FSMC
 
     async with db_session.begin() as session:
         user = await session.get(User, call.from_user.id)
-        user.selected_groups.append(user.group)
+        user.favorite_groups.append(user.group)
 
+    logging.info(f'[{call.from_user.id}]: Add group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_added))
     await show_group_choose(call, callback_data, state)
 
@@ -26,8 +31,9 @@ async def remove_from_favorites(call: CallbackQuery, callback_data: dict, state:
 
     async with db_session.begin() as session:
         user = await session.get(User, call.from_user.id)
-        user.selected_groups.remove(user.group)
+        user.favorite_groups.remove(user.group)
 
+    logging.info(f'[{call.from_user.id}]: Remove group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_removed))
     await show_group_choose(call, callback_data, state)
 
@@ -37,13 +43,17 @@ async def select_group(call: CallbackQuery, callback_data: dict, state: FSMConte
     db_session = call.bot.get('database')
 
     select_group_id = int(callback_data['id'])
-    async with db_session.begin() as session:
+    async with db_session() as session:
         user = await session.get(User, call.from_user.id)
         if user.group_id == select_group_id:
             await call.answer(_(messages.group_already_selected))
             return
         user.group_id = int(callback_data['id'])
 
+        await session.commit()
+        await session.refresh(user)
+
+    logging.info(f'[{call.from_user.id}]: Changed group to {user.group.group_name} with favorite groups')
     await call.answer(_(messages.group_changed))
     await show_group_choose(call, callback_data, state)
 
@@ -58,22 +68,23 @@ async def get_group_name(message: Message, state: FSMContext):
         call = CallbackQuery(**data['call'])
 
     db_session = message.bot.get('database')
-    group_name = int(group_name)
-    group = await Group.get_group_by_name(group_name, db_session)
-    if not group:
-        if _(messages.group_not_exist) not in main_mess.text:
-            main_mess = await main_mess.edit_text(main_mess.text + '\n\n' + _(messages.group_not_exist),
-                                                  reply_markup=main_mess.reply_markup)
-            await state.update_data(main_message=main_mess.to_python())
-        return
 
     async with db_session.begin() as session:
+        group = await Group.get_group_by_name(session, group_name)
+        if not group:
+            if _(messages.group_not_exist) not in main_mess.text:
+                main_mess = await main_mess.edit_text(main_mess.text + '\n\n' + _(messages.group_not_exist),
+                                                      reply_markup=main_mess.reply_markup)
+                await state.update_data(main_message=main_mess.to_python())
+            return
+
         user = await session.get(User, message.from_id)
         if user.group_id == group.group_id:
             return
 
         user.group_id = group.group_id
 
+    logging.info(f'[{message.from_id}]: Changed group to {group_name} with input')
     await show_group_choose(call, {'payload': data['payload']}, state)
 
 

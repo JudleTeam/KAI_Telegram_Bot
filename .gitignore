@@ -9,6 +9,8 @@ __pycache__/
 dev/
 logs/
 *.log
+alembic.ini
+alembic/
 
 # Distribution / packaging
 .Python
@@ -38,7 +40,6 @@ pip-delete-this-directory.txt
 # Translations
 *.mo
 *.pot
-*.po
 
 
 # pyenv

@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple, Any, Optional
 
 from aiogram.contrib.middlewares.i18n import I18nMiddleware
@@ -28,9 +29,10 @@ class ACLMiddleware(I18nMiddleware):
             if database_user:
                 lang = database_user.language.code
 
-            await redis.set(name=f'{telegram_user.id}:lang', value=lang)
+            await redis.set(name=f'{telegram_user.id}:lang', value=lang, ex=3600)
 
         if lang not in self.available_locales:
+            logging.error(f'[{telegram_user.id}]: Language {lang} no more available')
             await telegram_user.bot.send_message(
                 chat_id=telegram_user.id,
                 text=messages.language_not_available,

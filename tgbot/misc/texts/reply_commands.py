@@ -11,3 +11,8 @@ shop = _('Shop')
 
 profile_symbol = '👤 '
 profile = _('Profile')
+
+help_symbol = '❓ '
+help = _('Help')
+
+share_contact = _('Share contact')
