@@ -40,17 +40,6 @@ async def command_start(message: Message, state: FSMContext):
 
             await redis.set(name=f'{message.from_id}:exists', value='1')
 
-            config: Config = message.bot.get('config')
-            start_guide = (
-                f'Перед началом использования бота настоятельно рекомендуем ознакомиться с {md.hlink("инструкцией", config.misc.guide_link)}. '
-                'В случае чего её можно будет посмотреть позже\n\n'
-                '---\n\n'
-                f'Before starting to use the bot, we strongly recommend that you read {md.hlink("guide", config.misc.guide_link)}. '
-                'If something happens, you can watch it later\n\n'
-            )
-
-            await message.answer(start_guide)
-
             if language:
                 welcome = _(messages.language_found).format(language=language.title)
             else:
