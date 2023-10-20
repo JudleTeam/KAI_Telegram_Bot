@@ -5,6 +5,7 @@ from typing import Sequence
 import phonenumbers
 from aiogram import Bot
 from aiogram.contrib.middlewares.i18n import I18nMiddleware
+from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup
 from aiogram.utils.exceptions import RetryAfter, BotBlocked, ChatNotFound, UserDeactivated, TelegramAPIError
 from phonenumbers import NumberParseException
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -72,9 +73,11 @@ async def broadcast_text(
         text: str,
         bot: Bot,
         db: async_sessionmaker,
-        format_kwargs: dict = None,
+        format_kwargs=None,
         timeout: float = 0.05,
         **kwargs):
+    if format_kwargs is None:
+        format_kwargs = {}
 
     logging.info('Start broadcasting')
 

@@ -73,7 +73,8 @@ async def show_day_details(call: CallbackQuery, callback_data: dict):
 
     await call.message.edit_text(
         form_day_with_details(_, lessons, date, tg_user.use_emoji),
-        reply_markup=inline_keyboards.get_day_details_keyboard(_, lessons, date, edit_homework_right)
+        reply_markup=inline_keyboards.get_day_details_keyboard(_, lessons, date, edit_homework_right),
+        disable_web_page_preview=True
     )
     await call.answer()
 
@@ -104,7 +105,8 @@ async def show_week_details(call: CallbackQuery, callback_data: dict):
 
     await call.message.edit_text(
         all_lessons_text,
-        reply_markup=inline_keyboards.get_week_details_keyboard(_, all_lessons, all_dates, edit_homework_right)
+        reply_markup=inline_keyboards.get_week_details_keyboard(_, all_lessons, all_dates, edit_homework_right),
+        disable_web_page_preview=True
     )
     await call.answer()
 
@@ -166,9 +168,11 @@ async def get_homework(message: Message, state: FSMContext):
     async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
         if homework:
+            is_added = False
             logging.info(f'[{message.from_user.id}] Edited homework {date} {homework.lesson.start_time} - {homework_description}')
             homework.description = homework_description
         else:
+            is_added = True
             lesson = await session.get(GroupLesson, lesson_id)
             logging.info(f'[{message.from_user.id}] Added homework {date} {lesson.start_time} - {homework_description}')
             chats_ids = await KAIUser.get_telegram_ids_by_group(session, lesson.group_id)
@@ -183,7 +187,7 @@ async def get_homework(message: Message, state: FSMContext):
     await state.finish()
     await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
 
-    if state_data['action'] == 'add':
+    if is_added:
         await broadcast_text(
             _,
             chats=chats_ids,
