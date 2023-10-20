@@ -151,7 +151,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: dict, s
             callback_data['action'] = 'add'
             text = _(messages.homework_input)
 
-    await call.message.edit_text(text, reply_markup=keyboard)
+    await call.message.edit_text(text, reply_markup=keyboard, disable_web_page_preview=True)
     await state.update_data(main_call=call.to_python(), **callback_data)
     await states.Homework.waiting_for_homework.set()
     await call.answer()
@@ -198,7 +198,8 @@ async def get_homework(message: Message, state: FSMContext):
                 'homework': homework.description
             },
             bot=message.bot,
-            db=db
+            db=db,
+            disable_web_page_preview=True
         )
 
 
