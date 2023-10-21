@@ -38,7 +38,7 @@ async def command_start(message: Message, state: FSMContext):
                 _.ctx_locale.set(language.code)
                 await redis.set(name=f'{message.from_id}:lang', value=language.code, ex=3600)
 
-            await redis.set(name=f'{message.from_id}:exists', value='1', ex=3600)
+            await redis.set(name=f'{message.from_id}:exists', value='', ex=3600)
 
             if language:
                 welcome = _(messages.language_found).format(language=language.title)

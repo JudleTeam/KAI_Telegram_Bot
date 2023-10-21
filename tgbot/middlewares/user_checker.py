@@ -34,38 +34,32 @@ class UserCheckerMiddleware(BaseMiddleware):
                 await message.answer(_(messages.group_chat_error))
             raise CancelHandler()
 
-        cached_is_user_exists = await redis.get(f'{message.chat.id}:exists')
-        cached_is_user_blocked = await redis.get(f'{message.chat.id}:blocked')
-        if cached_is_user_exists is None or cached_is_user_blocked is None:
+        database_user = None
+        cached_is_user_exists = await redis.exists(f'{message.chat.id}:exists')
+        if not cached_is_user_exists:
+            if message.text == '/start':
+                return
+
             async with db_session() as session:
                 database_user = await session.get(User, message.from_user.id)
-                if database_user:
-                    await redis.set(name=f'{message.chat.id}:exists', value='1', ex=3600)
-                    if database_user.is_blocked:
-                        await redis.set(name=f'{message.chat.id}:blocked', value='1', ex=3600)
 
-                        await message.answer(_(messages.user_blocked))
-                        raise CancelHandler()
-                    else:
-                        await redis.set(name=f'{message.chat.id}:blocked', value='', ex=3600)
-                else:
-                    if message.text == '/start':
-                        return
-
-                    await redis.set(name=f'{message.chat.id}:exists', value='', ex=3600)
-
-                    logging.error(f'[{message.chat.id}]: Unregistered')
-                    await message.answer(messages.user_unregistered)
-                    raise CancelHandler()
-        else:
-            if not cached_is_user_exists:
-                if message.text == '/start':
-                    return
-
+            if database_user is None:
                 logging.error(f'[{message.chat.id}]: Unregistered')
                 await message.answer(messages.user_unregistered)
                 raise CancelHandler()
 
-            if cached_is_user_blocked:
-                await message.answer(_(messages.user_blocked))
-                raise CancelHandler()
+            await redis.set(name=f'{message.chat.id}:exists', value='', ex=3600)
+
+        cached_is_user_blocked = await redis.exists(f'{message.chat.id}:blocked')
+        if cached_is_user_blocked:
+            await message.answer(_(messages.user_blocked))
+            raise CancelHandler()
+
+        if database_user is None:
+            async with db_session() as session:
+                database_user = await session.get(User, message.from_user.id)
+
+        if database_user.is_blocked:
+            await redis.set(name=f'{message.chat.id}:blocked', value='', ex=3600)
+            await message.answer(_(messages.user_blocked))
+            raise CancelHandler()
