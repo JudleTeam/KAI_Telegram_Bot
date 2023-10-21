@@ -1,17 +1,18 @@
-from aiogram import Dispatcher
+from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
-from tgbot.misc import callbacks
+from tgbot.misc.callbacks import Navigation
 from tgbot.misc.texts import roles, messages
 from tgbot.services.database.models import User
 
+router = Router()
 
-async def show_my_group(call: CallbackQuery):
-    _ = call.bot.get('_')
-    db = call.bot.get('database')
 
+@router.callback_query(Navigation.filter(F.to == Navigation.To.my_group))
+async def show_my_group(call: CallbackQuery, _, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.has_role(roles.verified):
@@ -42,9 +43,4 @@ async def show_my_group(call: CallbackQuery):
         )
 
     await call.message.edit_text(text, reply_markup=inline_keyboards.get_my_group_keyboard(_, user))
-
     await call.answer()
-
-
-def register_education(dp: Dispatcher):
-    dp.register_callback_query_handler(show_my_group, callbacks.navigation.filter(to='my_group'))
