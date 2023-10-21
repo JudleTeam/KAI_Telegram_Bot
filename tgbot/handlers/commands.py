@@ -15,9 +15,9 @@ from tgbot.services.database.models import User, Role
 
 
 
-commands_router = Router()
+router = Router()
 
-@commands_router.message(CommandStart())
+@router.message(CommandStart())
 async def command_start(message: Message, _, db: async_sessionmaker):
     # TODO: update work with deep link
     args = message.get_args()
@@ -62,7 +62,7 @@ async def command_start(message: Message, _, db: async_sessionmaker):
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
-@commands_router.message(Command('menu'))
+@router.message(Command('menu'))
 async def command_menu(message: Message, state: FSMContext, _):
     await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
     await state.clear()

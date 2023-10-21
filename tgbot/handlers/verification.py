@@ -1,24 +1,26 @@
 import logging
 
-from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, ContentType, ReplyKeyboardRemove
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.handlers.profile import show_verification, send_verification
 from tgbot.keyboards import inline_keyboards, reply_keyboards
-from tgbot.misc import states, callbacks
+from tgbot.misc import states
+from tgbot.misc.callbacks import Action
 from tgbot.misc.texts import messages, roles
-from tgbot.services.database.models import User, Role, KAIUser
+from tgbot.services.database.models import User
 from tgbot.services.kai_parser import KaiParser
 from tgbot.services.kai_parser.schemas import KaiApiError, BadCredentials
 from tgbot.services.utils import add_full_user_to_db, verify_profile_with_phone
 
+router = Router()
 
-async def unlink_account(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-    db_session = call.bot.get('database')
 
-    async with db_session.begin() as session:
+@router.callback_query(Action.filter(F.name == Action.Name.unlink_account))
+async def unlink_account(call: CallbackQuery, callback_data: Action, state: FSMContext, _, db: async_sessionmaker):
+    async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         user.kai_user = None
         user.remove_role(roles.verified)
@@ -30,11 +32,9 @@ async def unlink_account(call: CallbackQuery, callback_data: dict, state: FSMCon
     await show_verification(call, callback_data, state)
 
 
-async def kai_logout(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-    db_session = call.bot.get('database')
-
-    async with db_session.begin() as session:
+@router.callback_query(Action.filter(F.name == Action.Name.kai_logout))
+async def kai_logout(call: CallbackQuery, callback_data: Action, state: FSMContext, _, db: async_sessionmaker):
+    async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         user.kai_user.login = None
         user.kai_user.password = None
@@ -47,43 +47,38 @@ async def kai_logout(call: CallbackQuery, callback_data: dict, state: FSMContext
     await show_verification(call, callback_data, state)
 
 
-async def start_kai_login(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-
+@router.callback_query(Action.filter(F.name == Action.Name.start_kai_login))
+async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSMContext, _):
     await call.message.edit_text(_(messages.login_input),
                                  reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification', callback_data['payload']))
     await call.answer()
 
-    await state.update_data(main_call=call.to_python(), payload=callback_data['payload'])
-    await states.KAILogin.waiting_for_login.set()
+    await state.update_data(main_call=call.to_python(), payload=callback_data.payload)
+    await state.set_state(states.KAILogin.waiting_for_login)
 
     logging.info(f'[{call.from_user.id}]: Start KAI login')
 
 
-async def get_user_login(message: Message, state: FSMContext):
-    _ = message.bot.get('_')
-
+@router.message(states.KAILogin.waiting_for_login)
+async def get_user_login(message: Message, state: FSMContext, _):
     await message.delete()
-    async with state.proxy() as data:
-        main_call = CallbackQuery(**data['main_call'])
-        data['login'] = message.text.strip()
-        payload = data['payload']
+    state_data = await state.get_data()
+    main_call = CallbackQuery(**state_data['main_call'])
+    state_data['login'] = message.text.strip()
+    payload = state_data['payload']
 
     await main_call.message.edit_text(_(messages.password_input),
                                       reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification', payload))
-    await states.KAILogin.next()
+    await state.set_state(states.KAILogin.waiting_for_password)
 
 
-async def get_user_password(message: Message, state: FSMContext):
-    _ = message.bot.get('_')
-    db = message.bot.get('database')
-    state_data = await state.get_data()
-
+@router.message(states.KAILogin.waiting_for_password)
+async def get_user_password(message: Message, state: FSMContext, _, db: async_sessionmaker):
     await message.delete()
     password = message.text.strip()
-    async with state.proxy() as data:
-        login = data['login']
-        main_call = CallbackQuery(**data['main_call'])
+    state_data = await state.get_data()
+    login = state_data['login']
+    main_call = CallbackQuery(**state_data['main_call'])
 
     await main_call.message.edit_text(_(messages.authorization_process))
 
@@ -114,22 +109,19 @@ async def get_user_password(message: Message, state: FSMContext):
         await main_call.message.edit_text(_(messages.base_error))
         logging.error(f'[{message.from_id}]: Everything broke during login - {error}')
 
-    await state.finish()
+    await state.clear()
 
 
-async def send_phone_keyboard(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-
-    await states.PhoneSendState.waiting_for_phone.set()
-    await state.update_data(payload=callback_data['payload'])
+@router.callback_query(Action.filter(F.name == Action.Name.send_phone))
+async def send_phone_keyboard(call: CallbackQuery, callback_data: Action, state: FSMContext, _):
+    await state.set_state(states.PhoneSendState.waiting_for_phone)
+    await state.update_data(payload=callback_data.payload)
     await call.message.answer(_(messages.share_contact), reply_markup=reply_keyboards.get_send_phone_keyboard(_))
     await call.answer()
 
 
-async def get_user_phone(message: Message, state: FSMContext):
-    _ = message.bot.get('_')
-    db = message.bot.get('database')
-
+@router.message(states.PhoneSendState.waiting_for_phone, F.content_type == ContentType.CONTACT)
+async def get_user_phone(message: Message, state: FSMContext, _, db: async_sessionmaker):
     if message.from_id != message.contact.user_id:
         await message.answer(_(messages.not_your_phone))
         return
@@ -146,15 +138,13 @@ async def get_user_phone(message: Message, state: FSMContext):
     state_data = await state.get_data()
     if state_data['payload'] == 'at_start':
         await message.answer(text, reply_markup=ReplyKeyboardRemove())
-        await send_verification(message, state)
+        await send_verification(message, state, _, db)
     else:
         await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard(_))
 
 
-async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-    db = call.bot.get('database')
-
+@router.callback_query(Action.filter(F.name == Action.Name.check_phone))
+async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContext, _, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
@@ -169,15 +159,3 @@ async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContex
         await show_verification(call, callback_data, state)
     else:
         await call.answer(_(messages.phone_not_found), show_alert=True)
-
-
-def register_verification(dp: Dispatcher):
-    dp.register_callback_query_handler(start_kai_login, callbacks.action.filter(name='start_login'))
-    dp.register_callback_query_handler(kai_logout, callbacks.action.filter(name='logout'))
-    dp.register_callback_query_handler(unlink_account, callbacks.action.filter(name='unlink'))
-    dp.register_message_handler(get_user_login, state=states.KAILogin.waiting_for_login)
-    dp.register_message_handler(get_user_password, state=states.KAILogin.waiting_for_password)
-
-    dp.register_callback_query_handler(send_phone_keyboard, callbacks.action.filter(name='send_phone'))
-    dp.register_callback_query_handler(check_phone, callbacks.action.filter(name='check_phone'))
-    dp.register_message_handler(get_user_phone, content_types=[ContentType.CONTACT], state=states.PhoneSendState.waiting_for_phone)

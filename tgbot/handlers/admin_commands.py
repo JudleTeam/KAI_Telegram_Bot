@@ -15,7 +15,7 @@ from tgbot.services.database.models import User
 from tgbot.services.utils import get_user_description
 
 
-admin_commands_router = Router()
+router = Router()
 
 
 async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str,
@@ -59,7 +59,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
     )
 
 
-@admin_commands_router.message(Command('pardon', 'unban', 'unblock'))
+@router.message(Command('pardon', 'unban', 'unblock'))
 async def pardon_user(message: Message, _, db: async_sessionmaker, redis: Redis, config: Config):
     await update_user_block_and_notify(
         message,
@@ -70,7 +70,7 @@ async def pardon_user(message: Message, _, db: async_sessionmaker, redis: Redis,
     )
 
 
-@admin_commands_router.message(Command('ban', 'block'))
+@router.message(Command('ban', 'block'))
 async def block_user(message: Message,  _, db: async_sessionmaker, redis: Redis, config: Config):
     await update_user_block_and_notify(
         message,
@@ -81,7 +81,7 @@ async def block_user(message: Message,  _, db: async_sessionmaker, redis: Redis,
     )
 
 
-@admin_commands_router.message(Command('users', 'block'))
+@router.message(Command('users', 'block'))
 async def send_users(message: Message, db: async_sessionmaker):
     all_users = await User.get_all(db)
 
@@ -95,7 +95,7 @@ async def send_users(message: Message, db: async_sessionmaker):
     logging.info(f'Admin {message.from_id} used "/users"')
 
 
-@admin_commands_router.message(Command('set_prefix'))
+@router.message(Command('set_prefix'))
 async def set_prefix(message: Message, _, db: async_sessionmaker):
     args = message.text.split()
     if len(args) not in (2, 3) or not args[1].isdigit() or (len(args) == 3 and len(args[2]) > 32):
@@ -115,12 +115,12 @@ async def set_prefix(message: Message, _, db: async_sessionmaker):
     await message.answer(_(messages.prefix_set).format(user_id=md.hcode(user_id), prefix=prefix))
 
 
-@admin_commands_router.message(Command('last_log'))
+@router.message(Command('last_log'))
 async def send_last_log(message: Message, log_file):
     await message.answer_document(FSInputFile(Path(os.getcwd()).joinpath(log_file)))
 
 
-@admin_commands_router.message(Command('user_info'))
+@router.message(Command('user_info'))
 async def send_user_info(message: Message, _, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2:
@@ -144,7 +144,7 @@ async def send_user_info(message: Message, _, db: async_sessionmaker):
     await message.answer(text)
 
 
-@admin_commands_router.message(Command('send_message'))
+@router.message(Command('send_message'))
 async def send_message(message: Message, _, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2 or not message.reply_to_message:

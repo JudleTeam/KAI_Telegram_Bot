@@ -51,7 +51,7 @@ async def show_classmates(call: CallbackQuery, _, db: async_sessionmaker):
 async def start_group_pip_text_input(call: CallbackQuery, state: FSMContext, _):
     await call.message.edit_text(_(messages.pin_text_input), reply_markup=inline_keyboards.get_pin_text_keyboard(_))
 
-    await states.GroupPinText.waiting_for_text.set()
+    await state.set_state(states.GroupPinText.waiting_for_text)
     await state.update_data(main_call=call.to_python())
     await call.answer()
 

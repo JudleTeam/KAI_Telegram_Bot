@@ -1,19 +1,20 @@
 import datetime
-import logging
-from pprint import pprint
 
-from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram import Router, F
+from aiogram.exceptions import AiogramError
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md, markdown
-from aiogram.utils.exceptions import MessageNotModified
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import tgbot.keyboards.inline_keyboards as inline
-import tgbot.misc.callbacks as callbacks
+from tgbot.misc.callbacks import Schedule, Navigation
 from tgbot.misc.texts import messages, buttons, templates
 from tgbot.services.database.models import User, GroupLesson
 from tgbot.services.database.utils import get_lessons_with_homework
 from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to_text
+
+router = Router()
 
 
 def convert_day(today: str):
@@ -86,12 +87,12 @@ async def form_day(_, db, user, today, with_pointer=False):
     return msg
 
 
-async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
-    await state.finish()
-    _ = call.bot.get('_')
-    db_session = call.bot.get('database')
-    async with db_session() as session:
+@router.callback_query(Navigation.filter(F.to == Navigation.To.schedule_menu))
+async def show_schedule_menu(call: CallbackQuery, state: FSMContext, _, db: async_sessionmaker):
+    await state.clear()
+    async with db() as session:
         user = await session.get(User, call.from_user.id)
+
     group_name = user.group.group_name if user.group else '????'
     week_parity = int(datetime.datetime.now().strftime("%V")) % 2
     week_parity = _(buttons.odd_week) if week_parity else _(buttons.even_week)
@@ -104,15 +105,15 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-async def show_day_schedule(call: CallbackQuery, callback_data: dict):
-    db, _ = call.bot.get('database'), call.bot.get('_')
+@router.callback_query(Schedule.filter(F.action == Schedule.Action.show_day))
+async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, _, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-    match callback_data['payload']:
+    match callback_data.payload:
         case 'today':
             today = datetime.datetime.now()
         case 'tomorrow':
@@ -120,7 +121,7 @@ async def show_day_schedule(call: CallbackQuery, callback_data: dict):
         case 'after_tomorrow':
             today = datetime.datetime.now() + datetime.timedelta(days=2)
         case _:
-            today = datetime.datetime.strptime(callback_data['payload'], '%Y-%m-%d')
+            today = datetime.datetime.fromisoformat(callback_data.payload)
 
     int_parity = 2 if not int(today.strftime('%V')) % 2 else 1
     parity = f'{_(messages.even_week) if int_parity == 2 else _(messages.odd_week)}'
@@ -129,22 +130,21 @@ async def show_day_schedule(call: CallbackQuery, callback_data: dict):
     keyboard = inline.get_schedule_day_keyboard(_, today, user.group.group_name)
     try:
         await call.message.edit_text(text, reply_markup=keyboard)
-    except MessageNotModified as e:
+    except AiogramError:
         pass
 
     await call.answer()
 
 
-async def send_week_schedule(call: CallbackQuery, callback_data: dict):
-    db = call.bot.get('database')
-    _ = call.bot.get('_')
+@router.callback_query(Schedule.filter(F.action == Schedule.Action.show_week))
+async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, _, db: async_sessionmaker):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-    week_first_date = datetime.datetime.fromisoformat(callback_data['payload'])
+    week_first_date = datetime.datetime.fromisoformat(callback_data.payload)
     week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
 
     all_lessons = ''
@@ -156,9 +156,3 @@ async def send_week_schedule(call: CallbackQuery, callback_data: dict):
                                                                                              user.group.group_name))
 
     await call.answer()
-
-
-def register_schedule(dp: Dispatcher):
-    dp.register_callback_query_handler(show_day_schedule, callbacks.schedule.filter(action='show_day'), state='*')
-    dp.register_callback_query_handler(show_schedule_menu, callbacks.schedule.filter(action='main_menu'), state='*')
-    dp.register_callback_query_handler(send_week_schedule, callbacks.schedule.filter(action='week_schedule'), state='*')

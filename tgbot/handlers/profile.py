@@ -1,38 +1,39 @@
-from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
-from aiogram.utils.exceptions import InvalidQueryID
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
-from tgbot.misc import callbacks, states
+from tgbot.misc import states
+from tgbot.misc.callbacks import Navigation
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User
 
+router = Router()
 
-async def show_group_choose(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-    db_session = call.bot.get('database')
-    async with db_session() as session:
+
+@router.callback_query(Navigation.filter(F.to == Navigation.To.group_choose))
+async def show_group_choose(call: CallbackQuery, callback_data: Navigation, state: FSMContext, _,
+                            db: async_sessionmaker):
+    async with db() as session:
         user = await session.get(User, call.from_user.id)
 
     group_name = md.hcode(user.group.group_name) if user.group else '❌'
-    keyboard = inline_keyboards.get_group_choose_keyboard(_, user, 'profile', callback_data['payload'])
+    keyboard = inline_keyboards.get_group_choose_keyboard(_, user, 'profile', callback_data.payload)
     message = await call.message.edit_text(_(messages.group_choose).format(group_name=group_name), reply_markup=keyboard)
 
-    await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data['payload'])
-    await states.GroupChoose.waiting_for_group.set()
+    await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data.payload)
+    await state.set_state(states.GroupChoose.waiting_for_group)
 
     await call.answer()
 
 
-async def show_verification(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    _ = call.bot.get('_')
-    db_session = call.bot.get('database')
+@router.callback_query(Navigation.filter(F.to == Navigation.To.verification))
+async def show_verification(call: CallbackQuery, callback_data: Navigation, state: FSMContext, _, db: async_sessionmaker):
+    await state.clear()
 
-    await state.finish()
-
-    async with db_session() as session:
+    async with db() as session:
         user = await session.get(User, call.from_user.id)
 
     verified_status = '✅' if user.has_role(roles.verified) else '❌'
@@ -45,18 +46,16 @@ async def show_verification(call: CallbackQuery, callback_data: dict, state: FSM
             kai_status=authorized_status,
             profile_status=verified_status
         ),
-        reply_markup=inline_keyboards.get_verification_keyboard(_, user, callback_data['payload'])
+        reply_markup=inline_keyboards.get_verification_keyboard(_, user, callback_data.payload)
     )
     await call.answer()
 
 
-async def send_verification(message: Message, state: FSMContext):
-    _ = message.bot.get('_')
-    db_session = message.bot.get('database')
+async def send_verification(message: Message, state: FSMContext, _, db: async_sessionmaker):
     state_data = await state.get_data()
-    await state.finish()
+    await state.clear()
 
-    async with db_session() as session:
+    async with db() as session:
         user = await session.get(User, message.from_id)
 
     verified_status = '✅' if user.has_role(roles.verified) else '❌'
@@ -73,9 +72,8 @@ async def send_verification(message: Message, state: FSMContext):
     )
 
 
-async def show_settings(call: CallbackQuery):
-    _, db = call.bot.get('_'), call.bot.get('database')
-
+@router.callback_query(Navigation.filter(F.to == Navigation.To.settings))
+async def show_settings(call: CallbackQuery, _, db: async_sessionmaker):
     async with db() as session:
         tg_user: User = await session.get(User, call.from_user.id)
 
@@ -88,9 +86,3 @@ async def show_settings(call: CallbackQuery):
     )
 
     await call.answer()
-
-
-def register_profile(dp: Dispatcher):
-    dp.register_callback_query_handler(show_group_choose, callbacks.navigation.filter(to='grp_choose'), state='*')
-    dp.register_callback_query_handler(show_verification, callbacks.navigation.filter(to='verification'), state='*')
-    dp.register_callback_query_handler(show_settings, callbacks.navigation.filter(to='settings'))

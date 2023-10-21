@@ -14,6 +14,11 @@ class Navigation(CallbackData, prefix='nav'):
         main_menu = 'main_menu'
         classmates = 'classmates'
         documents = 'documents'
+        verification = 'verification'
+        settings = 'settings'
+        schedule_menu = 'schedule_menu'
+        teachers = 'teachers'
+        language_choose = 'language_choose'
 
     to: To
     payload: Any = None
@@ -24,6 +29,11 @@ class Action(CallbackData, prefix='act'):
         edit_pinned_text = 'edit_pin_text'
         clear_pinned_text = 'clear_pin_text'
         send_document = 'send_doc'
+        start_kai_login = 'start_kai_login'
+        kai_logout = 'kai_logout'
+        unlink_account = 'unlink_account'
+        send_phone = 'send_phone'
+        check_phone = 'check_phone'
 
     name: Name
     payload: Any = None
@@ -57,6 +67,8 @@ class Schedule(CallbackData, prefix='schedule'):
     class Action(Enum, str):
         day_details = 'day_details'
         week_details = 'week_details'
+        show_day = 'show_day'
+        show_week = 'show_week'
 
     payload: Any = None
 
@@ -66,7 +78,8 @@ class FullSchedule(CallbackData, prefix='full_schedule'):
 
 class Settings(CallbackData, prefix='settings'):
     class Action(Enum, str):
-        pass
+        emoji = 'emoji'
+        teachers = 'teachers'
 
     action: Action
 

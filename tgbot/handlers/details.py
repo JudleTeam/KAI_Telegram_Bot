@@ -153,7 +153,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details
 
     await call.message.edit_text(text, reply_markup=keyboard)
     await state.update_data(main_call=call.to_python(), **callback_data.model_dump())
-    await states.Homework.waiting_for_homework.set()
+    await state.set_state(states.Homework.waiting_for_homework)
     await call.answer()
 
 
