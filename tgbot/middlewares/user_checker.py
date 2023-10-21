@@ -41,7 +41,7 @@ class UserCheckerMiddleware(BaseMiddleware):
                 return
 
             async with db_session() as session:
-                database_user = await session.get(User, message.from_user.id)
+                database_user = await session.get(User, message.chat.id)
 
             if database_user is None:
                 logging.error(f'[{message.chat.id}]: Unregistered')
@@ -57,7 +57,7 @@ class UserCheckerMiddleware(BaseMiddleware):
 
         if database_user is None:
             async with db_session() as session:
-                database_user = await session.get(User, message.from_user.id)
+                database_user = await session.get(User, message.chat.id)
 
         if database_user.is_blocked:
             await redis.set(name=f'{message.chat.id}:blocked', value='', ex=3600)
