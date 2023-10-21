@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
@@ -12,7 +13,7 @@ router = Router()
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.my_group))
-async def show_my_group(call: CallbackQuery, _, db: async_sessionmaker):
+async def show_my_group(call: CallbackQuery, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.has_role(roles.verified):
@@ -42,5 +43,5 @@ async def show_my_group(call: CallbackQuery, _, db: async_sessionmaker):
             pinned_text=md.hitalic(pinned_text)
         )
 
-    await call.message.edit_text(text, reply_markup=inline_keyboards.get_my_group_keyboard(_, user))
+    await call.message.edit_text(text, reply_markup=inline_keyboards.get_my_group_keyboard(user))
     await call.answer()

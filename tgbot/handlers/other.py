@@ -1,14 +1,14 @@
 import logging
 
-from aiogram import Dispatcher, Router, F
+from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from aiogram.utils.i18n import gettext as _
 
 from tgbot.handlers.details import show_lesson_menu
 from tgbot.handlers.education import show_my_group
 from tgbot.handlers.main_menu import show_profile_menu
 from tgbot.handlers.profile import show_verification
-from tgbot.misc import callbacks
 from tgbot.misc.callbacks import Cancel
 from tgbot.misc.texts import messages
 
@@ -16,7 +16,7 @@ router = Router()
 
 
 @router.callback_query(F.text == 'dev')
-async def show_dev(call: CallbackQuery, _):
+async def show_dev(call: CallbackQuery):
     await call.answer(_(messages.in_development), show_alert=True)
 
 

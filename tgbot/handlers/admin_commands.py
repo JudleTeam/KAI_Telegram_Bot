@@ -1,11 +1,14 @@
 import logging
 import os
 from pathlib import Path
+from pprint import pprint
 
-from aiogram import Router
+from aiogram import Router, Dispatcher, Bot
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -13,13 +16,14 @@ from tgbot.config import Config
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 from tgbot.services.utils import get_user_description
-
+from tgbot.services.utils.other import get_user_locale
 
 router = Router()
 
 
 async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str,
-                                       _, db: async_sessionmaker, redis: Redis, config: Config):
+                                       db: async_sessionmaker, redis: Redis, config: Config, dispatcher: Dispatcher,
+                                       bot: Bot):
     args = message.text.split()
     if len(args) != 2:
         await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
@@ -45,14 +49,14 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
     redis_value = '1' if is_blocked else ''
     await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value)
-    logging.info(f'Admin {message.from_id} {args[0][1:]} user {user_to_update.telegram_id}')
+    logging.info(f'Admin {message.from_user.id} {args[0][1:]} user {user_to_update.telegram_id}')
 
     if is_blocked:
         await message.answer(_(messages.user_has_been_blocked).format(user_id=md.hcode(user_id_to_update)))
     else:
         await message.answer(_(messages.user_has_been_unblocked).format(user_id=md.hcode(user_id_to_update)))
 
-    user_locale = user_to_update.language.code if user_to_update.language else 'en'
+    user_locale = await get_user_locale(dispatcher, bot, user_id_to_update)
     await message.bot.send_message(
         chat_id=user_to_update.telegram_id,
         text=_(blocked_msg, locale=user_locale) if is_blocked else _(unblocked_msg, locale=user_locale),
@@ -60,24 +64,28 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
 
 @router.message(Command('pardon', 'unban', 'unblock'))
-async def pardon_user(message: Message, _, db: async_sessionmaker, redis: Redis, config: Config):
+async def pardon_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
+                      dispatcher: Dispatcher, bot: Bot):
     await update_user_block_and_notify(
         message,
         is_blocked=False,
         blocked_msg=messages.admin_unblock,
         unblocked_msg=messages.user_has_been_unblocked,
-        _=_, db=db, redis=redis, config=config
+        dispatcher=dispatcher, bot=bot,
+        db=db, redis=redis, config=config
     )
 
 
 @router.message(Command('ban', 'block'))
-async def block_user(message: Message,  _, db: async_sessionmaker, redis: Redis, config: Config):
+async def block_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
+                     dispatcher: Dispatcher, bot: Bot):
     await update_user_block_and_notify(
         message,
         is_blocked=True,
         blocked_msg=messages.admin_block,
         unblocked_msg=messages.user_has_been_blocked,
-        _=_, db=db, redis=redis, config=config
+        dispatcher=dispatcher, bot=bot,
+        db=db, redis=redis, config=config
     )
 
 
@@ -92,11 +100,11 @@ async def send_users(message: Message, db: async_sessionmaker):
         formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
 
     await message.answer('\n'.join(formatted_users))
-    logging.info(f'Admin {message.from_id} used "/users"')
+    logging.info(f'Admin {message.from_user.id} used "/users"')
 
 
 @router.message(Command('set_prefix'))
-async def set_prefix(message: Message, _, db: async_sessionmaker):
+async def set_prefix(message: Message, db: async_sessionmaker):
     args = message.text.split()
     if len(args) not in (2, 3) or not args[1].isdigit() or (len(args) == 3 and len(args[2]) > 32):
         await message.answer(_(messages.set_prefix_bad_format))
@@ -121,7 +129,7 @@ async def send_last_log(message: Message, log_file):
 
 
 @router.message(Command('user_info'))
-async def send_user_info(message: Message, _, db: async_sessionmaker):
+async def send_user_info(message: Message, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2:
         await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
@@ -145,7 +153,7 @@ async def send_user_info(message: Message, _, db: async_sessionmaker):
 
 
 @router.message(Command('send_message'))
-async def send_message(message: Message, _, db: async_sessionmaker):
+async def send_message(message: Message, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2 or not message.reply_to_message:
         await message.answer(_(messages.send_message_bad_format))

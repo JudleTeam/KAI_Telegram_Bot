@@ -1,25 +1,29 @@
 import calendar
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.i18n import gettext as _
 
 import datetime
+
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from tgbot.misc import callbacks
+from tgbot.misc.callbacks import Navigation, Language as LangCallback
 from tgbot.misc.texts import buttons, roles, rights
-from tgbot.services.database.models import Language, User, Group, GroupLesson, Homework
+from tgbot.services.database.models import User, Group, GroupLesson, Homework
 
 
-def get_profile_keyboard(_):
-    keyboard = InlineKeyboardMarkup(row_width=1)
+def get_profile_keyboard():
+    builder = InlineKeyboardBuilder()
 
-    keyboard.add(
-        InlineKeyboardButton(_(buttons.choose_group), callback_data=callbacks.navigation.new('grp_choose', payload='')),
-        InlineKeyboardButton(_(buttons.choose_language),
-                             callback_data=callbacks.navigation.new('lang_choose', payload='profile')),
-        InlineKeyboardButton(_(buttons.verification), callback_data=callbacks.navigation.new('verification', payload='')),
-        InlineKeyboardButton(_(buttons.settings), callback_data=callbacks.navigation.new('settings', payload=''))
-    )
+    builder.button(text=_(buttons.choose_group), callback_data=Navigation(to=Navigation.To.group_choose))
+    builder.button(text=_(buttons.choose_language), callback_data=Navigation(to=Navigation.To.language_choose))
+    builder.button(text=_(buttons.verification), callback_data=Navigation(to=Navigation.To.verification))
+    builder.button(text=_(buttons.settings), callback_data=Navigation(to=Navigation.To.settings))
 
-    return keyboard
+    builder.adjust(1)
+
+    return builder.as_markup()
 
 
 def get_settings_keyboard(_, tg_user: User):
@@ -118,24 +122,20 @@ def get_group_choose_keyboard(_, user: User, back_to: str, payload: str):
     return keyboard
 
 
-def get_language_choose_keyboard(_, languages: list[Language], at_start=False):
-    keyboard = InlineKeyboardMarkup(row_width=1)
+def get_language_choose_keyboard(languages: dict[str, str], at_start=False):
+    builder = InlineKeyboardBuilder()
 
     payload = 'at_start' if at_start else ''
-    k_buttons = []
-    for language in languages:
-        callback = callbacks.language_choose.new(lang_id=language.id, code=language.code, payload=payload)
-        k_buttons.append(
-            InlineKeyboardButton(language.title, callback_data=callback)
-        )
-    keyboard.add(*k_buttons)
+    for code, title in languages.items():
+        callback = LangCallback(code=code, payload=payload)
+        builder.button(text=title, callback_data=callback)
 
     if not at_start:
-        keyboard.add(
-            InlineKeyboardButton(_(buttons.back), callback_data=callbacks.navigation.new('profile', payload='back'))
-        )
+        builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.profile, payload='back'))
 
-    return keyboard
+    builder.adjust(1)
+
+    return builder.as_markup()
 
 
 def get_start_keyboard(_):

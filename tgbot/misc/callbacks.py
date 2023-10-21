@@ -6,7 +6,7 @@ from aiogram.filters.callback_data import CallbackData
 
 
 class Navigation(CallbackData, prefix='nav'):
-    class To(Enum, str):
+    class To(str, Enum):
         my_group = 'my_group'
         group_choose = 'group_choose'
         profile = 'profile'
@@ -25,7 +25,7 @@ class Navigation(CallbackData, prefix='nav'):
 
 
 class Action(CallbackData, prefix='act'):
-    class Name(Enum, str):
+    class Name(str, Enum):
         edit_pinned_text = 'edit_pin_text'
         clear_pinned_text = 'clear_pin_text'
         send_document = 'send_doc'
@@ -40,7 +40,7 @@ class Action(CallbackData, prefix='act'):
 
 
 class Cancel(CallbackData, prefix='cancel'):
-    class To(Enum, str):
+    class To(str, Enum):
         pass
 
     to: To
@@ -48,13 +48,12 @@ class Cancel(CallbackData, prefix='cancel'):
 
 
 class Language(CallbackData, prefix='lang'):
-    lang_id: int
     code: str
     payload: Any = None
 
 
 class Group(CallbackData, prefix='group'):
-    class Action(Enum, str):
+    class Action(str, Enum):
         select = 'select'
         add = 'add'
         remove = 'remove'
@@ -64,7 +63,7 @@ class Group(CallbackData, prefix='group'):
 
 
 class Schedule(CallbackData, prefix='schedule'):
-    class Action(Enum, str):
+    class Action(str, Enum):
         day_details = 'day_details'
         week_details = 'week_details'
         show_day = 'show_day'
@@ -77,7 +76,7 @@ class FullSchedule(CallbackData, prefix='full_schedule'):
     parity: int
 
 class Settings(CallbackData, prefix='settings'):
-    class Action(Enum, str):
+    class Action(str, Enum):
         emoji = 'emoji'
         teachers = 'teachers'
 
@@ -85,7 +84,7 @@ class Settings(CallbackData, prefix='settings'):
 
 
 class Details(CallbackData, prefix='details'):
-    class Action(Enum, str):
+    class Action(str, Enum):
         show = 'show'
         add = 'add'
         edit = 'edit'

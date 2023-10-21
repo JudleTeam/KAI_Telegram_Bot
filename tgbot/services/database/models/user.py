@@ -29,7 +29,6 @@ class User(Base):
     __tablename__ = 'telegram_user'
 
     telegram_id = Column(BigInteger, primary_key=True, unique=True, autoincrement=False)
-    language_id = Column(Integer, ForeignKey('language.id'), nullable=True)
     group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_user_group'), nullable=True)
     created_at = Column(DateTime(), nullable=False, server_default=text('NOW()'))
     is_blocked_bot = Column(Boolean, nullable=False, server_default=text('false'))
@@ -40,7 +39,6 @@ class User(Base):
     use_emoji = Column(Boolean, nullable=False, server_default=text('true'))
     show_teachers_in_schedule = Column(Boolean, nullable=False, server_default=text('true'))
 
-    language = relationship('Language', lazy='selectin')
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     favorite_groups = relationship('Group', lazy='selectin', secondary=favorite_group)
     roles = relationship('Role', lazy='selectin', secondary=user_roles)

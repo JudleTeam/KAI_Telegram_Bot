@@ -1,11 +1,9 @@
 import typing
 
-from aiogram.dispatcher.filters import BoundFilter
-
 from tgbot.config import Config
 
 
-class AdminFilter(BoundFilter):
+class AdminFilter:
     key = 'is_admin'
 
     def __init__(self, is_admin: typing.Optional[bool] = None):

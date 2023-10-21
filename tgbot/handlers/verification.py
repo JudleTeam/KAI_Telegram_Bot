@@ -3,6 +3,7 @@ import logging
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, ContentType, ReplyKeyboardRemove
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.handlers.profile import show_verification, send_verification
@@ -19,7 +20,7 @@ router = Router()
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.unlink_account))
-async def unlink_account(call: CallbackQuery, callback_data: Action, state: FSMContext, _, db: async_sessionmaker):
+async def unlink_account(call: CallbackQuery, callback_data: Action, state: FSMContext, db: async_sessionmaker):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         user.kai_user = None
@@ -33,7 +34,7 @@ async def unlink_account(call: CallbackQuery, callback_data: Action, state: FSMC
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.kai_logout))
-async def kai_logout(call: CallbackQuery, callback_data: Action, state: FSMContext, _, db: async_sessionmaker):
+async def kai_logout(call: CallbackQuery, callback_data: Action, state: FSMContext, db: async_sessionmaker):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         user.kai_user.login = None
@@ -48,9 +49,9 @@ async def kai_logout(call: CallbackQuery, callback_data: Action, state: FSMConte
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.start_kai_login))
-async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSMContext, _):
+async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSMContext):
     await call.message.edit_text(_(messages.login_input),
-                                 reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification', callback_data['payload']))
+                                 reply_markup=inline_keyboards.get_cancel_keyboard('verification', callback_data['payload']))
     await call.answer()
 
     await state.update_data(main_call=call.to_python(), payload=callback_data.payload)
@@ -60,7 +61,7 @@ async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSM
 
 
 @router.message(states.KAILogin.waiting_for_login)
-async def get_user_login(message: Message, state: FSMContext, _):
+async def get_user_login(message: Message, state: FSMContext):
     await message.delete()
     state_data = await state.get_data()
     main_call = CallbackQuery(**state_data['main_call'])
@@ -68,12 +69,12 @@ async def get_user_login(message: Message, state: FSMContext, _):
     payload = state_data['payload']
 
     await main_call.message.edit_text(_(messages.password_input),
-                                      reply_markup=inline_keyboards.get_cancel_keyboard(_, 'verification', payload))
+                                      reply_markup=inline_keyboards.get_cancel_keyboard('verification', payload))
     await state.set_state(states.KAILogin.waiting_for_password)
 
 
 @router.message(states.KAILogin.waiting_for_password)
-async def get_user_password(message: Message, state: FSMContext, _, db: async_sessionmaker):
+async def get_user_password(message: Message, state: FSMContext, db: async_sessionmaker):
     await message.delete()
     password = message.text.strip()
     state_data = await state.get_data()
@@ -82,7 +83,7 @@ async def get_user_password(message: Message, state: FSMContext, _, db: async_se
 
     await main_call.message.edit_text(_(messages.authorization_process))
 
-    keyboard = inline_keyboards.get_back_keyboard(_, 'verification', payload=state_data['payload'])
+    keyboard = inline_keyboards.get_back_keyboard('verification', payload=state_data['payload'])
     # Привести это в порядок надо бы
     try:
         try:
@@ -90,43 +91,43 @@ async def get_user_password(message: Message, state: FSMContext, _, db: async_se
 
         except KaiApiError as error:
             await main_call.message.edit_text(_(messages.kai_error), reply_markup=keyboard)
-            logging.info(f'[{message.from_id}]: Got KAI error on login - {error}')
+            logging.info(f'[{message.from_user.id}]: Got KAI error on login - {error}')
 
         except BadCredentials:
             await main_call.message.edit_text(_(messages.bad_credentials), reply_markup=keyboard)
-            logging.info(f'[{message.from_id}]: Bad credentials')
+            logging.info(f'[{message.from_user.id}]: Bad credentials')
 
         else:
-            is_available = await add_full_user_to_db(user_data, login, password, message.from_id, db)
+            is_available = await add_full_user_to_db(user_data, login, password, message.from_user.id, db)
             if is_available:
                 await main_call.message.edit_text(_(messages.success_login), reply_markup=keyboard)
-                logging.info(f'[{message.from_id}]: Success login')
+                logging.info(f'[{message.from_user.id}]: Success login')
             else:
                 await main_call.message.edit_text(_(messages.credentials_busy), reply_markup=keyboard)
-                logging.info(f'[{message.from_id}]: Tried to login to someone else\'s account ({login})')
+                logging.info(f'[{message.from_user.id}]: Tried to login to someone else\'s account ({login})')
 
     except Exception as error:
         await main_call.message.edit_text(_(messages.base_error))
-        logging.error(f'[{message.from_id}]: Everything broke during login - {error}')
+        logging.error(f'[{message.from_user.id}]: Everything broke during login - {error}')
 
     await state.clear()
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.send_phone))
-async def send_phone_keyboard(call: CallbackQuery, callback_data: Action, state: FSMContext, _):
+async def send_phone_keyboard(call: CallbackQuery, callback_data: Action, state: FSMContext):
     await state.set_state(states.PhoneSendState.waiting_for_phone)
     await state.update_data(payload=callback_data.payload)
-    await call.message.answer(_(messages.share_contact), reply_markup=reply_keyboards.get_send_phone_keyboard(_))
+    await call.message.answer(_(messages.share_contact), reply_markup=reply_keyboards.get_send_phone_keyboard())
     await call.answer()
 
 
 @router.message(states.PhoneSendState.waiting_for_phone, F.content_type == ContentType.CONTACT)
-async def get_user_phone(message: Message, state: FSMContext, _, db: async_sessionmaker):
-    if message.from_id != message.contact.user_id:
+async def get_user_phone(message: Message, state: FSMContext, db: async_sessionmaker):
+    if message.from_user.id != message.contact.user_id:
         await message.answer(_(messages.not_your_phone))
         return
 
-    is_verified = await verify_profile_with_phone(message.from_id, message.contact.phone_number, db)
+    is_verified = await verify_profile_with_phone(message.from_user.id, message.contact.phone_number, db)
     text = _(messages.phone_verified) + '\n\n'
     if is_verified is None:
         text += _(messages.kai_account_busy)
@@ -138,13 +139,13 @@ async def get_user_phone(message: Message, state: FSMContext, _, db: async_sessi
     state_data = await state.get_data()
     if state_data['payload'] == 'at_start':
         await message.answer(text, reply_markup=ReplyKeyboardRemove())
-        await send_verification(message, state, _, db)
+        await send_verification(message, state, db)
     else:
-        await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard(_))
+        await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard())
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.check_phone))
-async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContext, _, db: async_sessionmaker):
+async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContext, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 

@@ -1,6 +1,7 @@
 from aiogram import Dispatcher, Router, F
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import tgbot.keyboards.inline_keyboards as inline
@@ -33,7 +34,7 @@ def form_teachers_str(teachers: dict):
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.teachers))
-async def show_teachers(call: CallbackQuery, _, db: async_sessionmaker):
+async def show_teachers(call: CallbackQuery, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
@@ -48,4 +49,4 @@ async def show_teachers(call: CallbackQuery, _, db: async_sessionmaker):
 
     teachers_str = form_teachers_str(teachers)
     msg = _(messages.teachers_template).format(teachers=teachers_str, group_name=md.hcode(user.group.group_name))
-    await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(_, user.group.group_name))
+    await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(user.group.group_name))

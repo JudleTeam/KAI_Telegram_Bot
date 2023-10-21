@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.exceptions import AiogramError
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
@@ -14,7 +15,7 @@ from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to
 router = Router()
 
 
-def form_full_schedule_day(_, lessons: list[GroupLesson], week_day: int, show_teachers: bool, use_emoji: bool):
+def form_full_schedule_day(lessons: list[GroupLesson], week_day: int, show_teachers: bool, use_emoji: bool):
     lessons_str_list = list()
 
     convert_lesson_type = lesson_type_to_emoji if use_emoji else lesson_type_to_text
@@ -62,7 +63,7 @@ def form_full_schedule_day(_, lessons: list[GroupLesson], week_day: int, show_te
 
 
 @router.callback_query(FullSchedule.filter())
-async def show_full_schedule(call: CallbackQuery, callback_data: FullSchedule, _, db: async_sessionmaker):
+async def show_full_schedule(call: CallbackQuery, callback_data: FullSchedule, db: async_sessionmaker):
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
         if not tg_user.group_id:
@@ -75,13 +76,13 @@ async def show_full_schedule(call: CallbackQuery, callback_data: FullSchedule, _
                 lessons = await GroupLesson.get_group_day_schedule_with_any_parity(session, tg_user.group_id, week_day)
             else:
                 lessons = await GroupLesson.get_group_day_schedule(session, tg_user.group_id, week_day, callback_data.parity)
-            msg = form_full_schedule_day(_, lessons, week_day, tg_user.show_teachers_in_schedule, tg_user.use_emoji)
+            msg = form_full_schedule_day(lessons, week_day, tg_user.show_teachers_in_schedule, tg_user.use_emoji)
             all_lessons_text += msg
 
     try:
         await call.message.edit_text(
             all_lessons_text,
-            reply_markup=inline_keyboards.get_full_schedule_keyboard(_, callback_data.parity, tg_user.group.group_name)
+            reply_markup=inline_keyboards.get_full_schedule_keyboard(callback_data.parity, tg_user.group.group_name)
         )
     except AiogramError:
         pass

@@ -5,6 +5,7 @@ from aiogram.exceptions import AiogramError
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md, markdown
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import tgbot.keyboards.inline_keyboards as inline
@@ -61,7 +62,7 @@ def form_lessons(schedule_list: list[GroupLesson], show_teachers: bool, use_emoj
     return lessons
 
 
-async def form_day(_, db, user, today, with_pointer=False):
+async def form_day(db, user, today, with_pointer=False):
     if with_pointer and today.date() == datetime.datetime.now().date():
         with_pointer = True
     else:
@@ -88,7 +89,7 @@ async def form_day(_, db, user, today, with_pointer=False):
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.schedule_menu))
-async def show_schedule_menu(call: CallbackQuery, state: FSMContext, _, db: async_sessionmaker):
+async def show_schedule_menu(call: CallbackQuery, state: FSMContext, db: async_sessionmaker):
     await state.clear()
     async with db() as session:
         user = await session.get(User, call.from_user.id)
@@ -101,12 +102,12 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext, _, db: asyn
     )
     if user.use_emoji:
         msg += _(messages.emoji_hint)
-    await call.message.edit_text(msg, reply_markup=inline.get_main_schedule_keyboard(_, group_name))
+    await call.message.edit_text(msg, reply_markup=inline.get_main_schedule_keyboard(group_name))
     await call.answer()
 
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.show_day))
-async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, _, db: async_sessionmaker):
+async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
@@ -126,7 +127,7 @@ async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, _, db:
     int_parity = 2 if not int(today.strftime('%V')) % 2 else 1
     parity = f'{_(messages.even_week) if int_parity == 2 else _(messages.odd_week)}'
 
-    text = await form_day(_, db, user, today) + md.hitalic(parity)
+    text = await form_day(db, user, today) + md.hitalic(parity)
     keyboard = inline.get_schedule_day_keyboard(_, today, user.group.group_name)
     try:
         await call.message.edit_text(text, reply_markup=keyboard)
@@ -137,7 +138,7 @@ async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, _, db:
 
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.show_week))
-async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, _, db: async_sessionmaker):
+async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
@@ -152,7 +153,7 @@ async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, _, db
         msg = await form_day(_, db, user, week_first_date + datetime.timedelta(days=week_day), True)
         all_lessons += msg
 
-    await call.message.edit_text(all_lessons, reply_markup=inline.get_week_schedule_keyboard(_, week_first_date,
-                                                                                             user.group.group_name))
+    keyboard = inline.get_week_schedule_keyboard(week_first_date, user.group.group_name)
+    await call.message.edit_text(all_lessons, reply_markup=keyboard)
 
     await call.answer()

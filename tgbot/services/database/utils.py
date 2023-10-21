@@ -1,10 +1,11 @@
 import datetime
 from pprint import pprint
 
+from aiogram import Dispatcher, Bot
 from sqlalchemy import select, text, or_
 from sqlalchemy.orm import selectinload, joinedload
 
-from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Departament, Homework, Language, User
+from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Departament, Homework, User
 
 
 async def get_group_teachers(session, group_id: int):
@@ -60,12 +61,3 @@ async def get_lessons_with_homework(session, group_id: int, date: datetime.date)
 
     records = await session.execute(stmt)
     return records.unique().scalars().all()
-
-
-async def get_user_locale(session, user_id: int):
-    record = await session.execute(
-        select(Language.code)
-        .join(User.language.and_(User.telegram_id == user_id))
-    )
-
-    return record.scalar()

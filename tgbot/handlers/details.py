@@ -1,11 +1,12 @@
 import datetime
 import logging
 
-from aiogram import Router, F
+from aiogram import Router, F, Dispatcher, Bot
 from aiogram.dispatcher.event.bases import CancelHandler
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
@@ -21,7 +22,7 @@ from tgbot.services.utils.other import broadcast_text
 router = Router()
 
 
-def form_day_with_details(_, lessons: list[GroupLesson], date, use_emoji: bool):
+def form_day_with_details(lessons: list[GroupLesson], date, use_emoji: bool):
     convert_lesson_type = lesson_type_to_emoji if use_emoji else lesson_type_to_text
 
     str_lessons = list()
@@ -53,7 +54,7 @@ def form_day_with_details(_, lessons: list[GroupLesson], date, use_emoji: bool):
     return msg
 
 
-async def check_access(_, call, tg_user):
+async def check_access(call, tg_user):
     if not tg_user.has_role(roles.admin):
         if not tg_user.has_role(roles.verified):
             await call.answer(_(messages.details_not_verified), show_alert=True)
@@ -65,25 +66,25 @@ async def check_access(_, call, tg_user):
 
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.day_details))
-async def show_day_details(call: CallbackQuery, callback_data: Schedule, _, db: async_sessionmaker):
+async def show_day_details(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
     date = datetime.date.fromisoformat(callback_data.payload)
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
 
-        await check_access(_, call, tg_user)
+        await check_access(call, tg_user)
 
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
         lessons = await get_lessons_with_homework(session, tg_user.group_id, date)
 
     await call.message.edit_text(
-        form_day_with_details(_, lessons, date, tg_user.use_emoji),
-        reply_markup=inline_keyboards.get_day_details_keyboard(_, lessons, date, edit_homework_right)
+        form_day_with_details(lessons, date, tg_user.use_emoji),
+        reply_markup=inline_keyboards.get_day_details_keyboard(lessons, date, edit_homework_right)
     )
     await call.answer()
 
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.week_details))
-async def show_week_details(call: CallbackQuery, callback_data: Schedule, _, db: async_sessionmaker):
+async def show_week_details(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
     week_first_date = datetime.datetime.fromisoformat(callback_data.payload)
     week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
 
@@ -92,7 +93,7 @@ async def show_week_details(call: CallbackQuery, callback_data: Schedule, _, db:
     async with db.begin() as session:
         tg_user = await session.get(User, call.from_user.id)
 
-        await check_access(_, call, tg_user)
+        await check_access(call, tg_user)
 
         edit_homework_right = tg_user.has_right_to(rights.edit_homework)
 
@@ -101,18 +102,18 @@ async def show_week_details(call: CallbackQuery, callback_data: Schedule, _, db:
             day = week_first_date + datetime.timedelta(days=week_day)
             lessons = await get_lessons_with_homework(session, tg_user.group_id, day)
             all_lessons.extend(lessons), all_dates.extend([day.date()] * len(lessons))
-            msg = form_day_with_details(_, lessons, day, tg_user.use_emoji)
+            msg = form_day_with_details(lessons, day, tg_user.use_emoji)
             all_lessons_text += msg
 
     await call.message.edit_text(
         all_lessons_text,
-        reply_markup=inline_keyboards.get_week_details_keyboard(_, all_lessons, all_dates, edit_homework_right)
+        reply_markup=inline_keyboards.get_week_details_keyboard(all_lessons, all_dates, edit_homework_right)
     )
     await call.answer()
 
 
 @router.callback_query(Details.filter(F.action == Details.Action.show))
-async def show_lesson_menu(call: CallbackQuery, callback_data: Details, _, db: async_sessionmaker):
+async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: async_sessionmaker):
     date = callback_data.date
     async with db() as session:
         homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, date)
@@ -128,7 +129,7 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, _, db: a
         start_time=lesson.start_time.strftime('%H:%M'),
         homework=homework.description if homework else _(messages.no_homework)
     )
-    keyboard = inline_keyboards.get_homework_keyboard(_, lesson.id, date, homework, callback_data.payload)
+    keyboard = inline_keyboards.get_homework_keyboard(lesson.id, date, homework, callback_data.payload)
 
     await call.message.edit_text(text, reply_markup=keyboard)
     await call.answer()
@@ -136,7 +137,7 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, _, db: a
 
 @router.callback_query(Details.filter(F.action == Details.Action.add))
 @router.callback_query(Details.filter(F.action == Details.Action.edit))
-async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details, state: FSMContext, _,
+async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details, state: FSMContext,
                                      db: async_sessionmaker):
     payload = f'{callback_data.lesson_id};{callback_data.date};{callback_data.payload}'
     keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=payload)
@@ -158,7 +159,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details
 
 
 @router.message(states.Homework.waiting_for_homework)
-async def get_homework(message: Message, state: FSMContext, _, db: async_sessionmaker):
+async def get_homework(message: Message, state: FSMContext, db: async_sessionmaker, dispatcher: Dispatcher, bot: Bot):
     homework_description = message.text
     state_data = await state.get_data()
     lesson_id = int(state_data['lesson_id'])
@@ -187,7 +188,6 @@ async def get_homework(message: Message, state: FSMContext, _, db: async_session
 
     if state_data['action'] == 'add':
         await broadcast_text(
-            _,
             chats=chats_ids,
             text=messages.new_homework,
             format_kwargs={
@@ -195,13 +195,13 @@ async def get_homework(message: Message, state: FSMContext, _, db: async_session
                 'discipline': lesson.discipline.name,
                 'homework': homework.description
             },
-            bot=message.bot,
-            db=db
+            bot=bot,
+            dispatcher=dispatcher
         )
 
 
 @router.callback_query(Details.filter(F.action == Details.Action.delete))
-async def delete_homework(call: CallbackQuery, callback_data: Details, _, db: async_sessionmaker):
+async def delete_homework(call: CallbackQuery, callback_data: Details, db: async_sessionmaker):
     async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, callback_data.date)
         if homework:

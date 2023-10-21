@@ -2,6 +2,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, URLInputFile
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -16,7 +17,7 @@ router = Router()
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.classmates))
-async def show_classmates(call: CallbackQuery, _, db: async_sessionmaker):
+async def show_classmates(call: CallbackQuery, db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
@@ -41,15 +42,15 @@ async def show_classmates(call: CallbackQuery, _, db: async_sessionmaker):
             group_name=md.hcode(user.kai_user.group.group_name),
             classmates=classmates_str
         ),
-        reply_markup=inline_keyboards.get_back_keyboard(_, 'my_group'),
+        reply_markup=inline_keyboards.get_back_keyboard('my_group'),
         disable_web_page_preview=True
     )
     await call.answer()
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.edit_pinned_text))
-async def start_group_pip_text_input(call: CallbackQuery, state: FSMContext, _):
-    await call.message.edit_text(_(messages.pin_text_input), reply_markup=inline_keyboards.get_pin_text_keyboard(_))
+async def start_group_pip_text_input(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text(_(messages.pin_text_input), reply_markup=inline_keyboards.get_pin_text_keyboard())
 
     await state.set_state(states.GroupPinText.waiting_for_text)
     await state.update_data(main_call=call.to_python())
@@ -81,13 +82,13 @@ async def clear_pin_text(call: CallbackQuery, state: FSMContext, db: async_sessi
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.documents))
-async def show_documents(call: CallbackQuery, _):
-    await call.message.edit_text(_(messages.documents), reply_markup=inline_keyboards.get_documents_keyboard(_))
+async def show_documents(call: CallbackQuery):
+    await call.message.edit_text(_(messages.documents), reply_markup=inline_keyboards.get_documents_keyboard())
     await call.answer()
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.send_document))
-async def send_document(call: CallbackQuery, callback_data: Action, _, db: async_sessionmaker, redis: Redis):
+async def send_document(call: CallbackQuery, callback_data: Action, db: async_sessionmaker, redis: Redis):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
