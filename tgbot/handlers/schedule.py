@@ -128,7 +128,7 @@ async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, db: as
     parity = f'{_(messages.even_week) if int_parity == 2 else _(messages.odd_week)}'
 
     text = await form_day(db, user, today) + md.hitalic(parity)
-    keyboard = inline.get_schedule_day_keyboard(_, today, user.group.group_name)
+    keyboard = inline.get_schedule_day_keyboard(today, user.group.group_name)
     try:
         await call.message.edit_text(text, reply_markup=keyboard)
     except AiogramError:
@@ -150,7 +150,7 @@ async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, db: a
 
     all_lessons = ''
     for week_day in range(6):
-        msg = await form_day(_, db, user, week_first_date + datetime.timedelta(days=week_day), True)
+        msg = await form_day(db, user, week_first_date + datetime.timedelta(days=week_day), True)
         all_lessons += msg
 
     keyboard = inline.get_week_schedule_keyboard(week_first_date, user.group.group_name)

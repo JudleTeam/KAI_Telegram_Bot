@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from tgbot.handlers.profile import show_verification, send_verification
 from tgbot.keyboards import inline_keyboards, reply_keyboards
 from tgbot.misc import states
-from tgbot.misc.callbacks import Action
+from tgbot.misc.callbacks import Action, Navigation
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User
 from tgbot.services.kai_parser import KaiParser
@@ -50,8 +50,10 @@ async def kai_logout(call: CallbackQuery, callback_data: Action, state: FSMConte
 
 @router.callback_query(Action.filter(F.name == Action.Name.start_kai_login))
 async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSMContext):
-    await call.message.edit_text(_(messages.login_input),
-                                 reply_markup=inline_keyboards.get_cancel_keyboard('verification', callback_data['payload']))
+    await call.message.edit_text(
+        _(messages.login_input),
+        reply_markup=inline_keyboards.get_cancel_keyboard(Navigation.To.verification, callback_data['payload'])
+    )
     await call.answer()
 
     await state.update_data(main_call=call.to_python(), payload=callback_data.payload)
@@ -68,8 +70,10 @@ async def get_user_login(message: Message, state: FSMContext):
     state_data['login'] = message.text.strip()
     payload = state_data['payload']
 
-    await main_call.message.edit_text(_(messages.password_input),
-                                      reply_markup=inline_keyboards.get_cancel_keyboard('verification', payload))
+    await main_call.message.edit_text(
+        _(messages.password_input),
+        reply_markup=inline_keyboards.get_cancel_keyboard(Navigation.To.verification, payload)
+    )
     await state.set_state(states.KAILogin.waiting_for_password)
 
 
@@ -83,7 +87,7 @@ async def get_user_password(message: Message, state: FSMContext, db: async_sessi
 
     await main_call.message.edit_text(_(messages.authorization_process))
 
-    keyboard = inline_keyboards.get_back_keyboard('verification', payload=state_data['payload'])
+    keyboard = inline_keyboards.get_back_keyboard(Navigation.To.verification, payload=state_data['payload'])
     # Привести это в порядок надо бы
     try:
         try:

@@ -19,11 +19,9 @@ def get_main_keyboard():
     return builder.as_markup(resize_keyboard=True)
 
 
-def get_send_phone_keyboard(_):
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+def get_send_phone_keyboard():
+    builder = ReplyKeyboardBuilder()
 
-    keyboard.add(
-        KeyboardButton(_(reply_commands.share_contact), request_contact=True)
-    )
+    builder.button(text=_(reply_commands.share_contact), request_contact=True)
 
-    return keyboard
+    return builder.as_markup(resize_keyboard=True)

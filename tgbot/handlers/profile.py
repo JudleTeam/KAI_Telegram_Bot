@@ -21,7 +21,7 @@ async def show_group_choose(call: CallbackQuery, callback_data: Navigation, stat
         user = await session.get(User, call.from_user.id)
 
     group_name = md.hcode(user.group.group_name) if user.group else '❌'
-    keyboard = inline_keyboards.get_group_choose_keyboard(user, 'profile', callback_data.payload)
+    keyboard = inline_keyboards.get_group_choose_keyboard(user, Navigation.To.profile, callback_data.payload)
     message = await call.message.edit_text(_(messages.group_choose).format(group_name=group_name), reply_markup=keyboard)
 
     await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data.payload)
@@ -76,7 +76,7 @@ async def send_verification(message: Message, state: FSMContext, db: async_sessi
 @router.callback_query(Navigation.filter(F.to == Navigation.To.settings))
 async def show_settings(call: CallbackQuery, db: async_sessionmaker):
     async with db() as session:
-        tg_user: User = await session.get(User, call.from_user.id)
+        tg_user = await session.get(User, call.from_user.id)
 
     await call.message.edit_text(
         _(messages.settings).format(

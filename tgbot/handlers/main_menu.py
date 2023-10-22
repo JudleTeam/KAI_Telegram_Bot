@@ -52,7 +52,7 @@ async def show_profile_menu(call: CallbackQuery, callback_data: Navigation, stat
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
-    text = get_user_description(_, call.from_user, user)
+    text = get_user_description(call.from_user, user)
 
     await call.message.edit_text(text, reply_markup=inline_keyboards.get_profile_keyboard())
 
@@ -79,7 +79,7 @@ async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMCon
     await call.message.delete()
     if callback_data['payload'] == 'at_start':
         await call.message.answer(_(messages.channel_advertising),
-                                  reply_markup=inline_keyboards.get_channel_keyboard(_, config.misc.channel_link))
+                                  reply_markup=inline_keyboards.get_channel_keyboard(config.misc.channel_link))
 
     await call.message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard())
     await state.clear()

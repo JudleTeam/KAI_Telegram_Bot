@@ -22,11 +22,11 @@ router = Router()
 @router.message(CommandStart())
 async def command_start(message: Message, db: async_sessionmaker, redis: Redis, config: Config):
     # TODO: update work with deep link
-    args = message.get_args()
-    try:
-        payload = decode_payload(args)
-    except UnicodeDecodeError:
-        payload = None
+    # args = message.get_args()
+    # try:
+    #     payload = decode_payload(args)
+    # except UnicodeDecodeError:
+    #     payload = None
 
     await message.answer(
         '‼️ Этот бот для БЕТА и ЭКСПЕРЕМЕНТАЛЬНЫХ версий КАИ бота! ‼️\n\n'
@@ -41,7 +41,7 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
         user = await session.get(User, message.from_user.id)
         if not user:
             roles_dict = await Role.get_roles_dict(db)
-            user = User(telegram_id=message.from_user.id, source=payload, roles=[roles_dict[roles.student]])
+            user = User(telegram_id=message.from_user.id, source='', roles=[roles_dict[roles.student]])
             session.add(user)
 
             await redis.set(name=f'{message.from_user.id}:exists', value='1')
@@ -56,8 +56,8 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
 
             await message.answer(start_guide)
 
-            await message.answer(_(messages.welcome), reply_markup=inline_keyboards.get_start_keyboard(_))
-            logging.info(f'New user: {message.from_user.mention} {message.from_user.full_name} [{message.from_user.id}]')
+            await message.answer(_(messages.welcome), reply_markup=inline_keyboards.get_start_keyboard())
+            logging.info(f'New user: {message.from_user.username} {message.from_user.full_name} [{message.from_user.id}]')
         else:
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard())
 

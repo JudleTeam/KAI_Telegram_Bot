@@ -1,11 +1,9 @@
 import logging
 import os
 from pathlib import Path
-from pprint import pprint
 
 from aiogram import Router, Dispatcher, Bot
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile
 from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _

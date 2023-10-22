@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, Router, F
+from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _

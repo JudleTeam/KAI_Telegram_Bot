@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
 from tgbot.misc import states
-from tgbot.misc.callbacks import Schedule, Details
+from tgbot.misc.callbacks import Schedule, Details, Cancel
 from tgbot.misc.texts import messages, templates, rights, roles
 from tgbot.services.database.models import User, GroupLesson, Homework, KAIUser
 from tgbot.services.database.utils import get_lessons_with_homework
@@ -114,7 +114,7 @@ async def show_week_details(call: CallbackQuery, callback_data: Schedule, db: as
 
 @router.callback_query(Details.filter(F.action == Details.Action.show))
 async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: async_sessionmaker):
-    date = callback_data.date
+    date = datetime.date.fromisoformat(callback_data.date)
     async with db() as session:
         homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, date)
         if homework is None:
@@ -140,7 +140,7 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: asyn
 async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details, state: FSMContext,
                                      db: async_sessionmaker):
     payload = f'{callback_data.lesson_id};{callback_data.date};{callback_data.payload}'
-    keyboard = inline_keyboards.get_cancel_keyboard(_, to='homework', payload=payload)
+    keyboard = inline_keyboards.get_cancel_keyboard(to=Cancel.To.homework, payload=payload)
     if callback_data.action == Details.Action.add:
         text = _(messages.homework_input)
     else:

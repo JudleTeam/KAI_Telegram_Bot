@@ -41,7 +41,10 @@ class Action(CallbackData, prefix='act'):
 
 class Cancel(CallbackData, prefix='cancel'):
     class To(str, Enum):
-        pass
+        my_group = 'my_group'
+        profile = 'profile'
+        verification = 'verification'
+        homework = 'homework'
 
     to: To
     payload: Any = None
@@ -58,6 +61,7 @@ class Group(CallbackData, prefix='group'):
         add = 'add'
         remove = 'remove'
 
+    action: Action
     id: int
     payload: Any = None
 
@@ -69,6 +73,7 @@ class Schedule(CallbackData, prefix='schedule'):
         show_day = 'show_day'
         show_week = 'show_week'
 
+    action: Action
     payload: Any = None
 
 
@@ -90,6 +95,7 @@ class Details(CallbackData, prefix='details'):
         edit = 'edit'
         delete = 'delete'
 
+    action: Action
     lesson_id: int
-    date: datetime.date
+    date: str  # Date in ISO format
     payload: Any = None

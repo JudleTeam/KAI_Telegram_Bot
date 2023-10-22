@@ -31,11 +31,11 @@ async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext):
     await call.answer()
 
     match callback_data.to:
-        case 'profile': await show_profile_menu(call, callback_data, state)
-        case 'verification':
+        case Cancel.To.profile: await show_profile_menu(call, callback_data, state)
+        case Cancel.To.verification:
             logging.info(f'[{call.from_user.id}]: Cancel KAI login')
             await show_verification(call, callback_data, state)
-        case 'my_group': await show_my_group(call)
-        case 'homework':
+        case Cancel.To.my_group: await show_my_group(call)
+        case Cancel.To.homework:
             lesson_id, date, payload = callback_data.payload.split(';')
             await show_lesson_menu(call, {'lesson_id': lesson_id, 'date': date, 'payload': payload})

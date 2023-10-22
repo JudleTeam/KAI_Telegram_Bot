@@ -42,7 +42,7 @@ async def show_classmates(call: CallbackQuery, db: async_sessionmaker):
             group_name=md.hcode(user.kai_user.group.group_name),
             classmates=classmates_str
         ),
-        reply_markup=inline_keyboards.get_back_keyboard('my_group'),
+        reply_markup=inline_keyboards.get_back_keyboard(Navigation.To.my_group),
         disable_web_page_preview=True
     )
     await call.answer()
