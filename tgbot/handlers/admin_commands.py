@@ -9,6 +9,7 @@ from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from aiogram.utils.exceptions import ChatNotFound
 
 from tgbot.config import Config
 from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
@@ -45,8 +46,9 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
         user_to_update.is_blocked = is_blocked
 
-    redis_value = '1' if is_blocked else ''
-    await redis.set(name=f'{user_id_to_update}:blocked', value=redis_value)
+    if is_blocked:
+        await redis.set(name=f'{user_id_to_update}:blocked', value='', ex=3600)
+
     logging.info(f'Admin {message.from_user.id} {args[0][1:]} user {user_to_update.telegram_id}')
 
     if is_blocked:
@@ -91,9 +93,13 @@ async def send_users(message: Message, db: async_sessionmaker):
 
     formatted_users = list()
     for user in all_users:
-        tg_user = await message.bot.get_chat(user.telegram_id)
-        user_tag = tg_user.mention if tg_user.mention else tg_user.full_name
-        formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
+        try:
+            tg_user = await message.bot.get_chat(user.telegram_id)
+        except ChatNotFound:
+            pass
+        else:
+            user_tag = tg_user.mention if tg_user.mention else tg_user.full_name
+            formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
 
     await message.answer('\n'.join(formatted_users))
     logging.info(f'Admin {message.from_user.id} used "/users"')

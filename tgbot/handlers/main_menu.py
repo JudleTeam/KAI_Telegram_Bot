@@ -75,9 +75,9 @@ async def send_education_menu(message: Message, state: FSMContext):
 
 
 @router.callback_query(Navigation.filter(F.action == Navigation.To.main_menu))
-async def send_main_menu(call: CallbackQuery, callback_data: dict, state: FSMContext, config: Config):
+async def send_main_menu(call: CallbackQuery, callback_data: Navigation, state: FSMContext, config: Config):
     await call.message.delete()
-    if callback_data['payload'] == 'at_start':
+    if callback_data.payload == 'at_start':
         await call.message.answer(_(messages.channel_advertising),
                                   reply_markup=inline_keyboards.get_channel_keyboard(config.misc.channel_link))
 

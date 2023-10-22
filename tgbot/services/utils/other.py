@@ -77,6 +77,8 @@ async def broadcast_text(
         format_kwargs: dict = None,
         timeout: float = 0.05,
         **kwargs):
+    if format_kwargs is None:
+        format_kwargs = {}
 
     logging.info('Start broadcasting')
 

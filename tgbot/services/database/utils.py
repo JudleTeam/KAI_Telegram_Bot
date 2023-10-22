@@ -1,5 +1,4 @@
 import datetime
-from pprint import pprint
 
 from aiogram import Dispatcher, Bot
 from sqlalchemy import select, text, or_

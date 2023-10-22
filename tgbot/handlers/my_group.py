@@ -117,4 +117,4 @@ async def send_document(call: CallbackQuery, callback_data: Action, db: async_se
     await call.answer()
 
     if not file_id:
-        await redis.set(file_url, msg.document.file_id)
+        await redis.set(file_url, msg.document.file_id, ex=86400)
