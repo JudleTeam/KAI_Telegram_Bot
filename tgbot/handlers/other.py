@@ -4,12 +4,13 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils.i18n import gettext as _
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.handlers.details import show_lesson_menu
 from tgbot.handlers.education import show_my_group
 from tgbot.handlers.main_menu import show_profile_menu
 from tgbot.handlers.profile import show_verification
-from tgbot.misc.callbacks import Cancel
+from tgbot.misc.callbacks import Cancel, Details
 from tgbot.misc.texts import messages
 
 router = Router()
@@ -26,7 +27,7 @@ async def show_pass(call: CallbackQuery):
 
 
 @router.callback_query(Cancel.filter())
-async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext):
+async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext, db: async_sessionmaker):
     await state.clear()
     await call.answer()
 
@@ -34,8 +35,9 @@ async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext):
         case Cancel.To.profile: await show_profile_menu(call, callback_data, state)
         case Cancel.To.verification:
             logging.info(f'[{call.from_user.id}]: Cancel KAI login')
-            await show_verification(call, callback_data, state)
+            await show_verification(call, callback_data, state, db)
         case Cancel.To.my_group: await show_my_group(call)
         case Cancel.To.homework:
             lesson_id, date, payload = callback_data.payload.split(';')
-            await show_lesson_menu(call, {'lesson_id': lesson_id, 'date': date, 'payload': payload})
+            callback = Details(action=Details.Action.show, lesson_id=lesson_id, date=date, payload=payload)
+            await show_lesson_menu(call, callback, db)

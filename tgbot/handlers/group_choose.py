@@ -1,7 +1,7 @@
 import json
 import logging
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.i18n import gettext as _
@@ -17,7 +17,7 @@ from tgbot.services.database.models import User, Group
 router = Router()
 
 @router.callback_query(GroupCallback.filter(F.action == GroupCallback.Action.add))
-async def add_to_favorites(call: CallbackQuery, callback_data: GroupCallback, state: FSMContext,
+async def add_to_favorites(call: CallbackQuery, callback_data: GroupCallback, state: FSMContext, bot: Bot,
                            db: async_sessionmaker):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
@@ -25,11 +25,11 @@ async def add_to_favorites(call: CallbackQuery, callback_data: GroupCallback, st
 
     logging.info(f'[{call.from_user.id}]: Add group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_added))
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, db)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, bot, db)
 
 
 @router.callback_query(GroupCallback.filter(F.action == GroupCallback.Action.remove))
-async def remove_from_favorites(call: CallbackQuery, callback_data: GroupCallback, state: FSMContext,
+async def remove_from_favorites(call: CallbackQuery, callback_data: GroupCallback, state: FSMContext, bot: Bot,
                                 db: async_sessionmaker):
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
@@ -37,11 +37,12 @@ async def remove_from_favorites(call: CallbackQuery, callback_data: GroupCallbac
 
     logging.info(f'[{call.from_user.id}]: Remove group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_removed))
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, db)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, bot, db)
 
 
 @router.callback_query(GroupCallback.filter(F.action == GroupCallback.Action.select))
-async def select_group(call: CallbackQuery, callback_data: GroupCallback, state: FSMContext, db: async_sessionmaker):
+async def select_group(call: CallbackQuery, callback_data: GroupCallback, state: FSMContext, db: async_sessionmaker,
+                       bot: Bot):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if user.group_id == callback_data.id:
@@ -54,11 +55,11 @@ async def select_group(call: CallbackQuery, callback_data: GroupCallback, state:
 
     logging.info(f'[{call.from_user.id}]: Changed group to {user.group.group_name} with favorite groups')
     await call.answer(_(messages.group_changed))
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, db)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, bot, db)
 
 
 @router.message(states.GroupChoose.waiting_for_group)
-async def get_group_name(message: Message, state: FSMContext, db: async_sessionmaker):
+async def get_group_name(message: Message, state: FSMContext, db: async_sessionmaker, bot: Bot):
     group_name = message.text
 
     await message.delete()
@@ -82,4 +83,4 @@ async def get_group_name(message: Message, state: FSMContext, db: async_sessionm
         user.group_id = group.group_id
 
     logging.info(f'[{message.from_user.id}]: Changed group to {group_name} with input')
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=state_data['payload']), state, db)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=state_data['payload']), state, bot, db)

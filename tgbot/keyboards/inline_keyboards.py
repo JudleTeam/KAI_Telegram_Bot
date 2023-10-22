@@ -91,7 +91,7 @@ def get_group_choose_keyboard(user: User, back_to: Navigation.To, payload: str):
         case 'main_schedule':
             builder_3.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.schedule_menu))
         case 'at_start':
-            builder_3.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.main_menu, payload=payload))
+            builder_3.button(text=_(buttons.next_), callback_data=Navigation(to=Navigation.To.main_menu, payload=payload))
         case 'teachers':
             builder_3.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.teachers))
         case _ if 'day_schedule' in payload:
@@ -388,7 +388,7 @@ def get_verification_keyboard(user: User, payload):
     if not user.phone:
         builder.button(text=_(buttons.via_phone), callback_data=Action(name=Action.Name.send_phone, payload=payload))
     elif not is_verified:
-        builder.button(text=_(buttons.check_phone), callback_data=Action(name=Action.Name.check_phone), payload=payload)
+        builder.button(text=_(buttons.check_phone), callback_data=Action(name=Action.Name.check_phone, payload=payload))
     
     if not (user.has_role(roles.authorized)):
         builder.button(text=_(buttons.kai_login),
@@ -399,12 +399,17 @@ def get_verification_keyboard(user: User, payload):
     if is_verified:
         builder.button(text=_(buttons.unlink_account),
                        callback_data=Action(name=Action.Name.unlink_account, payload=payload))
-        
+
     if payload == 'at_start':
-        builder.button(text=_(buttons.next_), callback_data=Navigation(to=Navigation.To.group_choose, payload=payload))
+        if user.group_id:
+            builder.button(text=_(buttons.next_), callback_data=Navigation(to=Navigation.To.main_menu, payload=payload))
+        else:
+            builder.button(text=_(buttons.next_), callback_data=Navigation(to=Navigation.To.group_choose, payload=payload))
     else:
         builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.profile, payload=payload))
-    
+
+    builder.adjust(1)
+
     return builder.as_markup()
 
 

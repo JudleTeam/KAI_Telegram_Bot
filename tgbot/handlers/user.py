@@ -4,7 +4,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils.i18n import gettext as _, I18n
-from iso_language_codes import language_dictionary
+from iso_language_codes import language_autonym
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -21,8 +21,7 @@ router = Router()
 async def show_language_choose(call: CallbackQuery, callback_data: Navigation, i18n: I18n):
     at_start = callback_data.payload == 'start'
 
-    iso_languages = language_dictionary()
-    languages = {locale:iso_languages[locale]['Autonym'] for locale in i18n.available_locales}
+    languages = {locale:language_autonym(locale) for locale in i18n.available_locales}
     keyboard = inline_keyboards.get_language_choose_keyboard(languages, at_start=at_start)
 
     await call.message.edit_text(_(messages.language_choose), reply_markup=keyboard)

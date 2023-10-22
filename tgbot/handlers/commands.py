@@ -4,15 +4,14 @@ from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from aiogram.utils import markdown as md
-from aiogram.utils.deep_linking import decode_payload
 from aiogram.utils.i18n import gettext as _
+from iso_language_codes import language_autonym
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.config import Config
 from tgbot.handlers.profile import send_verification
-from tgbot.keyboards import inline_keyboards, reply_keyboards
+from tgbot.keyboards import reply_keyboards
 from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User, Role
@@ -22,8 +21,8 @@ from tgbot.services.database.models import User, Role
 router = Router()
 
 @router.message(CommandStart())
-async def command_start(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
-                        i18n: CacheAndDatabaseI18nMiddleware):
+async def command_start(message: Message, db: async_sessionmaker, redis: Redis, config: Config, state: FSMContext,
+                        i18n_middleware: CacheAndDatabaseI18nMiddleware):
     # TODO: update work with deep link
     # args = message.get_args()
     # try:
@@ -35,23 +34,24 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
         user = await session.get(User, message.from_user.id)
         if not user:
             roles_dict = await Role.get_roles_dict(db)
-            locale = await i18n.get_user_locale(message.from_user.id, redis, db)
+            locale = message.from_user.language_code
+
+            if locale:
+                welcome = _(messages.language_found).format(language=language_autonym(locale))
+            else:
+                welcome = messages.language_not_found
+                locale = i18n_middleware.i18n.default_locale
+
             user = User(telegram_id=message.from_user.id, source='', roles=[roles_dict[roles.student]], language=locale)
             session.add(user)
             await session.commit()
 
-            await redis.set(name=f'{message.from_id}:exists', value='', ex=3600)
-
-            # Need update with new lang system
-            if language:
-                welcome = _(messages.language_found).format(language=language.title)
-            else:
-                welcome = messages.language_not_found
+            await redis.set(name=f'{message.from_user.id}:exists', value='', ex=3600)
 
             await state.update_data(payload='at_start')
             await message.answer(welcome)
-            await send_verification(message, state)
-            logging.info(f'New user: {message.from_user.mention} {message.from_user.full_name} [{message.from_id}]')
+            await send_verification(message, state, db)
+            logging.info(f'New user: {message.from_user.username} {message.from_user.full_name} [{message.from_user.id}]')
         else:
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard())
 

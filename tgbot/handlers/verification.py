@@ -1,6 +1,7 @@
+import json
 import logging
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, ContentType, ReplyKeyboardRemove
 from aiogram.utils.i18n import gettext as _
@@ -30,7 +31,7 @@ async def unlink_account(call: CallbackQuery, callback_data: Action, state: FSMC
 
     logging.info(f'[{call.from_user.id}]: Unlinked account')
     await call.answer(_(messages.account_unlinked))
-    await show_verification(call, callback_data, state)
+    await show_verification(call, callback_data, state, db)
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.kai_logout))
@@ -45,31 +46,32 @@ async def kai_logout(call: CallbackQuery, callback_data: Action, state: FSMConte
     logging.info(f'[{call.from_user.id}]: KAI logout')
 
     await call.answer(_(messages.kai_logout))
-    await show_verification(call, callback_data, state)
+    await show_verification(call, callback_data, state, db)
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.start_kai_login))
 async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSMContext):
     await call.message.edit_text(
         _(messages.login_input),
-        reply_markup=inline_keyboards.get_cancel_keyboard(Navigation.To.verification, callback_data['payload'])
+        reply_markup=inline_keyboards.get_cancel_keyboard(Navigation.To.verification, callback_data.payload)
     )
     await call.answer()
 
-    await state.update_data(main_call=call.to_python(), payload=callback_data.payload)
+    await state.update_data(main_call=call.model_dump_json(), payload=callback_data.payload)
     await state.set_state(states.KAILogin.waiting_for_login)
 
     logging.info(f'[{call.from_user.id}]: Start KAI login')
 
 
 @router.message(states.KAILogin.waiting_for_login)
-async def get_user_login(message: Message, state: FSMContext):
+async def get_user_login(message: Message, state: FSMContext, bot: Bot):
     await message.delete()
     state_data = await state.get_data()
-    main_call = CallbackQuery(**state_data['main_call'])
-    state_data['login'] = message.text.strip()
+    main_call = CallbackQuery(**json.loads(state_data['main_call']))
+    await state.update_data(login=message.text.strip())
     payload = state_data['payload']
 
+    main_call.message.as_(bot)
     await main_call.message.edit_text(
         _(messages.password_input),
         reply_markup=inline_keyboards.get_cancel_keyboard(Navigation.To.verification, payload)
@@ -78,13 +80,14 @@ async def get_user_login(message: Message, state: FSMContext):
 
 
 @router.message(states.KAILogin.waiting_for_password)
-async def get_user_password(message: Message, state: FSMContext, db: async_sessionmaker):
+async def get_user_password(message: Message, state: FSMContext, db: async_sessionmaker, bot: Bot):
     await message.delete()
     password = message.text.strip()
     state_data = await state.get_data()
     login = state_data['login']
-    main_call = CallbackQuery(**state_data['main_call'])
+    main_call = CallbackQuery(**json.loads(state_data['main_call']))
 
+    main_call.message.as_(bot)
     await main_call.message.edit_text(_(messages.authorization_process))
 
     keyboard = inline_keyboards.get_back_keyboard(Navigation.To.verification, payload=state_data['payload'])

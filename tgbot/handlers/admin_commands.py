@@ -3,13 +3,13 @@ import os
 from pathlib import Path
 
 from aiogram import Router
+from aiogram.exceptions import AiogramError
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
 from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from aiogram.utils.exceptions import ChatNotFound
 
 from tgbot.config import Config
 from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
@@ -95,10 +95,10 @@ async def send_users(message: Message, db: async_sessionmaker):
     for user in all_users:
         try:
             tg_user = await message.bot.get_chat(user.telegram_id)
-        except ChatNotFound:
+        except AiogramError:
             pass
         else:
-            user_tag = tg_user.mention if tg_user.mention else tg_user.full_name
+            user_tag = tg_user.username if tg_user.username else tg_user.full_name
             formatted_users.append(f'{md.hcode(tg_user.id):_<28} {user_tag}')
 
     await message.answer('\n'.join(formatted_users))

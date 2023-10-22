@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
@@ -17,7 +17,7 @@ router = Router()
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.group_choose))
-async def show_group_choose(call: CallbackQuery, callback_data: Navigation, state: FSMContext,
+async def show_group_choose(call: CallbackQuery, callback_data: Navigation, state: FSMContext, bot: Bot,
                             db: async_sessionmaker):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
@@ -29,11 +29,13 @@ async def show_group_choose(call: CallbackQuery, callback_data: Navigation, stat
     else:
         text = _(messages.group_choose).format(group_name=group_name)
 
+    call.message.as_(bot)
     message = await call.message.edit_text(text, reply_markup=keyboard)
 
     await state.update_data(call=call.model_dump_json(), main_message=message.model_dump_json(), payload=callback_data.payload)
     await state.set_state(states.GroupChoose.waiting_for_group)
 
+    call.as_(bot)
     await call.answer()
 
 

@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional
 from aiogram import Bot
 from aiogram.types import TelegramObject, User
 from aiogram.utils.i18n import I18nMiddleware, I18n
-from iso_language_codes import language_dictionary
+from iso_language_codes import language_autonym
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -47,26 +47,28 @@ class CacheAndDatabaseI18nMiddleware(I18nMiddleware):
         if db_user.language in self.i18n.available_locales:
             await redis.set(name=redis_key, value=db_user.language, ex=self.locale_cache_time)
             return db_user.language
+
+        if event_from_user.language_code and event_from_user.language_code in self.i18n.available_locales:
+            new_locale = event_from_user.language_code
         else:
-
             new_locale = self.i18n.default_locale
-            await self.set_locale(event_from_user.id, new_locale, redis, db)
 
-            iso_languages = language_dictionary()
-            bot: Bot = data.get('bot')
-            try:
-                text = self.i18n.gettext(
-                    messages.language_not_available, locale=new_locale
-                ).format(language=iso_languages[new_locale]['Autonym'])
-                await bot.send_message(
-                    chat_id=event_from_user.id,
-                    text=text,
-                    reply_markup=reply_keyboards.get_main_keyboard()
-                )
-            except Exception as e:
-                logging.error(f'[{event_from_user.id}] Error during sending language error message: {e}')
+        await self.set_locale(event_from_user.id, new_locale, redis, db)
 
-            return self.i18n.default_locale
+        bot: Bot = data.get('bot')
+        try:
+            text = self.i18n.gettext(
+                messages.language_not_available, locale=new_locale
+            ).format(language=language_autonym(new_locale))
+            await bot.send_message(
+                chat_id=event_from_user.id,
+                text=text,
+                reply_markup=reply_keyboards.get_main_keyboard()
+            )
+        except Exception as e:
+            logging.error(f'[{event_from_user.id}] Error during sending language error message: {e}')
+
+        return new_locale
 
     async def set_locale(self, user_id: int, locale: str, redis: Redis, db: async_sessionmaker) -> None:
         self.i18n.current_locale = locale
@@ -88,3 +90,5 @@ class CacheAndDatabaseI18nMiddleware(I18nMiddleware):
 
         if db_user.language in self.i18n.available_locales:
             return db_user.language
+
+        return self.i18n.default_locale

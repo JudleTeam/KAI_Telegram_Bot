@@ -1,10 +1,6 @@
-import datetime
-from typing import Sequence
-
-from iso_language_codes import language_dictionary
-from sqlalchemy import Column, Integer, Boolean, String, text, Text, Date, ForeignKey, BigInteger
+from sqlalchemy import Column, Text, Date, ForeignKey, BigInteger
 from sqlalchemy.future import select
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
 
