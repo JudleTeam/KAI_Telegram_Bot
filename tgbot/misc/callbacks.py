@@ -74,7 +74,7 @@ class Schedule(CallbackData, prefix='schedule'):
         show_week = 'show_week'
 
     action: Action
-    payload: Any = None
+    date: str  # Date in ISO format or "today"/"tomorrow"/"after_tomorrow"
 
 
 class FullSchedule(CallbackData, prefix='full_schedule'):

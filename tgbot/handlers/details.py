@@ -69,7 +69,7 @@ async def check_access(call, tg_user):
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.day_details))
 async def show_day_details(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
-    date = datetime.date.fromisoformat(callback_data.payload)
+    date = datetime.date.fromisoformat(callback_data.date)
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
 
@@ -87,7 +87,7 @@ async def show_day_details(call: CallbackQuery, callback_data: Schedule, db: asy
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.week_details))
 async def show_week_details(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
-    week_first_date = datetime.datetime.fromisoformat(callback_data.payload)
+    week_first_date = datetime.datetime.fromisoformat(callback_data.date)
     week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
 
     all_lessons = list()

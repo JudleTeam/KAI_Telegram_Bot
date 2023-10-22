@@ -107,14 +107,16 @@ async def show_schedule_menu(call: CallbackQuery, state: FSMContext, db: async_s
 
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.show_day))
-async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
+async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, state: FSMContext, db: async_sessionmaker):
+    await state.clear()
+
     async with db() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-    match callback_data.payload:
+    match callback_data.date:
         case 'today':
             today = datetime.datetime.now()
         case 'tomorrow':
@@ -122,7 +124,7 @@ async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, db: as
         case 'after_tomorrow':
             today = datetime.datetime.now() + datetime.timedelta(days=2)
         case _:
-            today = datetime.datetime.fromisoformat(callback_data.payload)
+            today = datetime.datetime.fromisoformat(callback_data.date)
 
     int_parity = 2 if not int(today.strftime('%V')) % 2 else 1
     parity = f'{_(messages.even_week) if int_parity == 2 else _(messages.odd_week)}'
@@ -138,14 +140,16 @@ async def show_day_schedule(call: CallbackQuery, callback_data: Schedule, db: as
 
 
 @router.callback_query(Schedule.filter(F.action == Schedule.Action.show_week))
-async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, db: async_sessionmaker):
+async def show_week_schedule(call: CallbackQuery, callback_data: Schedule, state: FSMContext, db: async_sessionmaker):
+    await state.clear()
+
     async with db.begin() as session:
         user = await session.get(User, call.from_user.id)
         if not user.group_id:
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-    week_first_date = datetime.datetime.fromisoformat(callback_data.payload)
+    week_first_date = datetime.datetime.fromisoformat(callback_data.date)
     week_first_date -= datetime.timedelta(days=week_first_date.weekday() % 7)
 
     all_lessons = ''

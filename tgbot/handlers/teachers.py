@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _
@@ -34,7 +35,8 @@ def form_teachers_str(teachers: dict):
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.teachers))
-async def show_teachers(call: CallbackQuery, db: async_sessionmaker):
+async def show_teachers(call: CallbackQuery, state: FSMContext, db: async_sessionmaker):
+    await state.clear()
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 

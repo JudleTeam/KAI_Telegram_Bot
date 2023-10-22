@@ -67,7 +67,7 @@ def get_group_choose_keyboard(user: User, back_to: Navigation.To, payload: str):
             native_group_btn_text = f'●{native_group_btn_text}●'
         builder_1.button(
             text=native_group_btn_text,
-            callback_data=GroupCallback(action=GroupCallback.Action.select, id=user.kai_user.group_id), payload=payload
+            callback_data=GroupCallback(action=GroupCallback.Action.select, id=user.kai_user.group_id, payload=payload)
         )
 
     builder_1.adjust(1)
@@ -76,10 +76,10 @@ def get_group_choose_keyboard(user: User, back_to: Navigation.To, payload: str):
     for group in user.favorite_groups:
         if native_group_name == group.group_name:
             continue
-        btn_text = f'● {group.group_name} ●' if user.group == group else group.group_name
+        btn_text = f'● {group.group_name} ●' if user.group == group else str(group.group_name)
         builder_2.button(
             text=btn_text,
-            callback_data=GroupCallback(action=GroupCallback.Action.select, id=group.group_id), payload=payload
+            callback_data=GroupCallback(action=GroupCallback.Action.select, id=group.group_id, payload=payload)
         )
 
     builder_2.adjust(3)
@@ -87,7 +87,7 @@ def get_group_choose_keyboard(user: User, back_to: Navigation.To, payload: str):
     builder_3 = InlineKeyboardBuilder()
 
     match payload:
-        case '': builder_3.button(text=_(buttons.back), callback_data=Navigation(to=back_to, payload='back_gc'))
+        case None: builder_3.button(text=_(buttons.back), callback_data=Navigation(to=back_to, payload='back_gc'))
         case 'main_schedule':
             builder_3.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.schedule_menu))
         case 'at_start':
@@ -97,11 +97,11 @@ def get_group_choose_keyboard(user: User, back_to: Navigation.To, payload: str):
         case _ if 'day_schedule' in payload:
             payload = payload.split(';')[-1]
             builder_3.button(text=_(buttons.back),
-                             callback_data=Schedule(action=Schedule.Action.show_day, payload=payload))
+                             callback_data=Schedule(action=Schedule.Action.show_day, date=payload))
         case _ if 'week_schedule' in payload:
             payload = payload.split(';')[-1]
             builder_3.button(text=_(buttons.back),
-                             callback_data=Schedule(action=Schedule.Action.show_week, payload=payload))
+                             callback_data=Schedule(action=Schedule.Action.show_week, date=payload))
         case _ if 'full_schedule' in payload:
             parity = int(payload.split(';')[-1])
             builder_3.button(text=_(buttons.back), callback_data=FullSchedule(parity=parity))
@@ -130,7 +130,7 @@ def get_start_keyboard():
     builder = InlineKeyboardBuilder()
 
     builder.button(text=_(buttons.choose_language),
-                   callback_data=Navigation(to=Navigation.To.language_choose), payload='start')
+                   callback_data=Navigation(to=Navigation.To.language_choose, payload='start'))
 
     return builder.as_markup()
 
@@ -140,15 +140,15 @@ def get_main_schedule_keyboard(group_name):
 
     builder = InlineKeyboardBuilder()
 
-    builder.button(text=_(buttons.today), callback_data=Schedule(action=Schedule.Action.show_day, payload='today'))
+    builder.button(text=_(buttons.today), callback_data=Schedule(action=Schedule.Action.show_day, date='today'))
 
     builder.button(text=_(buttons.tomorrow),
-                   callback_data=Schedule(action=Schedule.Action.show_day, payload='tomorrow'))
+                   callback_data=Schedule(action=Schedule.Action.show_day, date='tomorrow'))
     builder.button(text=_(buttons.day_after_tomorrow),
-                   callback_data=Schedule(action=Schedule.Action.show_day, payload='after_tomorrow'))
+                   callback_data=Schedule(action=Schedule.Action.show_day, date='after_tomorrow'))
 
     builder.button(text=_(buttons.week_schedule),
-                   callback_data=Schedule(action=Schedule.Action.show_week, payload=today_iso))
+                   callback_data=Schedule(action=Schedule.Action.show_week, date=today_iso))
     builder.button(text=_(buttons.full_schedule), callback_data=FullSchedule(parity=0))
 
     builder.button(text=_(buttons.group).format(group_name=group_name),
@@ -196,27 +196,27 @@ def get_schedule_day_keyboard(today: datetime.date, group_name):
 
     builder = InlineKeyboardBuilder()
 
-    builder.button(text=_(buttons.today), callback_data=Schedule(action=Schedule.Action.show_day, payload='today'))
+    builder.button(text=_(buttons.today), callback_data=Schedule(action=Schedule.Action.show_day, date='today'))
 
     builder.button(
         text=_(buttons.prev_week),
-        callback_data=Schedule(action=Schedule.Action.show_day, payload=(today - timedelta(days=7)).isoformat())
+        callback_data=Schedule(action=Schedule.Action.show_day, date=(today - timedelta(days=7)).isoformat())
     )
     builder.button(
         text=_(buttons.prev_day),
-        callback_data=Schedule(action=Schedule.Action.show_day, payload=(today - timedelta(days=1)).isoformat())
+        callback_data=Schedule(action=Schedule.Action.show_day, date=(today - timedelta(days=1)).isoformat())
     )
     builder.button(
         text=_(buttons.next_day),
-        callback_data=Schedule(action=Schedule.Action.show_day, payload=(today + timedelta(days=1)).isoformat())
+        callback_data=Schedule(action=Schedule.Action.show_day, date=(today + timedelta(days=1)).isoformat())
     )
     builder.button(
         text=_(buttons.next_week),
-        callback_data=Schedule(action=Schedule.Action.show_day, payload=(today + timedelta(days=7)).isoformat())
+        callback_data=Schedule(action=Schedule.Action.show_day, date=(today + timedelta(days=7)).isoformat())
     )
 
     builder.button(text=_(buttons.details),
-                   callback_data=Schedule(action=Schedule.Action.day_details, payload=today.isoformat()))
+                   callback_data=Schedule(action=Schedule.Action.day_details, date=today.isoformat()))
     builder.button(
         text=_(buttons.group).format(group_name=group_name),
         callback_data=Navigation(to=Navigation.To.group_choose, payload=f'day_schedule;{today.isoformat()}')
@@ -237,7 +237,7 @@ def get_day_details_keyboard(lessons: list[GroupLesson], date: datetime.date, ed
             btn_text = f'{lesson.start_time.strftime("%H:%M")} | {lesson.discipline.name}'
             builder_1.button(
                 text=btn_text,
-                callback_data=Details(action=Details.Action.show, lesson_id=lesson.id, date=date.isoformat(), payload='day_details')
+                callback_data=Details(action=Details.Action.show, lesson_id=lesson.id, date=date.isoformat(), payload=Schedule.Action.day_details)
             )
 
     builder_1.adjust(1)
@@ -250,16 +250,16 @@ def get_day_details_keyboard(lessons: list[GroupLesson], date: datetime.date, ed
     builder_2 = InlineKeyboardBuilder()
 
     builder_2.button(text=_(buttons.prev_week),
-                     callback_data=Schedule(action=Schedule.Action.day_details, payload=prev_week.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.day_details, date=prev_week.isoformat()))
     builder_2.button(text=_(buttons.prev_day),
-                     callback_data=Schedule(action=Schedule.Action.day_details, payload=prev_day.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.day_details, date=prev_day.isoformat()))
     builder_2.button(text=_(buttons.next_day),
-                     callback_data=Schedule(action=Schedule.Action.day_details, payload=next_day.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.day_details, date=next_day.isoformat()))
     builder_2.button(text=_(buttons.next_week),
-                     callback_data=Schedule(action=Schedule.Action.day_details, payload=next_week.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.day_details, date=next_week.isoformat()))
 
     builder_2.button(text=_(buttons.schedule),
-                     callback_data=Schedule(action=Schedule.Action.show_day, payload=date.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.show_day, date=date.isoformat()))
     builder_2.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.schedule_menu))
 
     builder_2.adjust(4, 1)
@@ -275,7 +275,7 @@ def get_week_details_keyboard(lessons: list[GroupLesson], dates: list[datetime.d
             btn_text = f'{_(calendar.day_name[date.weekday()])[:2]} | {lesson.start_time.strftime("%H:%M")}'
             builder_1.button(
                 text=btn_text,
-                callback_data=Details(action=Details.Action.show, lesson_id=lesson.id, date=date.isoformat(), payload='week_details')
+                callback_data=Details(action=Details.Action.show, lesson_id=lesson.id, date=date.isoformat(), payload=Schedule.Action.week_details)
             )
 
     builder_1.adjust(3)
@@ -290,13 +290,13 @@ def get_week_details_keyboard(lessons: list[GroupLesson], dates: list[datetime.d
     prev_week = date - datetime.timedelta(weeks=1)
 
     builder_2.button(text=_(buttons.prev_week),
-                     callback_data=Schedule(action=Schedule.Action.week_details, payload=prev_week.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.week_details, date=prev_week.isoformat()))
     builder_2.button(text=_(buttons.next_week),
-                     callback_data=Schedule(action=Schedule.Action.week_details, payload=next_week.isoformat()))
+                     callback_data=Schedule(action=Schedule.Action.week_details, date=next_week.isoformat()))
 
     builder_2.button(
         text=_(buttons.schedule),
-        callback_data=Schedule(action=Schedule.Action.show_week, payload=date.isoformat())
+        callback_data=Schedule(action=Schedule.Action.show_week, date=date.isoformat())
     )
 
     builder_2.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.schedule_menu))
@@ -306,7 +306,7 @@ def get_week_details_keyboard(lessons: list[GroupLesson], dates: list[datetime.d
     return builder_1.attach(builder_2).as_markup()
 
 
-def get_homework_keyboard(lesson_id: int, date: datetime.date, homework: Homework | None, payload: str):
+def get_homework_keyboard(lesson_id: int, date: datetime.date, homework: Homework | None, payload: Schedule.Action):
     if isinstance(date, datetime.datetime):
         date = date.date()
 
@@ -329,8 +329,7 @@ def get_homework_keyboard(lesson_id: int, date: datetime.date, homework: Homewor
             callback_data=Details(action=Details.Action.delete, lesson_id=lesson_id, date=iso_date, payload=payload)
         )
 
-    # What in action? It was action=payload, payload=date with schedule callback. May be show week or show day
-    builder.button(text=_(buttons.back), callback_data=Schedule(action=Schedule.Action.show_week, payload=iso_date))
+    builder.button(text=_(buttons.back), callback_data=Schedule(action=payload, date=iso_date))
 
     builder.adjust(1)
 
@@ -354,10 +353,10 @@ def get_week_schedule_keyboard(today: datetime.date, group_name):
     else:
         builder.button(text=_(buttons.even_week), callback_data='pass')
 
-    builder.button(text=_(buttons.prev_week), callback_data=Schedule(action=Schedule.Action.show_week, payload=prev_week))
-    builder.button(text=_(buttons.next_week), callback_data=Schedule(action=Schedule.Action.show_week, payload=next_week))
+    builder.button(text=_(buttons.prev_week), callback_data=Schedule(action=Schedule.Action.show_week, date=prev_week))
+    builder.button(text=_(buttons.next_week), callback_data=Schedule(action=Schedule.Action.show_week, date=next_week))
 
-    builder.button(text=_(buttons.details), callback_data=Schedule(action=Schedule.Action.week_details, payload=today_iso))
+    builder.button(text=_(buttons.details), callback_data=Schedule(action=Schedule.Action.week_details, date=today_iso))
     builder.button(
         text=_(buttons.group).format(group_name=group_name),
         callback_data=Navigation(to=Navigation.To.group_choose, payload=f'week_schedule;{today_iso}')
@@ -393,18 +392,18 @@ def get_verification_keyboard(user: User, payload):
     
     if not (user.has_role(roles.authorized)):
         builder.button(text=_(buttons.kai_login),
-                       callback_data=Action(name=Action.Name.start_kai_login), payload=payload)
+                       callback_data=Action(name=Action.Name.start_kai_login, payload=payload))
     else:
         pass  # May be logout button
     
     if is_verified:
         builder.button(text=_(buttons.unlink_account),
-                       callback_data=Action(name=Action.Name.unlink_account), payload=payload)
+                       callback_data=Action(name=Action.Name.unlink_account, payload=payload))
         
     if payload == 'at_start':
-        builder.button(text=_(buttons.next_), callback_data=Navigation(to=Navigation.To.group_choose), payload=payload)
+        builder.button(text=_(buttons.next_), callback_data=Navigation(to=Navigation.To.group_choose, payload=payload))
     else:
-        builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.profile), payload=payload)
+        builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.profile, payload=payload))
     
     return builder.as_markup()
 

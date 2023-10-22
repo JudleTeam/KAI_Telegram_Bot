@@ -26,7 +26,7 @@ async def show_group_choose(call: CallbackQuery, callback_data: Navigation, stat
     keyboard = inline_keyboards.get_group_choose_keyboard(user, Navigation.To.profile, callback_data.payload)
     message = await call.message.edit_text(_(messages.group_choose).format(group_name=group_name), reply_markup=keyboard)
 
-    await state.update_data(call=call.to_python(), main_message=message.to_python(), payload=callback_data.payload)
+    await state.update_data(call=call.model_dump_json(), main_message=message.model_dump_json(), payload=callback_data.payload)
     await state.set_state(states.GroupChoose.waiting_for_group)
 
     await call.answer()

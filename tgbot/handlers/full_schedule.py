@@ -1,5 +1,6 @@
 from aiogram import Router
 from aiogram.exceptions import AiogramError
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _
@@ -63,7 +64,8 @@ def form_full_schedule_day(lessons: list[GroupLesson], week_day: int, show_teach
 
 
 @router.callback_query(FullSchedule.filter())
-async def show_full_schedule(call: CallbackQuery, callback_data: FullSchedule, db: async_sessionmaker):
+async def show_full_schedule(call: CallbackQuery, callback_data: FullSchedule, state: FSMContext, db: async_sessionmaker):
+    await state.clear()
     async with db() as session:
         tg_user = await session.get(User, call.from_user.id)
         if not tg_user.group_id:

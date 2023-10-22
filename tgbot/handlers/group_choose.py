@@ -1,3 +1,4 @@
+import json
 import logging
 
 from aiogram import Router, F
@@ -24,7 +25,7 @@ async def add_to_favorites(call: CallbackQuery, callback_data: GroupCallback, st
 
     logging.info(f'[{call.from_user.id}]: Add group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_added))
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, db)
 
 
 @router.callback_query(GroupCallback.filter(F.action == GroupCallback.Action.remove))
@@ -36,7 +37,7 @@ async def remove_from_favorites(call: CallbackQuery, callback_data: GroupCallbac
 
     logging.info(f'[{call.from_user.id}]: Remove group {user.group.group_name} from favorites')
     await call.answer(_(messages.group_removed))
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, db)
 
 
 @router.callback_query(GroupCallback.filter(F.action == GroupCallback.Action.select))
@@ -53,7 +54,7 @@ async def select_group(call: CallbackQuery, callback_data: GroupCallback, state:
 
     logging.info(f'[{call.from_user.id}]: Changed group to {user.group.group_name} with favorite groups')
     await call.answer(_(messages.group_changed))
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=callback_data.payload), state, db)
 
 
 @router.message(states.GroupChoose.waiting_for_group)
@@ -62,8 +63,8 @@ async def get_group_name(message: Message, state: FSMContext, db: async_sessionm
 
     await message.delete()
     state_data = await state.get_data()
-    main_mess = Message(**state_data['main_message'])
-    call = CallbackQuery(**state_data['call'])
+    main_mess = Message(**json.loads(state_data['main_message']))
+    call = CallbackQuery(**json.loads(state_data['call']))
 
     async with db.begin() as session:
         group = await Group.get_group_by_name(session, group_name)
@@ -81,4 +82,4 @@ async def get_group_name(message: Message, state: FSMContext, db: async_sessionm
         user.group_id = group.group_id
 
     logging.info(f'[{message.from_user.id}]: Changed group to {group_name} with input')
-    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=state_data['payload']), state)
+    await show_group_choose(call, Navigation(to=Navigation.To.group_choose, payload=state_data['payload']), state, db)
