@@ -15,7 +15,6 @@ from tgbot.misc.texts import messages
 class UserCheckerMiddleware(BaseMiddleware):
     async def __call__(self, handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]], event: TelegramObject,
                        data: Dict[str, Any]) -> Any:
-        print(1)
         if isinstance(event, CallbackQuery):
             if 'start' in event.data:
                 return
