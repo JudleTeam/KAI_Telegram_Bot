@@ -22,7 +22,7 @@ user_unregistered = _('It looks like you aren\'t registered in the bot. Type "/s
 user_blocked = _('You are blocked in the bot! If this is an error, contact the administrator')
 
 language_not_available = _('The language you are using is no longer available. '
-                           'Contact the administrator or change the language')
+                           'Your language is set to "{language}" it can be changed in the settings')
 language_choose = _('Please select your language')
 
 schedule_menu = _(

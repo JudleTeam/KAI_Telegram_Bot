@@ -7,9 +7,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
 from aiogram.utils.i18n import gettext as _
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.keyboards import inline_keyboards
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc import states
 from tgbot.misc.callbacks import Schedule, Details, Cancel
 from tgbot.misc.texts import messages, templates, rights, roles
@@ -159,7 +161,8 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details
 
 
 @router.message(states.Homework.waiting_for_homework)
-async def get_homework(message: Message, state: FSMContext, db: async_sessionmaker, dispatcher: Dispatcher, bot: Bot):
+async def get_homework(message: Message, state: FSMContext, db: async_sessionmaker, bot: Bot, redis: Redis,
+                       i18n_middleware: CacheAndDatabaseI18nMiddleware):
     homework_description = message.text
     state_data = await state.get_data()
     lesson_id = int(state_data['lesson_id'])
@@ -196,7 +199,9 @@ async def get_homework(message: Message, state: FSMContext, db: async_sessionmak
                 'homework': homework.description
             },
             bot=bot,
-            dispatcher=dispatcher
+            db=db,
+            redis=redis,
+            i18n=i18n_middleware
         )
 
 

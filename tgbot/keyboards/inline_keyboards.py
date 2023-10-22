@@ -251,9 +251,9 @@ def get_day_details_keyboard(lessons: list[GroupLesson], date: datetime.date, ed
 
     builder_2.button(text=_(buttons.prev_week),
                      callback_data=Schedule(action=Schedule.Action.day_details, payload=prev_week.isoformat()))
-    builder_2.button(text=_(buttons.prev_week),
-                     callback_data=Schedule(action=Schedule.Action.day_details, payload=prev_day.isoformat()))
     builder_2.button(text=_(buttons.prev_day),
+                     callback_data=Schedule(action=Schedule.Action.day_details, payload=prev_day.isoformat()))
+    builder_2.button(text=_(buttons.next_day),
                      callback_data=Schedule(action=Schedule.Action.day_details, payload=next_day.isoformat()))
     builder_2.button(text=_(buttons.next_week),
                      callback_data=Schedule(action=Schedule.Action.day_details, payload=next_week.isoformat()))
@@ -275,7 +275,7 @@ def get_week_details_keyboard(lessons: list[GroupLesson], dates: list[datetime.d
             btn_text = f'{_(calendar.day_name[date.weekday()])[:2]} | {lesson.start_time.strftime("%H:%M")}'
             builder_1.button(
                 text=btn_text,
-                callback_data=Details(action=Details.Action.show, lesson_id=lesson.id, date=date, payload='week_details')
+                callback_data=Details(action=Details.Action.show, lesson_id=lesson.id, date=date.isoformat(), payload='week_details')
             )
 
     builder_1.adjust(3)
@@ -355,7 +355,7 @@ def get_week_schedule_keyboard(today: datetime.date, group_name):
         builder.button(text=_(buttons.even_week), callback_data='pass')
 
     builder.button(text=_(buttons.prev_week), callback_data=Schedule(action=Schedule.Action.show_week, payload=prev_week))
-    builder.button(_(buttons.next_week), callback_data=Schedule(action=Schedule.Action.show_week, payload=next_week))
+    builder.button(text=_(buttons.next_week), callback_data=Schedule(action=Schedule.Action.show_week, payload=next_week))
 
     builder.button(text=_(buttons.details), callback_data=Schedule(action=Schedule.Action.week_details, payload=today_iso))
     builder.button(

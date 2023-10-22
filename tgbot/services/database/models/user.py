@@ -29,6 +29,7 @@ class User(Base):
     __tablename__ = 'telegram_user'
 
     telegram_id = Column(BigInteger, primary_key=True, unique=True, autoincrement=False)
+    language = Column(String(2), nullable=False)
     group_id = Column(BigInteger, ForeignKey('group.group_id', name='fk_user_group'), nullable=True)
     created_at = Column(DateTime(), nullable=False, server_default=text('NOW()'))
     is_blocked_bot = Column(Boolean, nullable=False, server_default=text('false'))

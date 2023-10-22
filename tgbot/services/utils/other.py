@@ -7,8 +7,10 @@ from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError
 from aiogram.utils.i18n import gettext
 from phonenumbers import NumberParseException
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.services.database.models import User
 
 
@@ -65,18 +67,13 @@ async def send_message(bot: Bot, chat_id: int, text: str, **kwargs) -> bool:
     return False
 
 
-async def get_user_locale(dp: Dispatcher, bot: Bot, user_id: int):
-    state = dp.fsm.get_context(bot, chat_id=user_id, user_id=user_id)
-    state_data = await state.get_data()
-
-    return state_data.get('locale')
-
-
 async def broadcast_text(
         chats: Sequence[int],
         text: str,
-        dispatcher: Dispatcher,
+        i18n: CacheAndDatabaseI18nMiddleware,
         bot: Bot,
+        redis: Redis,
+        db: async_sessionmaker,
         format_kwargs: dict = None,
         timeout: float = 0.05,
         **kwargs):
@@ -85,7 +82,7 @@ async def broadcast_text(
 
     total = len(chats)
     for num, chat_id in enumerate(chats, start=1):
-        user_locale = await get_user_locale(dispatcher, bot, chat_id)
+        user_locale = await i18n.get_user_locale(chat_id, redis, db)
         text_to_send = gettext(text, locale=user_locale).format(**format_kwargs)
         result = await send_message(bot, chat_id, text_to_send, **kwargs)
 

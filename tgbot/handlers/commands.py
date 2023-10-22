@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.config import Config
 from tgbot.keyboards import inline_keyboards, reply_keyboards
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User, Role
 
@@ -20,7 +21,8 @@ from tgbot.services.database.models import User, Role
 router = Router()
 
 @router.message(CommandStart())
-async def command_start(message: Message, db: async_sessionmaker, redis: Redis, config: Config):
+async def command_start(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
+                        i18n: CacheAndDatabaseI18nMiddleware):
     # TODO: update work with deep link
     # args = message.get_args()
     # try:
@@ -41,7 +43,8 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
         user = await session.get(User, message.from_user.id)
         if not user:
             roles_dict = await Role.get_roles_dict(db)
-            user = User(telegram_id=message.from_user.id, source='', roles=[roles_dict[roles.student]])
+            locale = await i18n.get_user_locale(message.from_user.id, redis, db)
+            user = User(telegram_id=message.from_user.id, source='', roles=[roles_dict[roles.student]], language=locale)
             session.add(user)
 
             await redis.set(name=f'{message.from_user.id}:exists', value='1')

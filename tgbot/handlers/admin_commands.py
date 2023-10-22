@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from aiogram import Router, Dispatcher, Bot
+from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
 from aiogram.utils import markdown as md
@@ -11,17 +11,17 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.config import Config
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
 from tgbot.services.utils import get_user_description
-from tgbot.services.utils.other import get_user_locale
 
 router = Router()
 
 
 async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str,
-                                       db: async_sessionmaker, redis: Redis, config: Config, dispatcher: Dispatcher,
-                                       bot: Bot):
+                                       db: async_sessionmaker, redis: Redis, config: Config,
+                                       i18n: CacheAndDatabaseI18nMiddleware):
     args = message.text.split()
     if len(args) != 2:
         await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
@@ -54,7 +54,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
     else:
         await message.answer(_(messages.user_has_been_unblocked).format(user_id=md.hcode(user_id_to_update)))
 
-    user_locale = await get_user_locale(dispatcher, bot, user_id_to_update)
+    user_locale = await i18n.get_user_locale(user_id_to_update, redis, db)
     await message.bot.send_message(
         chat_id=user_to_update.telegram_id,
         text=_(blocked_msg, locale=user_locale) if is_blocked else _(unblocked_msg, locale=user_locale),
@@ -63,27 +63,25 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
 @router.message(Command('pardon', 'unban', 'unblock'))
 async def pardon_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
-                      dispatcher: Dispatcher, bot: Bot):
+                      i18n_middleware: CacheAndDatabaseI18nMiddleware):
     await update_user_block_and_notify(
         message,
         is_blocked=False,
         blocked_msg=messages.admin_unblock,
         unblocked_msg=messages.user_has_been_unblocked,
-        dispatcher=dispatcher, bot=bot,
-        db=db, redis=redis, config=config
+        i18n=i18n_middleware, db=db, redis=redis, config=config
     )
 
 
 @router.message(Command('ban', 'block'))
 async def block_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
-                     dispatcher: Dispatcher, bot: Bot):
+                     i18n_middleware: CacheAndDatabaseI18nMiddleware):
     await update_user_block_and_notify(
         message,
         is_blocked=True,
         blocked_msg=messages.admin_block,
         unblocked_msg=messages.user_has_been_blocked,
-        dispatcher=dispatcher, bot=bot,
-        db=db, redis=redis, config=config
+        i18n=i18n_middleware, db=db, redis=redis, config=config
     )
 
 

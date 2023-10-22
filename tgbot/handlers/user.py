@@ -3,11 +3,14 @@ import logging
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
-from aiogram.utils.i18n import gettext as _, I18n, FSMI18nMiddleware
+from aiogram.utils.i18n import gettext as _, I18n
 from iso_language_codes import language_dictionary
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.handlers.profile import show_verification
 from tgbot.keyboards import inline_keyboards, reply_keyboards
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc.callbacks import Language as LangCallback, Navigation
 from tgbot.misc.texts import messages
 
@@ -27,9 +30,9 @@ async def show_language_choose(call: CallbackQuery, callback_data: Navigation, i
 
 
 @router.callback_query(LangCallback.filter())
-async def choose_language(call: CallbackQuery, callback_data: LangCallback, state: FSMContext,
-                          i18n_middleware: FSMI18nMiddleware):
-    await i18n_middleware.set_locale(state, callback_data.code)
+async def choose_language(call: CallbackQuery, callback_data: LangCallback, state: FSMContext, redis: Redis,
+                          i18n_middleware: CacheAndDatabaseI18nMiddleware, db: async_sessionmaker):
+    await i18n_middleware.set_locale(call.from_user.id, callback_data.code, redis, db)
     logging.info(f'[{call.from_user.id}]: Changed language to {callback_data.code}')
 
     await call.answer(_(messages.language_changed))

@@ -14,6 +14,7 @@ from tgbot.config import load_config, Config
 from tgbot import handlers
 from tgbot import filters
 from tgbot import middlewares
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.services.database.models import Role
 from tgbot.services.database.models.right import Right
 from tgbot.services.kai_parser import KaiParser
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def register_all_middlewares(dp: Dispatcher, config: Config):
     i18n = I18n(path=config.i18n.locales_dir, default_locale='en', domain=config.i18n.domain)
-    middleware = FSMI18nMiddleware(i18n)
+    middleware = CacheAndDatabaseI18nMiddleware(i18n)
     dp.update.middleware(middleware)
 
 
