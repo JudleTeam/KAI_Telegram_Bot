@@ -1,11 +1,10 @@
 import calendar
 
-from aiogram.utils.i18n import gettext as _
-
 import datetime
 from datetime import timedelta
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.i18n import gettext as _
 
 from tgbot.misc.callbacks import (
     Navigation, Language as LangCallback, Action, Cancel, Schedule, Details, Settings, Group as GroupCallback,

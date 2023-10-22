@@ -20,9 +20,8 @@ from tgbot.services.utils import get_user_description
 router = Router()
 
 
-async def update_user_block_and_notify(message: Message, is_blocked: bool, blocked_msg: str, unblocked_msg: str,
-                                       db: async_sessionmaker, redis: Redis, config: Config,
-                                       i18n: CacheAndDatabaseI18nMiddleware):
+async def update_user_block_and_notify(message: Message, is_blocked: bool, db: async_sessionmaker, redis: Redis,
+                                       config: Config, i18n: CacheAndDatabaseI18nMiddleware):
     args = message.text.split()
     if len(args) != 2:
         await message.answer(_(messages.ban_unban_bad_format).format(command=args[0]))
@@ -51,27 +50,22 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, block
 
     logging.info(f'Admin {message.from_user.id} {args[0][1:]} user {user_to_update.telegram_id}')
 
+    user_locale = await i18n.get_user_locale(user_id_to_update, redis, db)
     if is_blocked:
         await message.answer(_(messages.user_has_been_blocked).format(user_id=md.hcode(user_id_to_update)))
+        to_user = _(messages.admin_block, locale=user_locale)
     else:
         await message.answer(_(messages.user_has_been_unblocked).format(user_id=md.hcode(user_id_to_update)))
+        to_user = _(messages.admin_unblock, locale=user_locale)
 
-    user_locale = await i18n.get_user_locale(user_id_to_update, redis, db)
-    await message.bot.send_message(
-        chat_id=user_to_update.telegram_id,
-        text=_(blocked_msg, locale=user_locale) if is_blocked else _(unblocked_msg, locale=user_locale),
-    )
+    await message.bot.send_message(chat_id=user_to_update.telegram_id, text=to_user)
 
 
 @router.message(Command('pardon', 'unban', 'unblock'))
 async def pardon_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
                       i18n_middleware: CacheAndDatabaseI18nMiddleware):
     await update_user_block_and_notify(
-        message,
-        is_blocked=False,
-        blocked_msg=messages.admin_unblock,
-        unblocked_msg=messages.user_has_been_unblocked,
-        i18n=i18n_middleware, db=db, redis=redis, config=config
+        message, is_blocked=False, i18n=i18n_middleware, db=db, redis=redis, config=config
     )
 
 
@@ -79,11 +73,7 @@ async def pardon_user(message: Message, db: async_sessionmaker, redis: Redis, co
 async def block_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
                      i18n_middleware: CacheAndDatabaseI18nMiddleware):
     await update_user_block_and_notify(
-        message,
-        is_blocked=True,
-        blocked_msg=messages.admin_block,
-        unblocked_msg=messages.user_has_been_blocked,
-        i18n=i18n_middleware, db=db, redis=redis, config=config
+        message, is_blocked=True, i18n=i18n_middleware, db=db, redis=redis, config=config
     )
 
 
