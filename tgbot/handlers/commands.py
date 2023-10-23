@@ -1,15 +1,15 @@
 import logging
 
 from aiogram import Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.utils.i18n import gettext as _
+from aiogram.utils.payload import decode_payload
 from iso_language_codes import language_autonym
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from tgbot.config import Config
 from tgbot.handlers.profile import send_verification
 from tgbot.keyboards import reply_keyboards
 from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
@@ -20,15 +20,16 @@ from tgbot.services.database.models import User, Role
 
 router = Router()
 
+@router.message(CommandStart(deep_link_encoded=True))
 @router.message(CommandStart())
-async def command_start(message: Message, db: async_sessionmaker, redis: Redis, config: Config, state: FSMContext,
+async def command_start(message: Message, db: async_sessionmaker, redis: Redis, command: CommandObject, state: FSMContext,
                         i18n_middleware: CacheAndDatabaseI18nMiddleware):
-    # TODO: update work with deep link
-    # args = message.get_args()
-    # try:
-    #     payload = decode_payload(args)
-    # except UnicodeDecodeError:
-    #     payload = None
+    payload = None
+    if command.args:
+        try:
+            payload = decode_payload(command.args)
+        except UnicodeDecodeError:
+            pass
 
     async with db.begin() as session:
         user = await session.get(User, message.from_user.id)
@@ -42,7 +43,8 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
                 welcome = messages.language_not_found
                 locale = i18n_middleware.i18n.default_locale
 
-            user = User(telegram_id=message.from_user.id, source='', roles=[roles_dict[roles.student]], language=locale)
+            user = User(telegram_id=message.from_user.id, source=payload, roles=[roles_dict[roles.student]],
+                        language=locale)
             session.add(user)
             await session.commit()
 
@@ -51,7 +53,9 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
             await state.update_data(payload='at_start')
             await message.answer(welcome)
             await send_verification(message, state, db)
-            logging.info(f'New user: {message.from_user.username} {message.from_user.full_name} [{message.from_user.id}]')
+            logging.info(
+                f'New user: {message.from_user.username} {message.from_user.full_name} [{message.from_user.id}] | Payload - {payload}'
+            )
         else:
             await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard())
 

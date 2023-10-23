@@ -139,7 +139,7 @@ async def send_user_info(message: Message, db: async_sessionmaker):
             return
 
     tg_user = await message.bot.get_chat(user_to_show_id)
-    text = get_user_description(_, tg_user, user_to_show, for_admin=True)
+    text = get_user_description(tg_user, user_to_show, for_admin=True)
 
     await message.answer(text)
 

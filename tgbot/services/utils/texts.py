@@ -17,7 +17,7 @@ def get_user_description(tg_user: aUser, db_user: dUser, for_admin=False):
             is_blocked=db_user.is_blocked,
             telegram_id=md.hcode(tg_user.id),
             tg_full_name=md.hcode(tg_user.full_name),
-            tg_mention=md.hcode(tg_user.mention),
+            tg_mention=md.hcode(tg_user.username),
             telegram_phone=md.hcode(db_user.phone)
         )
     else:
