@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-10-20 12:54+0300\n"
+"POT-Creation-Date: 2023-10-23 15:36+0300\n"
 "PO-Revision-Date: 2023-02-18 16:19+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.12.1\n"
 
 #: tgbot/misc/texts/buttons.py:4
 msgid "Back"
@@ -284,8 +284,8 @@ msgstr ""
 
 #: tgbot/misc/texts/messages.py:24
 msgid ""
-"The language you are using is no longer available. Contact the "
-"administrator or change the language"
+"The language you are using is no longer available. Your language is set "
+"to \"{language}\" it can be changed in the settings"
 msgstr ""
 
 #: tgbot/misc/texts/messages.py:26
@@ -1022,5 +1022,11 @@ msgstr ""
 #~ "It can be changed after registration "
 #~ "in the settings, which are available "
 #~ "in the profile section"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The language you are using is no"
+#~ " longer available. Contact the "
+#~ "administrator or change the language"
 #~ msgstr ""
 
