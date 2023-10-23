@@ -6,7 +6,7 @@ import datetime
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
-from aiogram.utils.i18n import I18n, FSMI18nMiddleware
+from aiogram.utils.i18n import I18n
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -65,7 +65,7 @@ async def main():
     )
     async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-    redis = Redis()
+    redis = Redis(db=config.redis.db)
     storage = RedisStorage(redis=redis) if config.bot.use_redis else MemoryStorage()
     bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(storage=storage)
