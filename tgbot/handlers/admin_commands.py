@@ -12,6 +12,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.config import Config
+from tgbot.filters import AdminFilter
 from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc.texts import messages
 from tgbot.services.database.models import User
@@ -61,7 +62,7 @@ async def update_user_block_and_notify(message: Message, is_blocked: bool, db: a
     await message.bot.send_message(chat_id=user_to_update.telegram_id, text=to_user)
 
 
-@router.message(Command('pardon', 'unban', 'unblock'))
+@router.message(Command('pardon', 'unban', 'unblock'), AdminFilter())
 async def pardon_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
                       i18n_middleware: CacheAndDatabaseI18nMiddleware):
     await update_user_block_and_notify(
@@ -69,7 +70,7 @@ async def pardon_user(message: Message, db: async_sessionmaker, redis: Redis, co
     )
 
 
-@router.message(Command('ban', 'block'))
+@router.message(Command('ban', 'block'), AdminFilter())
 async def block_user(message: Message, db: async_sessionmaker, redis: Redis, config: Config,
                      i18n_middleware: CacheAndDatabaseI18nMiddleware):
     await update_user_block_and_notify(
@@ -77,7 +78,7 @@ async def block_user(message: Message, db: async_sessionmaker, redis: Redis, con
     )
 
 
-@router.message(Command('users', 'block'))
+@router.message(Command('users'), AdminFilter())
 async def send_users(message: Message, db: async_sessionmaker):
     all_users = await User.get_all(db)
 
@@ -95,7 +96,7 @@ async def send_users(message: Message, db: async_sessionmaker):
     logging.info(f'Admin {message.from_user.id} used "/users"')
 
 
-@router.message(Command('set_prefix'))
+@router.message(Command('set_prefix'), AdminFilter())
 async def set_prefix(message: Message, db: async_sessionmaker):
     args = message.text.split()
     if len(args) not in (2, 3) or not args[1].isdigit() or (len(args) == 3 and len(args[2]) > 32):
@@ -115,12 +116,12 @@ async def set_prefix(message: Message, db: async_sessionmaker):
     await message.answer(_(messages.prefix_set).format(user_id=md.hcode(user_id), prefix=prefix))
 
 
-@router.message(Command('last_log'))
+@router.message(Command('last_log'), AdminFilter())
 async def send_last_log(message: Message, log_file):
     await message.answer_document(FSInputFile(Path(os.getcwd()).joinpath(log_file)))
 
 
-@router.message(Command('user_info'))
+@router.message(Command('user_info'), AdminFilter())
 async def send_user_info(message: Message, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2:
@@ -144,7 +145,7 @@ async def send_user_info(message: Message, db: async_sessionmaker):
     await message.answer(text)
 
 
-@router.message(Command('send_message'))
+@router.message(Command('send_message'), AdminFilter())
 async def send_message(message: Message, db: async_sessionmaker):
     args = message.text.split()
     if len(args) != 2 or not message.reply_to_message:
