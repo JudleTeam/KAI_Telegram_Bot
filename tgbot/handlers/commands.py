@@ -31,6 +31,15 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
         except UnicodeDecodeError:
             pass
 
+    await message.answer(
+        '‼️ Этот бот для БЕТА и ЭКСПЕРЕМЕНТАЛЬНЫХ версий КАИ бота! ‼️\n\n'
+        'Он нужен для тестирования нового или экспериментального функционала и получения обратной связи. '
+        'В этом боте может быть гораздо больше ошибок и проблем!\n'
+        'Если вас это не интересует, лучше использовать основного бота - @kai_pup_bot\n\n'
+        'Если нашли какую-то проблему или у вас есть отличное предложение, пишите - @printeromg\n\n'
+        '‼️ Этот бот для БЕТА и ЭКСПЕРЕМЕНТАЛЬНЫХ версий КАИ бота! ‼️'
+    )
+
     async with db.begin() as session:
         user = await session.get(User, message.from_user.id)
         if not user:
