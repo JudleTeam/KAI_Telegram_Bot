@@ -47,6 +47,12 @@ lesson_details = _(
     '{homework}'
 )
 
+teacher_schedule = _(
+    'Teacher\'s schedule "{name}"\n'
+    'Department: "{departament}\n\n'
+    '{schedule}'
+)
+
 no_document = _('This document is not available on the website...')
 
 homework = _('📖 Homework:\n{homework}')
