@@ -117,7 +117,16 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
         else:
             use_emoji = True
 
-        teachers = await Teacher.search_by_name(session, inline_query.query, similarity=0.2, limit=limit, offset=offset)
+        match len(inline_query.query.split()):
+            case 1:
+                similarity = 0.2
+            case 2:
+                similarity = 0.4
+            case _:
+                similarity = 0.6
+
+        teachers = await Teacher.search_by_name(session, inline_query.query.replace('ё', 'е'),
+                                                similarity=similarity, limit=limit, offset=offset)
 
         result = list()
         for teacher in teachers:
