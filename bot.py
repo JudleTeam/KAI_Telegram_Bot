@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.utils.i18n import I18n
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -19,8 +20,7 @@ from tgbot.middlewares.user_checker import UserCheckerMiddleware
 from tgbot.services.database.models import Role
 from tgbot.services.database.models.right import Right
 from tgbot.services.kai_parser import KaiParser
-from tgbot.services.kai_parser.utils import parse_groups, parse_all_groups_schedule
-from tgbot.services.schedulers import start_schedulers
+from tgbot.services.kai_parser.utils import parse_all_groups, parse_all_groups_schedule
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,30 @@ def register_all_middlewares(dp: Dispatcher, config: Config):
 def register_all_filters(dp):
     for aiogram_filter in filters.filters:
         dp.filters_factory.bind(aiogram_filter)
+
+def start_jobs(db):
+    scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+
+    scheduler.add_job(
+        func=parse_all_groups_schedule,
+        trigger='cron',
+        hour=3,
+        kwargs={
+            'db': db
+        }
+    )
+
+    scheduler.add_job(
+        func=parse_all_groups,
+        trigger='cron',
+        hour=2,
+        minute=30,
+        kwargs={
+            'db': db
+        }
+    )
+
+    scheduler.start()
 
 
 async def main():
@@ -73,13 +97,10 @@ async def main():
     register_all_middlewares(dp, config)
     dp.include_routers(*handlers.routers)
 
-    # await Right.insert_default_rights(async_session)
-    # await Role.insert_default_roles(async_session)
+    await Right.insert_default_rights(async_session)
+    await Role.insert_default_roles(async_session)
 
-    # await parse_all_groups_schedule(async_session)
-    # await parse_groups(await KaiParser.get_group_ids(), async_session)
-
-    asyncio.create_task(start_schedulers(bot, async_session))
+    start_jobs(async_session)
 
     await dp.start_polling(
         bot,

@@ -16,12 +16,12 @@ iso-language-codes = "^1.1.0"
 sqlalchemy = {version = "^2.0.21", extras = ["asyncio"]}
 phonenumbers = "^8.13.21"
 bs4 = "^0.0.1"
-aioschedule = "^0.5.2"
 pydantic = "<2.4"
 alembic = "^1.12.0"
 lxml = "^4.9.3"
 ujson = "^5.8.0"
 uvloop = "^0.19.0"
+apscheduler = "^3.10.4"
 
 
 [tool.poetry.group.dev.dependencies]
