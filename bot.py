@@ -4,9 +4,9 @@ import os
 import datetime
 
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.utils.i18n import I18n
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -14,23 +14,19 @@ from tgbot.config import load_config, Config
 from tgbot import handlers
 from tgbot import filters
 from tgbot import middlewares
-from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
-from tgbot.middlewares.user_checker import UserCheckerMiddleware
 from tgbot.services.database.models import Role
 from tgbot.services.database.models.right import Right
-from tgbot.services.kai_parser import KaiParser
-from tgbot.services.kai_parser.utils import parse_groups, parse_all_groups_schedule
-from tgbot.services.schedulers import start_schedulers
+from tgbot.services.kai_parser.utils import parse_all_groups, parse_all_groups_schedule
 
 logger = logging.getLogger(__name__)
 
 
 def register_all_middlewares(dp: Dispatcher, config: Config):
     i18n = I18n(path=config.i18n.locales_dir, default_locale='en', domain=config.i18n.domain)
-    middleware = CacheAndDatabaseI18nMiddleware(i18n)
+    middleware = middlewares.CacheAndDatabaseI18nMiddleware(i18n)
     dp.update.middleware(middleware)
 
-    user_checker = UserCheckerMiddleware()
+    user_checker = middlewares.UserCheckerMiddleware()
     dp.callback_query.middleware(user_checker)
     dp.message.middleware(user_checker)
 
@@ -38,6 +34,30 @@ def register_all_middlewares(dp: Dispatcher, config: Config):
 def register_all_filters(dp):
     for aiogram_filter in filters.filters:
         dp.filters_factory.bind(aiogram_filter)
+
+def start_jobs(db):
+    scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+
+    scheduler.add_job(
+        func=parse_all_groups_schedule,
+        trigger='cron',
+        hour=3,
+        kwargs={
+            'db': db
+        }
+    )
+
+    scheduler.add_job(
+        func=parse_all_groups,
+        trigger='cron',
+        hour=2,
+        minute=30,
+        kwargs={
+            'db': db
+        }
+    )
+
+    scheduler.start()
 
 
 async def main():
@@ -58,28 +78,21 @@ async def main():
         handlers=log_handlers
     )
 
-    engine = create_async_engine(
-        f'postgresql+asyncpg://{config.database.user}:{config.database.password}@'
-        f'{config.database.host}:{config.database.port}/{config.database.database}',
-        future=True
-    )
+    engine = create_async_engine(config.database.url, future=True)
     async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
     redis = Redis(db=config.redis.db)
-    storage = RedisStorage(redis=redis) if config.bot.use_redis else MemoryStorage()
+    storage = RedisStorage(redis=redis)
     bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(storage=storage)
 
     register_all_middlewares(dp, config)
     dp.include_routers(*handlers.routers)
 
-    # await Right.insert_default_rights(async_session)
-    # await Role.insert_default_roles(async_session)
+    await Right.insert_default_rights(async_session)
+    await Role.insert_default_roles(async_session)
 
-    # await parse_all_groups_schedule(async_session)
-    # await parse_groups(await KaiParser.get_group_ids(), async_session)
-
-    asyncio.create_task(start_schedulers(bot, async_session))
+    start_jobs(async_session)
 
     await dp.start_polling(
         bot,
