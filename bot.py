@@ -4,7 +4,6 @@ import os
 import datetime
 
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.utils.i18n import I18n
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -15,11 +14,8 @@ from tgbot.config import load_config, Config
 from tgbot import handlers
 from tgbot import filters
 from tgbot import middlewares
-from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
-from tgbot.middlewares.user_checker import UserCheckerMiddleware
 from tgbot.services.database.models import Role
 from tgbot.services.database.models.right import Right
-from tgbot.services.kai_parser import KaiParser
 from tgbot.services.kai_parser.utils import parse_all_groups, parse_all_groups_schedule
 
 logger = logging.getLogger(__name__)
@@ -27,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 def register_all_middlewares(dp: Dispatcher, config: Config):
     i18n = I18n(path=config.i18n.locales_dir, default_locale='en', domain=config.i18n.domain)
-    middleware = CacheAndDatabaseI18nMiddleware(i18n)
+    middleware = middlewares.CacheAndDatabaseI18nMiddleware(i18n)
     dp.update.middleware(middleware)
 
-    user_checker = UserCheckerMiddleware()
+    user_checker = middlewares.UserCheckerMiddleware()
     dp.callback_query.middleware(user_checker)
     dp.message.middleware(user_checker)
 
@@ -82,15 +78,11 @@ async def main():
         handlers=log_handlers
     )
 
-    engine = create_async_engine(
-        f'postgresql+asyncpg://{config.database.user}:{config.database.password}@'
-        f'{config.database.host}:{config.database.port}/{config.database.database}',
-        future=True
-    )
+    engine = create_async_engine(config.database.url, future=True)
     async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
     redis = Redis(db=config.redis.db)
-    storage = RedisStorage(redis=redis) if config.bot.use_redis else MemoryStorage()
+    storage = RedisStorage(redis=redis)
     bot = Bot(token=config.bot.token, parse_mode='HTML')
     dp = Dispatcher(storage=storage)
 
