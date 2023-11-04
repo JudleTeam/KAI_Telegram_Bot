@@ -1,4 +1,5 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
+from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, URLInputFile
 from aiogram.utils import markdown as md
@@ -88,7 +89,7 @@ async def show_documents(call: CallbackQuery):
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.send_document))
-async def send_document(call: CallbackQuery, callback_data: Action, db: async_sessionmaker, redis: Redis):
+async def send_document(call: CallbackQuery, callback_data: Action, db: async_sessionmaker, redis: Redis, bot: Bot):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
@@ -110,8 +111,10 @@ async def send_document(call: CallbackQuery, callback_data: Action, db: async_se
         await call.answer(_(messages.no_document), show_alert=True)
         return
 
+    await bot.send_chat_action(chat_id=call.from_user.id, action=ChatAction.UPLOAD_DOCUMENT)
+
     file_id = await redis.get(file_url)
-    file = file_id.decode() if file_id else URLInputFile(file_url)
+    file = file_id.decode() if file_id else URLInputFile(file_url, filename=file_url.split('/')[-1])
 
     msg = await call.message.answer_document(file, caption=caption)
     await call.answer()

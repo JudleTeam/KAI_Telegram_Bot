@@ -468,9 +468,9 @@ def get_documents_keyboard():
     
     builder.button(text=_(buttons.educational_program),
                    callback_data=Action(name=Action.Name.send_document, payload='program'))
-    builder.button(text=_(buttons.educational_program),
+    builder.button(text=_(buttons.syllabus),
                    callback_data=Action(name=Action.Name.send_document, payload='syllabus'))
-    builder.button(text=_(buttons.educational_program),
+    builder.button(text=_(buttons.schedule),
                    callback_data=Action(name=Action.Name.send_document, payload='schedule'))
     builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.my_group))
     
