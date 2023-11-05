@@ -50,7 +50,9 @@ lesson_details = _(
 teacher_schedule = _(
     'Teacher\'s schedule "{name}"\n'
     'Department: "{departament}\n\n'
-    '{schedule}'
+    '{parity} week\n\n'
+    '{schedule}\n'
+    '{parity} week'
 )
 
 no_document = _('This document is not available on the website...')
