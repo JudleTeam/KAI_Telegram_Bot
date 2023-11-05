@@ -1,4 +1,7 @@
-from aiogram import Router, F
+import json
+
+from aiogram import Router, F, Bot
+from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, URLInputFile
 from aiogram.utils import markdown as md
@@ -53,22 +56,24 @@ async def start_group_pip_text_input(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(_(messages.pin_text_input), reply_markup=inline_keyboards.get_pin_text_keyboard())
 
     await state.set_state(states.GroupPinText.waiting_for_text)
-    await state.update_data(main_call=call.to_python())
+    await state.update_data(main_call=call.model_dump_json())
     await call.answer()
 
 
 @router.message(states.GroupPinText.waiting_for_text)
-async def get_group_pin_text(message: Message, state: FSMContext, db: async_sessionmaker):
+async def get_group_pin_text(message: Message, state: FSMContext, db: async_sessionmaker, bot: Bot):
     await message.delete()
     async with db.begin() as session:
         user = await session.get(User, message.from_user.id)
         user.kai_user.group.pinned_text = message.text
 
     state_data = await state.get_data()
-    call = CallbackQuery(**state_data['main_call'])
+    call = CallbackQuery(**json.loads(state_data['main_call']))
 
     await state.clear()
-    await show_my_group(call)
+    call.as_(bot)
+    call.message.as_(bot)
+    await show_my_group(call, db)
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.clear_pinned_text))
@@ -78,7 +83,7 @@ async def clear_pin_text(call: CallbackQuery, state: FSMContext, db: async_sessi
         user.kai_user.group.pinned_text = None
 
     await state.clear()
-    await show_my_group(call)
+    await show_my_group(call, db)
 
 
 @router.callback_query(Navigation.filter(F.to == Navigation.To.documents))
@@ -88,7 +93,7 @@ async def show_documents(call: CallbackQuery):
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.send_document))
-async def send_document(call: CallbackQuery, callback_data: Action, db: async_sessionmaker, redis: Redis):
+async def send_document(call: CallbackQuery, callback_data: Action, db: async_sessionmaker, redis: Redis, bot: Bot):
     async with db() as session:
         user = await session.get(User, call.from_user.id)
 
@@ -110,8 +115,10 @@ async def send_document(call: CallbackQuery, callback_data: Action, db: async_se
         await call.answer(_(messages.no_document), show_alert=True)
         return
 
+    await bot.send_chat_action(chat_id=call.from_user.id, action=ChatAction.UPLOAD_DOCUMENT)
+
     file_id = await redis.get(file_url)
-    file = file_id.decode() if file_id else URLInputFile(file_url)
+    file = file_id.decode() if file_id else URLInputFile(file_url, filename=file_url.split('/')[-1])
 
     msg = await call.message.answer_document(file, caption=caption)
     await call.answer()

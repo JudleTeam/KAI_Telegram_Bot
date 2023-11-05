@@ -1,3 +1,5 @@
+import datetime
+
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineQuery, InlineQueryResultArticle, InputTextMessageContent
@@ -7,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import tgbot.keyboards.inline_keyboards as inline
 from tgbot.misc.callbacks import Navigation
-from tgbot.misc.texts import messages, templates
+from tgbot.misc.texts import messages, templates, buttons
 from tgbot.services.database.models import User, Teacher, GroupLesson
 from tgbot.services.database.utils import get_group_teachers
 from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to_text
@@ -34,7 +36,7 @@ def form_teachers_str(teachers: dict):
     return teachers_str
 
 
-def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool):
+def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool, week_parity: int):
     convert_lesson_type = lesson_type_to_emoji if use_emoji else lesson_type_to_text
     result_str = ''
     for day in range(1, 6 + 1):
@@ -62,7 +64,7 @@ def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool):
             group_names = [str(x.group.group_name) for x in day_lessons if
                            x.parity_of_week == lesson.parity_of_week and x.start_time == lesson.start_time]
             printed_lessons.add(lesson_signature)
-            day_lessons_parts.append(templates.teacher_lesson.format(
+            lesson_str = templates.teacher_lesson.format(
                 start_time=lesson.start_time.strftime('%H:%M'),
                 end_time=lesson.end_time.strftime('%H:%M') if lesson.end_time else '??:??',
                 building=building_number,
@@ -71,7 +73,12 @@ def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool):
                 lesson_type=convert_lesson_type(lesson_type),
                 lesson_name=md.hbold(lesson.discipline.name),
                 group_names=', '.join(group_names)
-            ))
+            )
+
+            if lesson.int_parity_of_week == week_parity or lesson.int_parity_of_week == 0:
+                lesson_str = '→ ' + lesson_str
+
+            day_lessons_parts.append(lesson_str)
         day_lessons_str = '\n\n'.join(day_lessons_parts) if day_lessons_parts else _(messages.day_off)
         day_str = templates.schedule_day_template.format(
             day_of_week=_(messages.week_days[day - 1]),
@@ -128,6 +135,10 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
         teachers = await Teacher.search_by_name(session, inline_query.query.replace('ё', 'е'),
                                                 similarity=similarity, limit=limit, offset=offset)
 
+        int_week_parity = int(datetime.datetime.now().strftime("%V")) % 2
+        week_parity = _(buttons.odd_week) if int_week_parity else _(buttons.even_week)
+        int_week_parity = 1 if int_week_parity else 2
+
         result = list()
         for teacher in teachers:
             teacher_lessons: list[GroupLesson] = await GroupLesson.get_teacher_schedule(session, teacher.login)
@@ -140,7 +151,8 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
                         message_text=_(messages.teacher_schedule).format(
                             name=teacher.name,
                             departament=teacher.departament.name,
-                            schedule=form_teachers_lessons(teacher_lessons, use_emoji)
+                            schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity),
+                            parity=week_parity
                         )
                     ),
                     description=teacher.departament.name

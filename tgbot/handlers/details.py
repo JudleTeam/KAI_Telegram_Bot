@@ -1,8 +1,10 @@
 import datetime
+import json
 import logging
 
-from aiogram import Router, F, Dispatcher, Bot
+from aiogram import Router, F, Bot
 from aiogram.dispatcher.event.bases import CancelHandler
+from aiogram.exceptions import AiogramError
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils import markdown as md
@@ -16,7 +18,7 @@ from tgbot.misc import states
 from tgbot.misc.callbacks import Schedule, Details, Cancel
 from tgbot.misc.texts import messages, templates, rights, roles
 from tgbot.services.database.models import User, GroupLesson, Homework, KAIUser
-from tgbot.services.database.utils import get_lessons_with_homework
+from tgbot.services.database.utils import get_lessons_with_homework, get_telegram_ids_by_group
 from tgbot.services.kai_parser.utils import lesson_type_to_text, lesson_type_to_emoji
 from tgbot.services.utils.other import broadcast_text
 
@@ -117,7 +119,7 @@ async def show_week_details(call: CallbackQuery, callback_data: Schedule, db: as
 
 
 @router.callback_query(Details.filter(F.action == Details.Action.show))
-async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: async_sessionmaker):
+async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: async_sessionmaker, bot: Bot):
     date = datetime.date.fromisoformat(callback_data.date)
     async with db() as session:
         homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, date)
@@ -135,10 +137,12 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: asyn
     )
     keyboard = inline_keyboards.get_homework_keyboard(lesson.id, date, homework, callback_data.payload)
 
+    call.as_(bot)
+    call.message.as_(bot)
     await call.message.edit_text(text, reply_markup=keyboard)
     try:
         await call.answer()
-    except CallbackAnswerException:
+    except AiogramError:
         pass
 
 
@@ -146,13 +150,14 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: asyn
 @router.callback_query(Details.filter(F.action == Details.Action.edit))
 async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details, state: FSMContext,
                                      db: async_sessionmaker):
-    payload = f'{callback_data.lesson_id};{callback_data.date};{callback_data.payload}'
+    date = datetime.date.fromisoformat(callback_data.date)
+    payload = f'{callback_data.lesson_id};{date};{callback_data.payload}'
     keyboard = inline_keyboards.get_cancel_keyboard(to=Cancel.To.homework, payload=payload)
     if callback_data.action == Details.Action.add:
         text = _(messages.homework_input)
     else:
         async with db() as session:
-            homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, callback_data.date)
+            homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, date)
         if homework:
             text = _(messages.edit_homework).format(homework=md.hcode(homework.description))
         else:
@@ -160,7 +165,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details
             text = _(messages.homework_input)
 
     await call.message.edit_text(text, reply_markup=keyboard)
-    await state.update_data(main_call=call.to_python(), **callback_data.model_dump())
+    await state.update_data(main_call=call.model_dump_json(), **callback_data.model_dump())
     await state.set_state(states.Homework.waiting_for_homework)
     await call.answer()
 
@@ -172,7 +177,7 @@ async def get_homework(message: Message, state: FSMContext, db: async_sessionmak
     state_data = await state.get_data()
     lesson_id = int(state_data['lesson_id'])
     date = datetime.date.fromisoformat(state_data['date'])
-    main_call = CallbackQuery(**state_data['main_call'])
+    main_call = CallbackQuery(**json.loads(state_data['main_call']))
 
     async with db.begin() as session:
         homework = await Homework.get_by_lesson_and_date(session, lesson_id, date)
@@ -184,7 +189,7 @@ async def get_homework(message: Message, state: FSMContext, db: async_sessionmak
             is_added = True
             lesson = await session.get(GroupLesson, lesson_id)
             logging.info(f'[{message.from_user.id}] Added homework {date} {lesson.start_time} - {homework_description}')
-            chats_ids = await KAIUser.get_telegram_ids_by_group(session, lesson.group_id)
+            chats_ids = await get_telegram_ids_by_group(session, lesson.group_id, for_notification=True)
             homework = Homework(
                 description=homework_description,
                 date=date,
@@ -194,7 +199,8 @@ async def get_homework(message: Message, state: FSMContext, db: async_sessionmak
 
     await message.delete()
     await state.clear()
-    await show_lesson_menu(main_call, {'lesson_id': lesson_id, 'date': date.isoformat(), 'payload': state_data['payload']})
+    data = Details(action=Details.Action.show, lesson_id=lesson_id, date=date.isoformat(), payload=state_data['payload'])
+    await show_lesson_menu(main_call, data, db, bot)
 
     if is_added:
         await broadcast_text(
@@ -213,11 +219,12 @@ async def get_homework(message: Message, state: FSMContext, db: async_sessionmak
 
 
 @router.callback_query(Details.filter(F.action == Details.Action.delete))
-async def delete_homework(call: CallbackQuery, callback_data: Details, db: async_sessionmaker):
+async def delete_homework(call: CallbackQuery, callback_data: Details, db: async_sessionmaker, bot: Bot):
+    date = datetime.date.fromisoformat(callback_data.date)
     async with db.begin() as session:
-        homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, callback_data.date)
+        homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, date)
         if homework:
-            logging.info(f'[{call.from_user.id}] Deleted homework {callback_data.date} {homework.lesson.start_time}')
+            logging.info(f'[{call.from_user.id}] Deleted homework {date} {homework.lesson.start_time}')
             await session.delete(homework)
 
-    await show_lesson_menu(call, callback_data)
+    await show_lesson_menu(call, callback_data, db, bot)

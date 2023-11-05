@@ -36,6 +36,12 @@ def get_settings_keyboard(tg_user: User):
     teachers_btn_text = _(buttons.disable_teachers) if tg_user.show_teachers_in_schedule else _(buttons.enable_teachers)
     builder.button(text=teachers_btn_text, callback_data=Settings(action=Settings.Action.teachers))
 
+    if tg_user.send_homework_notifications:
+        notify_btn_text = _(buttons.disable_homework_notify)
+    else:
+        notify_btn_text = _(buttons.enable_homework_notify)
+    builder.button(text=notify_btn_text, callback_data=Settings(action=Settings.Action.homework_notifications))
+
     builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.profile, payload='settings'))
 
     builder.adjust(1)
@@ -373,7 +379,7 @@ def get_teachers_keyboard(group_name):
 
     builder.button(text=_(buttons.group).format(group_name=group_name),
                    callback_data=Navigation(to=Navigation.To.group_choose, payload='teachers'))
-    builder.button(text=_(buttons.back), callback_data=Navigation.To.education)
+    builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.education, payload='teachers'))
 
     builder.adjust(1)
 
@@ -468,9 +474,9 @@ def get_documents_keyboard():
     
     builder.button(text=_(buttons.educational_program),
                    callback_data=Action(name=Action.Name.send_document, payload='program'))
-    builder.button(text=_(buttons.educational_program),
+    builder.button(text=_(buttons.syllabus),
                    callback_data=Action(name=Action.Name.send_document, payload='syllabus'))
-    builder.button(text=_(buttons.educational_program),
+    builder.button(text=_(buttons.schedule),
                    callback_data=Action(name=Action.Name.send_document, payload='schedule'))
     builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.my_group))
     

@@ -50,8 +50,12 @@ lesson_details = _(
 teacher_schedule = _(
     'Teacher\'s schedule "{name}"\n'
     'Department: "{departament}\n\n'
-    '{schedule}'
+    '{parity} week\n\n'
+    '{schedule}\n'
+    '{parity} week'
 )
+
+empty_button = _('This is an information button - it doesn\'t do anything')
 
 no_document = _('This document is not available on the website...')
 
@@ -252,5 +256,6 @@ odd_week = _('Odd week')
 settings = _(
     'Settings\n\n'
     'Use emoji in schedule: {emoji_status}\n'
-    'Show teachers in schedule: {teachers_status}'
+    'Show teachers in schedule: {teachers_status}\n'
+    'Homework notifications: {homework_notify}'
 )

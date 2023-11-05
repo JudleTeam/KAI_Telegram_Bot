@@ -164,6 +164,6 @@ async def check_phone(call: CallbackQuery, callback_data: dict, state: FSMContex
 
     if is_verified:
         await call.answer(_(messages.phone_found), show_alert=True)
-        await show_verification(call, callback_data, state)
+        await show_verification(call, callback_data, state, db)
     else:
         await call.answer(_(messages.phone_not_found), show_alert=True)

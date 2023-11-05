@@ -84,6 +84,7 @@ class Settings(CallbackData, prefix='settings'):
     class Action(str, Enum):
         emoji = 'emoji'
         teachers = 'teachers'
+        homework_notifications = 'homework_notify'
 
     action: Action
 

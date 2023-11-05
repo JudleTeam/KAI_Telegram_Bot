@@ -4,7 +4,7 @@ from aiogram import Dispatcher, Bot
 from sqlalchemy import select, text, or_
 from sqlalchemy.orm import selectinload, joinedload
 
-from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Departament, Homework, User
+from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Departament, Homework, User, KAIUser
 
 
 async def get_group_teachers(session, group_id: int):
@@ -60,3 +60,22 @@ async def get_lessons_with_homework(session, group_id: int, date: datetime.date)
 
     records = await session.execute(stmt)
     return records.unique().scalars().all()
+
+
+async def get_telegram_ids_by_group(session, group_id: int, without_id: int | None = None, for_notification: bool = None):
+    stmt = (
+        select(KAIUser.telegram_user_id)
+        .join(User)
+        .where(
+            KAIUser.group_id == group_id,
+            KAIUser.telegram_user_id != without_id,
+            KAIUser.telegram_user_id != None
+        )
+    )
+
+    if for_notification is not None:
+        stmt = stmt.where(User.send_homework_notifications == for_notification)
+
+    records = await session.execute(stmt)
+
+    return records.scalars().all()

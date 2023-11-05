@@ -30,6 +30,9 @@ def register_all_middlewares(dp: Dispatcher, config: Config):
     dp.callback_query.middleware(user_checker)
     dp.message.middleware(user_checker)
 
+    bot_typing_middleware = middlewares.BotTypingMiddleware()
+    dp.message.middleware(bot_typing_middleware)
+
 
 def register_all_filters(dp):
     for aiogram_filter in filters.filters:
