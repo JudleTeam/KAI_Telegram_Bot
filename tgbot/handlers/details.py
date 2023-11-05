@@ -150,13 +150,14 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: asyn
 @router.callback_query(Details.filter(F.action == Details.Action.edit))
 async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details, state: FSMContext,
                                      db: async_sessionmaker):
-    payload = f'{callback_data.lesson_id};{callback_data.date};{callback_data.payload}'
+    date = datetime.date.fromisoformat(callback_data.date)
+    payload = f'{callback_data.lesson_id};{date};{callback_data.payload}'
     keyboard = inline_keyboards.get_cancel_keyboard(to=Cancel.To.homework, payload=payload)
     if callback_data.action == Details.Action.add:
         text = _(messages.homework_input)
     else:
         async with db() as session:
-            homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, callback_data.date)
+            homework = await Homework.get_by_lesson_and_date(session, callback_data.lesson_id, date)
         if homework:
             text = _(messages.edit_homework).format(homework=md.hcode(homework.description))
         else:

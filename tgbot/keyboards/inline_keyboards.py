@@ -379,7 +379,7 @@ def get_teachers_keyboard(group_name):
 
     builder.button(text=_(buttons.group).format(group_name=group_name),
                    callback_data=Navigation(to=Navigation.To.group_choose, payload='teachers'))
-    builder.button(text=_(buttons.back), callback_data=Navigation.To.education)
+    builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.education, payload='teachers'))
 
     builder.adjust(1)
 

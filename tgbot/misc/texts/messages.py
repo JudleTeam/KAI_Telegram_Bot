@@ -55,6 +55,8 @@ teacher_schedule = _(
     '{parity} week'
 )
 
+empty_button = _('This is an information button - it doesn\'t do anything')
+
 no_document = _('This document is not available on the website...')
 
 homework = _('📖 Homework:\n{homework}')
