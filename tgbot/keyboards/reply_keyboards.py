@@ -10,7 +10,7 @@ def get_main_keyboard():
 
     builder.button(text=reply_commands.schedule_symbol + _(reply_commands.schedule))
     builder.button(text=reply_commands.education_symbol + _(reply_commands.education))
-    builder.button(text=reply_commands.shop_symbol + _(reply_commands.shop))
+    # builder.button(text=reply_commands.shop_symbol + _(reply_commands.shop))
     builder.button(text=reply_commands.profile_symbol + _(reply_commands.profile))
     builder.button(text=reply_commands.help_symbol + _(reply_commands.help))
 
