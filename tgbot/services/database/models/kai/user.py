@@ -44,19 +44,6 @@ class KAIUser(Base):
 
         return records.scalars().all()
 
-    @classmethod
-    async def get_telegram_ids_by_group(cls, session, group_id: int, without_id: int | None = None):
-        records = await session.execute(
-            select(KAIUser.telegram_user_id)
-            .where(
-                KAIUser.group_id == group_id,
-                KAIUser.telegram_user_id != without_id,
-                KAIUser.telegram_user_id != None
-            )
-        )
-
-        return records.scalars().all()
-
     @property
     def is_logged_in(self) -> bool:
         return bool(self.kai_id)

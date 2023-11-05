@@ -100,7 +100,8 @@ async def show_settings(call: CallbackQuery, db: async_sessionmaker):
     await call.message.edit_text(
         _(messages.settings).format(
             emoji_status='✅' if tg_user.use_emoji else '❌',
-            teachers_status='✅' if tg_user.show_teachers_in_schedule else '❌'
+            teachers_status='✅' if tg_user.show_teachers_in_schedule else '❌',
+            homework_notify='✅' if tg_user.send_homework_notifications else '❌'
         ),
         reply_markup=inline_keyboards.get_settings_keyboard(tg_user)
     )

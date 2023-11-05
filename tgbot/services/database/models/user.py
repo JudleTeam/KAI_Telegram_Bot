@@ -39,6 +39,7 @@ class User(Base):
 
     use_emoji = Column(Boolean, nullable=False, server_default=text('true'))
     show_teachers_in_schedule = Column(Boolean, nullable=False, server_default=text('true'))
+    send_homework_notifications = Column(Boolean, nullable=False, server_default=text('true'))
 
     group = relationship('Group', lazy='selectin', foreign_keys=[group_id])
     favorite_groups = relationship('Group', lazy='selectin', secondary=favorite_group)

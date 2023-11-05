@@ -252,5 +252,6 @@ odd_week = _('Odd week')
 settings = _(
     'Settings\n\n'
     'Use emoji in schedule: {emoji_status}\n'
-    'Show teachers in schedule: {teachers_status}'
+    'Show teachers in schedule: {teachers_status}\n'
+    'Homework notifications: {homework_notify}'
 )

@@ -1,6 +1,6 @@
 import logging
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils.i18n import gettext as _
@@ -27,7 +27,7 @@ async def show_pass(call: CallbackQuery):
 
 
 @router.callback_query(Cancel.filter())
-async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext, db: async_sessionmaker):
+async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext, db: async_sessionmaker, bot: Bot):
     await state.clear()
     await call.answer()
 
@@ -40,4 +40,4 @@ async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext, 
         case Cancel.To.homework:
             lesson_id, date, payload = callback_data.payload.split(';')
             callback = Details(action=Details.Action.show, lesson_id=lesson_id, date=date, payload=payload)
-            await show_lesson_menu(call, callback, db)
+            await show_lesson_menu(call, callback, db, bot)

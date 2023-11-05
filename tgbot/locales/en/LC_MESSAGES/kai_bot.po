@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-10-24 19:18+0300\n"
+"POT-Creation-Date: 2023-11-05 20:29+0300\n"
 "PO-Revision-Date: 2023-02-18 16:19+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -98,131 +98,139 @@ msgstr ""
 msgid "Disable teachers"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:26
-msgid "Today"
+#: tgbot/misc/texts/buttons.py:25
+msgid "Disable homework notifications"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:27
-msgid "Tomorrow"
+#: tgbot/misc/texts/buttons.py:26
+msgid "Enable homework notifications"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:28
-msgid "Day after tomorrow"
+msgid "Today"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:29
-msgid "Week schedule"
+msgid "Tomorrow"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:30
-msgid "Full"
+msgid "Day after tomorrow"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:31
-msgid "Teachers"
+msgid "Week schedule"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:32
-msgid "Exams"
+msgid "Full"
+msgstr ""
+
+#: tgbot/misc/texts/buttons.py:33
+msgid "Teachers"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:34
-msgid "2️⃣ Even"
-msgstr ""
-
-#: tgbot/misc/texts/buttons.py:35
-msgid "1️⃣ Odd"
+msgid "Exams"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:36
-msgid "Any week"
+msgid "2️⃣ Even"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:37
-msgid "<<<"
+msgid "1️⃣ Odd"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:38
-msgid ">>>"
+msgid "Any week"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:39
-msgid "<"
+msgid "<<<"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:40
-msgid ">"
+msgid ">>>"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:41
-msgid "Details"
+msgid "<"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:42 tgbot/misc/texts/reply_commands.py:4
-msgid "Schedule"
+#: tgbot/misc/texts/buttons.py:42
+msgid ">"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:43
-msgid "Group №{group_name}"
+msgid "Details"
+msgstr ""
+
+#: tgbot/misc/texts/buttons.py:44 tgbot/misc/texts/reply_commands.py:4
+msgid "Schedule"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:45
-msgid "My group"
-msgstr ""
-
-#: tgbot/misc/texts/buttons.py:46
-msgid "Classmates"
+msgid "Group №{group_name}"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:47
-msgid "Edit pinned text"
+msgid "My group"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:48
-msgid "Homework"
+msgid "Classmates"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:49
-msgid "Edit"
+msgid "Edit pinned text"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:50
-msgid "Delete"
+msgid "Homework"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:51
-msgid "Add"
+msgid "Edit"
 msgstr ""
 
 #: tgbot/misc/texts/buttons.py:52
+msgid "Delete"
+msgstr ""
+
+#: tgbot/misc/texts/buttons.py:53
+msgid "Add"
+msgstr ""
+
+#: tgbot/misc/texts/buttons.py:54
 msgid "Clear"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:54 tgbot/misc/texts/messages.py:243
+#: tgbot/misc/texts/buttons.py:56 tgbot/misc/texts/messages.py:243
 msgid "Documents"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:55
+#: tgbot/misc/texts/buttons.py:57
 msgid "Syllabus"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:56
+#: tgbot/misc/texts/buttons.py:58
 msgid "Educational program"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:57
+#: tgbot/misc/texts/buttons.py:59
 msgid "Study schedule"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:59
+#: tgbot/misc/texts/buttons.py:61
 msgid "Contact us"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:60
+#: tgbot/misc/texts/buttons.py:62
 msgid "Support project"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:61
+#: tgbot/misc/texts/buttons.py:63
 msgid "Guide"
 msgstr ""
 
@@ -694,7 +702,8 @@ msgid ""
 "Settings\n"
 "\n"
 "Use emoji in schedule: {emoji_status}\n"
-"Show teachers in schedule: {teachers_status}"
+"Show teachers in schedule: {teachers_status}\n"
+"Homework notifications: {homework_notify}"
 msgstr ""
 
 #: tgbot/misc/texts/reply_commands.py:7
@@ -1036,5 +1045,12 @@ msgstr ""
 #~ "The language you are using is no"
 #~ " longer available. Contact the "
 #~ "administrator or change the language"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Settings\n"
+#~ "\n"
+#~ "Use emoji in schedule: {emoji_status}\n"
+#~ "Show teachers in schedule: {teachers_status}"
 #~ msgstr ""
 

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-10-24 19:18+0300\n"
-"PO-Revision-Date: 2023-10-24 19:20+0300\n"
+"POT-Creation-Date: 2023-11-05 20:29+0300\n"
+"PO-Revision-Date: 2023-11-05 20:41+0300\n"
 "Last-Translator: PrinterOMG <PrinterOMG@ya.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Language: tt\n"
@@ -100,131 +100,139 @@ msgstr "Укытучыларны кабызырга"
 msgid "Disable teachers"
 msgstr "Укытучыларны сүндерергә"
 
+#: tgbot/misc/texts/buttons.py:25
+msgid "Disable homework notifications"
+msgstr "Өй эше турында хәбәрнамәне өзәргә"
+
 #: tgbot/misc/texts/buttons.py:26
+msgid "Enable homework notifications"
+msgstr "Өй эше турында хәбәрнамәне кертергә"
+
+#: tgbot/misc/texts/buttons.py:28
 msgid "Today"
 msgstr "Бүген"
 
-#: tgbot/misc/texts/buttons.py:27
+#: tgbot/misc/texts/buttons.py:29
 msgid "Tomorrow"
 msgstr "Иртәгә"
 
-#: tgbot/misc/texts/buttons.py:28
+#: tgbot/misc/texts/buttons.py:30
 msgid "Day after tomorrow"
 msgstr "Берсекөнгә"
 
-#: tgbot/misc/texts/buttons.py:29
+#: tgbot/misc/texts/buttons.py:31
 msgid "Week schedule"
 msgstr "Бу атнага"
 
-#: tgbot/misc/texts/buttons.py:30
+#: tgbot/misc/texts/buttons.py:32
 msgid "Full"
 msgstr "Тулы"
 
-#: tgbot/misc/texts/buttons.py:31
+#: tgbot/misc/texts/buttons.py:33
 msgid "Teachers"
 msgstr "Укытучылар"
 
-#: tgbot/misc/texts/buttons.py:32
+#: tgbot/misc/texts/buttons.py:34
 msgid "Exams"
 msgstr "Имтиханнар"
 
-#: tgbot/misc/texts/buttons.py:34
+#: tgbot/misc/texts/buttons.py:36
 msgid "2️⃣ Even"
 msgstr "2️⃣ Чётная"
 
-#: tgbot/misc/texts/buttons.py:35
+#: tgbot/misc/texts/buttons.py:37
 msgid "1️⃣ Odd"
 msgstr "1️⃣ Нечётная"
 
-#: tgbot/misc/texts/buttons.py:36
+#: tgbot/misc/texts/buttons.py:38
 msgid "Any week"
 msgstr "Теләсә нинди атна"
 
-#: tgbot/misc/texts/buttons.py:37
+#: tgbot/misc/texts/buttons.py:39
 msgid "<<<"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:38
+#: tgbot/misc/texts/buttons.py:40
 msgid ">>>"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:39
+#: tgbot/misc/texts/buttons.py:41
 msgid "<"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:40
+#: tgbot/misc/texts/buttons.py:42
 msgid ">"
 msgstr ""
 
-#: tgbot/misc/texts/buttons.py:41
+#: tgbot/misc/texts/buttons.py:43
 msgid "Details"
 msgstr "Тулырак"
 
-#: tgbot/misc/texts/buttons.py:42 tgbot/misc/texts/reply_commands.py:4
+#: tgbot/misc/texts/buttons.py:44 tgbot/misc/texts/reply_commands.py:4
 msgid "Schedule"
 msgstr "Расписание бүлеге"
 
-#: tgbot/misc/texts/buttons.py:43
+#: tgbot/misc/texts/buttons.py:45
 msgid "Group №{group_name}"
 msgstr "Төркем №{group_name}"
 
-#: tgbot/misc/texts/buttons.py:45
+#: tgbot/misc/texts/buttons.py:47
 msgid "My group"
 msgstr "Минем төркем"
 
-#: tgbot/misc/texts/buttons.py:46
+#: tgbot/misc/texts/buttons.py:48
 msgid "Classmates"
 msgstr "Төркемдәшләр"
 
-#: tgbot/misc/texts/buttons.py:47
+#: tgbot/misc/texts/buttons.py:49
 msgid "Edit pinned text"
 msgstr "Беркетелгән хәбәрне үзгәртергә"
 
-#: tgbot/misc/texts/buttons.py:48
+#: tgbot/misc/texts/buttons.py:50
 msgid "Homework"
 msgstr "Өй эше"
 
-#: tgbot/misc/texts/buttons.py:49
+#: tgbot/misc/texts/buttons.py:51
 msgid "Edit"
 msgstr "Үзгәртергә"
 
-#: tgbot/misc/texts/buttons.py:50
+#: tgbot/misc/texts/buttons.py:52
 msgid "Delete"
 msgstr "Җибәрергә"
 
-#: tgbot/misc/texts/buttons.py:51
+#: tgbot/misc/texts/buttons.py:53
 msgid "Add"
 msgstr "Өстәп әйтү"
 
-#: tgbot/misc/texts/buttons.py:52
+#: tgbot/misc/texts/buttons.py:54
 msgid "Clear"
 msgstr "Чистартырга"
 
-#: tgbot/misc/texts/buttons.py:54 tgbot/misc/texts/messages.py:243
+#: tgbot/misc/texts/buttons.py:56 tgbot/misc/texts/messages.py:243
 msgid "Documents"
 msgstr "Документлар"
 
-#: tgbot/misc/texts/buttons.py:55
+#: tgbot/misc/texts/buttons.py:57
 msgid "Syllabus"
 msgstr "Уку планы"
 
-#: tgbot/misc/texts/buttons.py:56
+#: tgbot/misc/texts/buttons.py:58
 msgid "Educational program"
 msgstr "Мәгариф программасы"
 
-#: tgbot/misc/texts/buttons.py:57
+#: tgbot/misc/texts/buttons.py:59
 msgid "Study schedule"
 msgstr "Уку графигы"
 
-#: tgbot/misc/texts/buttons.py:59
+#: tgbot/misc/texts/buttons.py:61
 msgid "Contact us"
 msgstr "Безгә хат язарга"
 
-#: tgbot/misc/texts/buttons.py:60
+#: tgbot/misc/texts/buttons.py:62
 msgid "Support project"
 msgstr "Проектны хупларга"
 
-#: tgbot/misc/texts/buttons.py:61
+#: tgbot/misc/texts/buttons.py:63
 msgid "Guide"
 msgstr "Күрсәтмәләр"
 
@@ -806,12 +814,14 @@ msgid ""
 "Settings\n"
 "\n"
 "Use emoji in schedule: {emoji_status}\n"
-"Show teachers in schedule: {teachers_status}"
+"Show teachers in schedule: {teachers_status}\n"
+"Homework notifications: {homework_notify}"
 msgstr ""
-"Настройка\n"
+"Караклар\n"
 "\n"
 "Эмодзын расписаниедә кулланырга: {emoji_status}\n"
-"Укытучыларны расписаниедә күрсәтергә: {teachers_status}"
+"Укытучыларны расписаниедә күрсәтергә: {teachers_status}\n"
+"Өй эше турында хәбәрләр: {homework_notify}"
 
 #: tgbot/misc/texts/reply_commands.py:7
 msgid "Education"

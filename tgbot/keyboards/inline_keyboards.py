@@ -36,6 +36,12 @@ def get_settings_keyboard(tg_user: User):
     teachers_btn_text = _(buttons.disable_teachers) if tg_user.show_teachers_in_schedule else _(buttons.enable_teachers)
     builder.button(text=teachers_btn_text, callback_data=Settings(action=Settings.Action.teachers))
 
+    if tg_user.send_homework_notifications:
+        notify_btn_text = _(buttons.disable_homework_notify)
+    else:
+        notify_btn_text = _(buttons.enable_homework_notify)
+    builder.button(text=notify_btn_text, callback_data=Settings(action=Settings.Action.homework_notifications))
+
     builder.button(text=_(buttons.back), callback_data=Navigation(to=Navigation.To.profile, payload='settings'))
 
     builder.adjust(1)

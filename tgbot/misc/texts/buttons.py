@@ -22,6 +22,8 @@ enable_emoji = _('Enable emoji')
 disable_emoji = _('Disable emoji')
 enable_teachers = _('Enable teachers')
 disable_teachers = _('Disable teachers')
+disable_homework_notify = _('Disable homework notifications')
+enable_homework_notify = _('Enable homework notifications')
 
 today = _('Today')
 tomorrow = _('Tomorrow')
