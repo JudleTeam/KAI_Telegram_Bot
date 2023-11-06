@@ -1,9 +1,16 @@
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import Integer, Column, BigInteger, ForeignKey, String, Date, Boolean
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship
+from sqlalchemy_utils import StringEncryptedType
 
 from tgbot.services.database.base import Base
+
+load_dotenv()
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 
 class KAIUser(Base):
@@ -17,7 +24,7 @@ class KAIUser(Base):
     position = Column(Integer, nullable=True)
     prefix = Column(String(32), nullable=True)
     login = Column(String(64), unique=True, nullable=True)
-    password = Column(String(64), nullable=True)
+    password = Column(StringEncryptedType(key=SECRET_KEY), nullable=True)
     full_name = Column(String(255), nullable=False)
     phone = Column(String(32), nullable=True, unique=False)  # БЫВАЕТ ЧТО У ДВУХ ЛЮДЕЙ ОДИН И ТОТ ЖЕ НОМЕР!!!
     email = Column(String(64), nullable=False, unique=True)
