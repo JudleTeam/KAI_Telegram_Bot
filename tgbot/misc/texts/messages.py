@@ -67,6 +67,12 @@ new_homework = _(
     '{homework}'
 )
 
+credentials_hint = _(
+    '❗️To log into BRS, your username and password are needed\n\n'
+    '🔒 Rest assured, your data is immediately encrypted and removed from chat\n\n'
+    'For data deletion, contact support. Your safety is our priority 🤝'
+)
+
 lesson_homework_edit = _(
     'Date: {date}\n'
     'Discipline: {discipline}\n'
