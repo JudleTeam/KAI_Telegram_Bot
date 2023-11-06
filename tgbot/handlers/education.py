@@ -33,7 +33,6 @@ async def show_my_group(call: CallbackQuery, db: async_sessionmaker):
     else:
         inst_add = ' (ВШПИТ)' if group.group_name in (6110, 6111, 6210, 6310) else ''
         text = _(messages.my_group_menu).format(
-            year=md.hcode(str(group.group_name)[1]),
             faculty=md.hcode(faculty),
             institute=md.hcode(group.institute.name + inst_add),
             departament=md.hcode(group.departament.name),

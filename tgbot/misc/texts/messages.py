@@ -200,7 +200,7 @@ education_menu = _('Education menu')
 my_group_menu = _(
     'My group ({group_name})\n\n'
 
-    'Year: {year} | Faculty: {faculty}\n'
+    'Faculty: {faculty}\n'
     'Institute: {institute}\n'
     'Departament: {departament}\n'
     'Speciality: {speciality}\n'
