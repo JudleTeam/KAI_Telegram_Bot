@@ -55,7 +55,7 @@ async def start_kai_login(call: CallbackQuery, callback_data: Action, state: FSM
         _(messages.login_input),
         reply_markup=inline_keyboards.get_cancel_keyboard(Navigation.To.verification, callback_data.payload)
     )
-    await call.answer()
+    await call.answer(_(messages.credentials_hint), show_alert=True)
 
     await state.update_data(main_call=call.model_dump_json(), payload=callback_data.payload)
     await state.set_state(states.KAILogin.waiting_for_login)

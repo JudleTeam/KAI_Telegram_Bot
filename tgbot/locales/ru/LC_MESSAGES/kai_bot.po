@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-11-05 21:21+0300\n"
-"PO-Revision-Date: 2023-11-05 21:22+0300\n"
+"POT-Creation-Date: 2023-11-06 20:50+0300\n"
+"PO-Revision-Date: 2023-11-06 20:54+0300\n"
 "Last-Translator: PrinterOMG <PrinterOMG@ya.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Language: ru\n"
@@ -208,7 +208,7 @@ msgstr "Добавить"
 msgid "Clear"
 msgstr "Очистить"
 
-#: tgbot/misc/texts/buttons.py:56 tgbot/misc/texts/messages.py:247
+#: tgbot/misc/texts/buttons.py:56 tgbot/misc/texts/messages.py:253
 msgid "Documents"
 msgstr "Документы"
 
@@ -399,6 +399,20 @@ msgstr ""
 
 #: tgbot/misc/texts/messages.py:70
 msgid ""
+"❗️To log into BRS, your username and password are needed\n"
+"\n"
+"🔒 Rest assured, your data is immediately encrypted and removed from chat\n"
+"\n"
+"For data deletion, contact support. Your safety is our priority 🤝"
+msgstr ""
+"❗️Для входа в БРС необходимы ваш логин и пароль\n"
+"\n"
+"🔒 Это безопасно - ваши данные сразу шифруются и удаляются из чата\n"
+"\n"
+"Для удаления данных напишите в поддержку. Ваша безопасность – наш приоритет 🤝"
+
+#: tgbot/misc/texts/messages.py:76
+msgid ""
 "Date: {date}\n"
 "Discipline: {discipline}\n"
 "Parity: {parity}\n"
@@ -415,7 +429,7 @@ msgstr ""
 "Текущая домашняя работа:\n"
 "{homework}"
 
-#: tgbot/misc/texts/messages.py:79
+#: tgbot/misc/texts/messages.py:85
 msgid ""
 "Welcome to KAI Bot!\n"
 "\n"
@@ -428,11 +442,11 @@ msgstr ""
 "Для вас выбран язык \"{language}\", основываясь на ваших настройках Telegram\n"
 "Его можно будет изменить в разделе \"Профиль\" после регистрации"
 
-#: tgbot/misc/texts/messages.py:91
+#: tgbot/misc/texts/messages.py:97
 msgid "❕ This step can be skipped, just click \"Next\" button"
 msgstr "❕ Этот шаг можно пропустить, просто нажми кнопку \"Дальше\""
 
-#: tgbot/misc/texts/messages.py:95
+#: tgbot/misc/texts/messages.py:101
 msgid ""
 "Group \"{group_name}\" has been automatically selected for you.\n"
 "The group can be changed in the profile and from the schedule"
@@ -440,11 +454,11 @@ msgstr ""
 "Для вас автоматически была выбрана группа \"{group_name}\"\n"
 "Группу можно поменять в профиле и из расписания"
 
-#: tgbot/misc/texts/messages.py:100
+#: tgbot/misc/texts/messages.py:106
 msgid "Enter homework text"
 msgstr "Отправьте текст для домашней работы"
 
-#: tgbot/misc/texts/messages.py:101
+#: tgbot/misc/texts/messages.py:107
 msgid ""
 "Current homework:\n"
 "{homework}\n"
@@ -456,19 +470,19 @@ msgstr ""
 "\n"
 "Отправьте текст новой домашней работы"
 
-#: tgbot/misc/texts/messages.py:105
+#: tgbot/misc/texts/messages.py:111
 msgid "To see details you need to be verified!"
 msgstr "Для доступа нужно верифицировать аккаунт!"
 
-#: tgbot/misc/texts/messages.py:106
+#: tgbot/misc/texts/messages.py:112
 msgid "You can see details only for your group!"
 msgstr "Смотреть подробности можно только у своей группы!"
 
-#: tgbot/misc/texts/messages.py:108
+#: tgbot/misc/texts/messages.py:114
 msgid "Day off"
 msgstr "Выходной"
 
-#: tgbot/misc/texts/messages.py:110
+#: tgbot/misc/texts/messages.py:116
 msgid ""
 "Current group: {group_name}\n"
 "\n"
@@ -478,31 +492,31 @@ msgstr ""
 "\n"
 "Введите номер группы или выберите группу из избранных"
 
-#: tgbot/misc/texts/messages.py:112
+#: tgbot/misc/texts/messages.py:118
 msgid "Group removed from favorites!"
 msgstr "Группа удалена из избранных!"
 
-#: tgbot/misc/texts/messages.py:113
+#: tgbot/misc/texts/messages.py:119
 msgid "Group added to favorites!"
 msgstr "Группа добавлена в избранные!"
 
-#: tgbot/misc/texts/messages.py:114
+#: tgbot/misc/texts/messages.py:120
 msgid "Current group changed!"
 msgstr "Текущая группа изменена!"
 
-#: tgbot/misc/texts/messages.py:115
+#: tgbot/misc/texts/messages.py:121
 msgid "This group is already selected!"
 msgstr "Эта группа уже выбрана!"
 
-#: tgbot/misc/texts/messages.py:116
+#: tgbot/misc/texts/messages.py:122
 msgid "❌ No such group exists!"
 msgstr "❌ Такой группы нет!"
 
-#: tgbot/misc/texts/messages.py:118
+#: tgbot/misc/texts/messages.py:124
 msgid "Functionality in development"
 msgstr "Функционал в разработке"
 
-#: tgbot/misc/texts/messages.py:122
+#: tgbot/misc/texts/messages.py:128
 msgid ""
 "List of teachers {group_name}:\n"
 "\n"
@@ -514,7 +528,7 @@ msgstr ""
 "————————————————\n"
 "{teachers}"
 
-#: tgbot/misc/texts/messages.py:128
+#: tgbot/misc/texts/messages.py:134
 msgid ""
 "Your faculty is not currently supported...\n"
 "If you want your faculty to have full functionality, write to us through the "
@@ -530,19 +544,19 @@ msgstr ""
 "Закреплённый текст:\n"
 "{pinned_text}"
 
-#: tgbot/misc/texts/messages.py:134
+#: tgbot/misc/texts/messages.py:140
 msgid "An error occurred on the KAI side. Please, try later"
 msgstr "Возникла ошибка на стороне КАИ. Пожалуйста, попробуйте позже"
 
-#: tgbot/misc/texts/messages.py:135
+#: tgbot/misc/texts/messages.py:141
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
 
-#: tgbot/misc/texts/messages.py:137
+#: tgbot/misc/texts/messages.py:143
 msgid "You need to select a group"
 msgstr "Сначала нужно выбрать группу"
 
-#: tgbot/misc/texts/messages.py:139
+#: tgbot/misc/texts/messages.py:145
 msgid ""
 "Invalid {command} command format. After the command, there should be a user's "
 "Telegram ID. Example: \"{command} 393867797\""
@@ -550,27 +564,27 @@ msgstr ""
 "Неверный формат команды {command}. После команды должен быть Telegram ID "
 "пользователя. Пример: \"{command} 393867797\""
 
-#: tgbot/misc/texts/messages.py:144
+#: tgbot/misc/texts/messages.py:150
 msgid "User {user_id} does not exist"
 msgstr "Пользователь {user_id} не существует"
 
-#: tgbot/misc/texts/messages.py:145
+#: tgbot/misc/texts/messages.py:151
 msgid "User {user_id} has been blocked"
 msgstr "Пользователь {user_id} был заблокирован"
 
-#: tgbot/misc/texts/messages.py:146
+#: tgbot/misc/texts/messages.py:152
 msgid "User {user_id} has been unblocked"
 msgstr "Пользователь {user_id} был разблокирован"
 
-#: tgbot/misc/texts/messages.py:148
+#: tgbot/misc/texts/messages.py:154
 msgid "You have been blocked by the administrator!"
 msgstr "Вы были заблокированы администратором!"
 
-#: tgbot/misc/texts/messages.py:149
+#: tgbot/misc/texts/messages.py:155
 msgid "You have been unblocked by the administrator!"
 msgstr "Вы были разблокированы администратором!"
 
-#: tgbot/misc/texts/messages.py:151
+#: tgbot/misc/texts/messages.py:157
 msgid ""
 "Verification\n"
 "\n"
@@ -584,7 +598,7 @@ msgstr ""
 "Данные для БРС: {kai_status}\n"
 "Профиль подтверждён: {profile_status}"
 
-#: tgbot/misc/texts/messages.py:158
+#: tgbot/misc/texts/messages.py:164
 msgid ""
 "Verification\n"
 "\n"
@@ -594,7 +608,7 @@ msgstr ""
 "\n"
 "Пожалуйста, введите ваш логин"
 
-#: tgbot/misc/texts/messages.py:163
+#: tgbot/misc/texts/messages.py:169
 msgid ""
 "Verification\n"
 "\n"
@@ -604,7 +618,7 @@ msgstr ""
 "\n"
 "Пожалуйста, введите ваш пароль"
 
-#: tgbot/misc/texts/messages.py:168
+#: tgbot/misc/texts/messages.py:174
 msgid ""
 "Authorization...\n"
 "Please wait a moment"
@@ -612,7 +626,7 @@ msgstr ""
 "Авторизация...\n"
 "Пожалуйста, подождите немного"
 
-#: tgbot/misc/texts/messages.py:170
+#: tgbot/misc/texts/messages.py:176
 msgid ""
 "‼️ Something went wrong!\n"
 "Looks like you entered the wrong credentials"
@@ -620,7 +634,7 @@ msgstr ""
 "‼️ Что-то пошло не так!\n"
 "Похоже вы ввели неверные логин или пароль"
 
-#: tgbot/misc/texts/messages.py:175
+#: tgbot/misc/texts/messages.py:181
 msgid ""
 "✅ Hooray!\n"
 "You have successfully verified your account"
@@ -628,36 +642,36 @@ msgstr ""
 "✅ Ура!\n"
 "Вы успешно подтвердили свой аккаунт"
 
-#: tgbot/misc/texts/messages.py:180
+#: tgbot/misc/texts/messages.py:186
 msgid "Your credentials have been removed from the database"
 msgstr "Ваши логин и пароль были удалены из базы данных"
 
-#: tgbot/misc/texts/messages.py:181
+#: tgbot/misc/texts/messages.py:187
 msgid "Please, share your contact"
 msgstr "Пожалуйста, поделитесь вашим контактом"
 
-#: tgbot/misc/texts/messages.py:182
+#: tgbot/misc/texts/messages.py:188
 msgid "✅ Your phone number has been verified!"
 msgstr "✅ Ваш номер телефона был подтверждён!"
 
-#: tgbot/misc/texts/messages.py:183
+#: tgbot/misc/texts/messages.py:189
 msgid ""
 "☑️ Your phone number was found in the database and your profile is now verified"
 msgstr "☑️ Ваш номер телефона был найден в базе и ваш профиль теперь верифицирован"
 
-#: tgbot/misc/texts/messages.py:184
+#: tgbot/misc/texts/messages.py:190
 msgid "❌ Your phone number was not found in the database"
 msgstr "❌ Ваш номер телефона не найден в базе"
 
-#: tgbot/misc/texts/messages.py:185
+#: tgbot/misc/texts/messages.py:191
 msgid "❌ Someone is already signed in with these credentials"
 msgstr "❌ Кто-то уже вошёл в этот аккаунт"
 
-#: tgbot/misc/texts/messages.py:186
+#: tgbot/misc/texts/messages.py:192
 msgid "You have successfully unlinked your account"
 msgstr "Вы успешно отвязали свой аккаунт"
 
-#: tgbot/misc/texts/messages.py:187
+#: tgbot/misc/texts/messages.py:193
 msgid ""
 "Subscribe to the Telegram channel of the project!\n"
 "There will be the latest news on the project and more!"
@@ -665,24 +679,24 @@ msgstr ""
 "Подписывайся на Telegram канал нашего проекта!\n"
 "В нём будут публиковаться последние новости проекта и не только!"
 
-#: tgbot/misc/texts/messages.py:189
+#: tgbot/misc/texts/messages.py:195
 msgid "❌ Account with this number already linked to someone else Telegram"
 msgstr ""
 "❌ Аккаунт с этим номеров телефона уже привязан к какому-то Telegram аккаунту"
 
-#: tgbot/misc/texts/messages.py:190
+#: tgbot/misc/texts/messages.py:196
 msgid "You don't have to do this!"
 msgstr "Не надо этого делать!"
 
-#: tgbot/misc/texts/messages.py:191
+#: tgbot/misc/texts/messages.py:197
 msgid "Sorry, I don't know how to work in group chats yet"
 msgstr "Извините, я пока не умею работать в групповых чатах"
 
-#: tgbot/misc/texts/messages.py:193
+#: tgbot/misc/texts/messages.py:199
 msgid "Education menu"
 msgstr "Меню обучения"
 
-#: tgbot/misc/texts/messages.py:194
+#: tgbot/misc/texts/messages.py:200
 msgid ""
 "My group ({group_name})\n"
 "\n"
@@ -706,15 +720,15 @@ msgstr ""
 "Закреплённый текст:\n"
 "{pinned_text}"
 
-#: tgbot/misc/texts/messages.py:205
+#: tgbot/misc/texts/messages.py:211
 msgid "You need to be verified to access"
 msgstr "Для доступа нужно верифицировать аккаунт"
 
-#: tgbot/misc/texts/messages.py:206
+#: tgbot/misc/texts/messages.py:212
 msgid "Missing"
 msgstr "Отсутствует"
 
-#: tgbot/misc/texts/messages.py:207
+#: tgbot/misc/texts/messages.py:213
 msgid ""
 "My group ({group_name})\n"
 "\n"
@@ -726,7 +740,7 @@ msgstr ""
 "Одногруппники:\n"
 "{classmates}"
 
-#: tgbot/misc/texts/messages.py:212
+#: tgbot/misc/texts/messages.py:218
 msgid ""
 "Invalid /set_prefix command format. The command should be followed by the user's "
 "Telegram ID, then a new prefix (can be empty, limit 32 symbols). Example: \"/"
@@ -736,15 +750,15 @@ msgstr ""
 "пользователя, затем новый префикс (может быть пустым, лимит 32 символа). Пример: "
 "\"/set_prefix 393867797 💩\""
 
-#: tgbot/misc/texts/messages.py:216
+#: tgbot/misc/texts/messages.py:222
 msgid "User {user_id} does not exist or is not verified"
 msgstr "Пользователь {user_id} не существует или не верифицирован"
 
-#: tgbot/misc/texts/messages.py:217
+#: tgbot/misc/texts/messages.py:223
 msgid "User {user_id} was prefixed with {prefix}"
 msgstr "Пользователю {user_id} был установлен префикс {prefix}"
 
-#: tgbot/misc/texts/messages.py:219
+#: tgbot/misc/texts/messages.py:225
 msgid ""
 "Invalid /send_message command format. The command must be a reply to a message "
 "that you must send. The command should be followed by the user's Telegram ID, to "
@@ -754,11 +768,11 @@ msgstr ""
 "После команды должен идти Telegram ID пользователя, которому будет отправлено "
 "сообщение"
 
-#: tgbot/misc/texts/messages.py:223
+#: tgbot/misc/texts/messages.py:229
 msgid "The message was sent to user {user_id}"
 msgstr "Сообщение было отправлено пользователю {user_id}"
 
-#: tgbot/misc/texts/messages.py:225
+#: tgbot/misc/texts/messages.py:231
 msgid ""
 "Full name: {full_name}\n"
 "Position in the group: {group_pos}\n"
@@ -772,7 +786,7 @@ msgstr ""
 "Телефон: {phone}\n"
 "Почта: {email}"
 
-#: tgbot/misc/texts/messages.py:232
+#: tgbot/misc/texts/messages.py:238
 msgid ""
 "Birthday: {birthday}\n"
 "Number of the record book: {zach}"
@@ -780,7 +794,7 @@ msgstr ""
 "День рождения: {birthday}\n"
 "Номер зачётки: {zach}"
 
-#: tgbot/misc/texts/messages.py:236
+#: tgbot/misc/texts/messages.py:242
 msgid ""
 "Telegram ID: {telegram_id}\n"
 "Telegram full name: {tg_full_name}\n"
@@ -798,27 +812,27 @@ msgstr ""
 "Выбранная группа: {s_group_name}\n"
 "Роли: {roles}"
 
-#: tgbot/misc/texts/messages.py:246
+#: tgbot/misc/texts/messages.py:252
 msgid "Enter the text of the pinned message"
 msgstr "Введите текст для закреплённого сообщения"
 
-#: tgbot/misc/texts/messages.py:249
+#: tgbot/misc/texts/messages.py:255
 msgid "Help menu"
 msgstr "Меню помощи"
 
-#: tgbot/misc/texts/messages.py:251
+#: tgbot/misc/texts/messages.py:257
 msgid "This is not your phone number! Submit your number using the button below"
 msgstr "Это не ваш номер телефона! Отправьте ваш номер с помощью кнопки внизу"
 
-#: tgbot/misc/texts/messages.py:253
+#: tgbot/misc/texts/messages.py:259
 msgid "Even week"
 msgstr "Чётная неделя"
 
-#: tgbot/misc/texts/messages.py:254
+#: tgbot/misc/texts/messages.py:260
 msgid "Odd week"
 msgstr "Нечетная неделя"
 
-#: tgbot/misc/texts/messages.py:256
+#: tgbot/misc/texts/messages.py:262
 msgid ""
 "Settings\n"
 "\n"
