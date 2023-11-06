@@ -37,11 +37,13 @@ async def command_start(message: Message, db: async_sessionmaker, redis: Redis, 
             roles_dict = await Role.get_roles_dict(db)
             locale = message.from_user.language_code
 
-            if locale:
+            if locale in i18n_middleware.i18n.available_locales:
+                await i18n_middleware.set_locale(message.from_user.id, locale, redis, db)
                 welcome = _(messages.language_found).format(language=language_autonym(locale))
             else:
                 welcome = messages.language_not_found
                 locale = i18n_middleware.i18n.default_locale
+                await i18n_middleware.set_locale(message.from_user.id, locale, redis, db)
 
             user = User(telegram_id=message.from_user.id, source=payload, roles=[roles_dict[roles.student]],
                         language=locale)
