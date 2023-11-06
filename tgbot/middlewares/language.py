@@ -41,10 +41,10 @@ class CacheAndDatabaseI18nMiddleware(I18nMiddleware):
         async with db() as session:
             db_user = await session.get(TelegramUser, event_from_user.id)
 
-        if db_user is None:
+        if db_user is None and not event_from_user.language_code:
             return self.i18n.default_locale
 
-        if db_user.language in self.i18n.available_locales:
+        if db_user and db_user.language in self.i18n.available_locales:
             await redis.set(name=redis_key, value=db_user.language, ex=self.locale_cache_time)
             return db_user.language
 
@@ -74,7 +74,8 @@ class CacheAndDatabaseI18nMiddleware(I18nMiddleware):
         self.i18n.current_locale = locale
         async with db.begin() as session:
             db_user = await session.get(TelegramUser, user_id)
-            db_user.language = locale
+            if db_user is not None:
+                db_user.language = locale
         await redis.set(name=f'{user_id}:lang', value=locale, ex=self.locale_cache_time)
 
     async def get_user_locale(self, user_id: int, redis: Redis, db: async_sessionmaker) -> str:
