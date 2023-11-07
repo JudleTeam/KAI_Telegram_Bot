@@ -122,6 +122,7 @@ async def get_user_password(message: Message, state: FSMContext, db: async_sessi
 
 @router.callback_query(Action.filter(F.name == Action.Name.send_phone))
 async def send_phone_keyboard(call: CallbackQuery, callback_data: Action, state: FSMContext):
+    await call.message.delete()
     await state.set_state(states.PhoneSendState.waiting_for_phone)
     await state.update_data(payload=callback_data.payload)
     await call.message.answer(_(messages.share_contact), reply_markup=reply_keyboards.get_send_phone_keyboard())
@@ -146,9 +147,10 @@ async def get_user_phone(message: Message, state: FSMContext, db: async_sessionm
     state_data = await state.get_data()
     if state_data['payload'] == 'at_start':
         await message.answer(text, reply_markup=ReplyKeyboardRemove())
-        await send_verification(message, state, db)
     else:
         await message.answer(text, reply_markup=reply_keyboards.get_main_keyboard())
+
+    await send_verification(message, state, db)
 
 
 @router.callback_query(Action.filter(F.name == Action.Name.check_phone))
