@@ -10,7 +10,6 @@ from tgbot.services.database.base import Base
 class GroupLesson(Base):
     __tablename__ = 'group_lesson'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    group_id = Column(Integer, nullable=False)
     number_of_day = Column(Integer, nullable=False)
     parity_of_week = Column(String, nullable=True)
     int_parity_of_week = Column(Integer, nullable=False)
@@ -22,10 +21,12 @@ class GroupLesson(Base):
 
     discipline_id = Column(Integer, ForeignKey('discipline.id'), nullable=False)
     teacher_id = Column(String(64), ForeignKey('teacher.login'), nullable=True)
+    group_id = Column(BigInteger, ForeignKey('group.group_id'), nullable=False)
 
     discipline = relationship('Discipline', lazy='selectin', backref='lessons')
     # Если teacher = None, значит стоит "Преподаватель кафедры"
     teacher = relationship('Teacher', backref='lessons', lazy='selectin')
+    group = relationship('Group', backref='lessons', lazy='selectin')
 
     def __repr__(self):
         return f'{self.parity_of_week} | {self.start_time.strftime("%H:%M")} | {self.discipline.name}'
@@ -83,6 +84,15 @@ class GroupLesson(Base):
         stmt = select(GroupLesson).where(
             GroupLesson.group_id == group_id
         )
+
+        records = await session.execute(stmt)
+        return records.scalars().all()
+
+    @classmethod
+    async def get_teacher_schedule(cls, session, teacher_login):
+        stmt = (select(GroupLesson)
+                .where(GroupLesson.teacher_id == teacher_login).
+                order_by(GroupLesson.number_of_day, GroupLesson.start_time))
 
         records = await session.execute(stmt)
         return records.scalars().all()

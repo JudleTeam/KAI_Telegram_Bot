@@ -1,26 +1,27 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+
 from tgbot.misc.texts import reply_commands
+from aiogram.utils.i18n import gettext as _
 
 
-def get_main_keyboard(_):
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+def get_main_keyboard():
+    builder = ReplyKeyboardBuilder()
 
-    keyboard.add(
-        KeyboardButton(reply_commands.schedule_symbol + _(reply_commands.schedule)),
-        KeyboardButton(reply_commands.education_symbol + _(reply_commands.education)),
-        KeyboardButton(reply_commands.shop_symbol + _(reply_commands.shop)),
-        KeyboardButton(reply_commands.profile_symbol + _(reply_commands.profile)),
-        KeyboardButton(reply_commands.help_symbol + _(reply_commands.help))
-    )
+    builder.button(text=reply_commands.schedule_symbol + _(reply_commands.schedule))
+    builder.button(text=reply_commands.education_symbol + _(reply_commands.education))
+    # builder.button(text=reply_commands.shop_symbol + _(reply_commands.shop))
+    builder.button(text=reply_commands.profile_symbol + _(reply_commands.profile))
+    builder.button(text=reply_commands.help_symbol + _(reply_commands.help))
 
-    return keyboard
+    builder.adjust(1)
+
+    return builder.as_markup(resize_keyboard=True)
 
 
-def get_send_phone_keyboard(_):
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+def get_send_phone_keyboard():
+    builder = ReplyKeyboardBuilder()
 
-    keyboard.add(
-        KeyboardButton(_(reply_commands.share_contact), request_contact=True)
-    )
+    builder.button(text=_(reply_commands.share_contact), request_contact=True)
 
-    return keyboard
+    return builder.as_markup(resize_keyboard=True)

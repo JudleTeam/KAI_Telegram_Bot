@@ -1,11 +1,12 @@
 from aiogram.types import User as aUser
 from aiogram.utils import markdown as md
+from aiogram.utils.i18n import gettext as _
 
 from tgbot.misc.texts import messages, roles
 from tgbot.services.database.models import User as dUser
 
 
-def get_user_description(_, tg_user: aUser, db_user: dUser, for_admin=False):
+def get_user_description(tg_user: aUser, db_user: dUser, for_admin=False):
     s_group = md.hcode(db_user.group.group_name) if db_user.group else '????'
     roles_str = ', '.join(map(_, db_user.get_roles_titles()))
 
@@ -16,7 +17,7 @@ def get_user_description(_, tg_user: aUser, db_user: dUser, for_admin=False):
             is_blocked=db_user.is_blocked,
             telegram_id=md.hcode(tg_user.id),
             tg_full_name=md.hcode(tg_user.full_name),
-            tg_mention=md.hcode(tg_user.mention),
+            tg_mention=md.hcode(tg_user.username),
             telegram_phone=md.hcode(db_user.phone)
         )
     else:

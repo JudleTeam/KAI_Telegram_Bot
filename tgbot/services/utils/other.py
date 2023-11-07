@@ -3,15 +3,15 @@ import logging
 from typing import Sequence
 
 import phonenumbers
-from aiogram import Bot
-from aiogram.contrib.middlewares.i18n import I18nMiddleware
-from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup
-from aiogram.utils.exceptions import RetryAfter, BotBlocked, ChatNotFound, UserDeactivated, TelegramAPIError
+from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError
+from aiogram.utils.i18n import gettext
 from phonenumbers import NumberParseException
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.services.database.models import User
-from tgbot.services.database.utils import get_user_locale
 
 
 def parse_phone_number(phone_number) -> str | None:
@@ -51,8 +51,8 @@ async def send_message(bot: Bot, chat_id: int, text: str, **kwargs) -> bool:
     try:
         await bot.send_message(chat_id, text, **kwargs)
 
-    except RetryAfter as error:
-        await asyncio.sleep(error.timeout)
+    except TelegramRetryAfter as error:
+        await asyncio.sleep(error.retry_after)
         return await send_message(bot, chat_id, text)
 
     except TelegramAPIError as error:
@@ -68,12 +68,13 @@ async def send_message(bot: Bot, chat_id: int, text: str, **kwargs) -> bool:
 
 
 async def broadcast_text(
-        _: I18nMiddleware,
         chats: Sequence[int],
         text: str,
+        i18n: CacheAndDatabaseI18nMiddleware,
         bot: Bot,
+        redis: Redis,
         db: async_sessionmaker,
-        format_kwargs=None,
+        format_kwargs: dict = None,
         timeout: float = 0.05,
         **kwargs):
     if format_kwargs is None:
@@ -82,17 +83,16 @@ async def broadcast_text(
     logging.info('Start broadcasting')
 
     total = len(chats)
-    async with db() as session:
-        for num, chat_id in enumerate(chats, start=1):
-            user_locale = await get_user_locale(session, chat_id)
-            text_to_send = _.gettext(text, locale=user_locale).format(**format_kwargs)
-            result = await send_message(bot, chat_id, text_to_send, **kwargs)
+    for num, chat_id in enumerate(chats, start=1):
+        user_locale = await i18n.get_user_locale(chat_id, redis, db)
+        text_to_send = gettext(text, locale=user_locale).format(**format_kwargs)
+        result = await send_message(bot, chat_id, text_to_send, **kwargs)
 
-            if result:
-                logging.info(f'[{num} / {total}] Message has been sent to {chat_id}')
-            else:
-                logging.info(f'[{num} / {total}] Message was not sent to {chat_id}')
+        if result:
+            logging.info(f'[{num} / {total}] Message has been sent to {chat_id}')
+        else:
+            logging.info(f'[{num} / {total}] Message was not sent to {chat_id}')
 
-            await asyncio.sleep(timeout)
+        await asyncio.sleep(timeout)
 
     logging.info('Broadcast completed')

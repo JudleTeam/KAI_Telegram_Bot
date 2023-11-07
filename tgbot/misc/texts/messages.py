@@ -22,7 +22,7 @@ user_unregistered = _('It looks like you aren\'t registered in the bot. Type "/s
 user_blocked = _('You are blocked in the bot! If this is an error, contact the administrator')
 
 language_not_available = _('The language you are using is no longer available. '
-                           'Contact the administrator or change the language')
+                           'Your language is set to "{language}" it can be changed in the settings')
 language_choose = _('Please select your language')
 
 schedule_menu = _(
@@ -47,6 +47,16 @@ lesson_details = _(
     '{homework}'
 )
 
+teacher_schedule = _(
+    'Teacher\'s schedule "{name}"\n'
+    'Department: "{departament}\n\n'
+    '{parity} week\n\n'
+    '{schedule}\n'
+    '{parity} week'
+)
+
+empty_button = _('This is an information button - it doesn\'t do anything')
+
 no_document = _('This document is not available on the website...')
 
 homework = _('📖 Homework:\n{homework}')
@@ -55,6 +65,12 @@ no_homework = _('No homework')
 new_homework = _(
     'New homework has appeared for {date} in the discipline "{discipline}":\n\n'
     '{homework}'
+)
+
+credentials_hint = _(
+    '❗️To log into BRS, your username and password are needed\n\n'
+    '🔒 Rest assured, your data is immediately encrypted and removed from chat\n\n'
+    'For data deletion, contact support. Your safety is our priority 🤝'
 )
 
 lesson_homework_edit = _(
@@ -184,7 +200,7 @@ education_menu = _('Education menu')
 my_group_menu = _(
     'My group ({group_name})\n\n'
 
-    'Year: {year} | Faculty: {faculty}\n'
+    'Faculty: {faculty}\n'
     'Institute: {institute}\n'
     'Departament: {departament}\n'
     'Speciality: {speciality}\n'
@@ -246,5 +262,6 @@ odd_week = _('Odd week')
 settings = _(
     'Settings\n\n'
     'Use emoji in schedule: {emoji_status}\n'
-    'Show teachers in schedule: {teachers_status}'
+    'Show teachers in schedule: {teachers_status}\n'
+    'Homework notifications: {homework_notify}'
 )

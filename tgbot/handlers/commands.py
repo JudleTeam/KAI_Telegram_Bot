@@ -1,65 +1,68 @@
 import logging
 
-from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram import Router
+from aiogram.filters import Command, CommandStart, CommandObject
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from aiogram.utils import markdown as md
-from aiogram.utils.deep_linking import decode_payload
+from aiogram.utils.i18n import gettext as _
+from aiogram.utils.payload import decode_payload
+from iso_language_codes import language_autonym
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from tgbot.config import Config
 from tgbot.handlers.profile import send_verification
-from tgbot.keyboards import inline_keyboards, reply_keyboards
+from tgbot.keyboards import reply_keyboards
+from tgbot.middlewares.language import CacheAndDatabaseI18nMiddleware
 from tgbot.misc.texts import messages, roles
-from tgbot.services.database.models import User, Role, Language
+from tgbot.services.database.models import User, Role
 
 
-async def command_start(message: Message, state: FSMContext):
-    db = message.bot.get('database')
-    _ = message.bot.get('_')
 
-    args = message.get_args()
-    try:
-        payload = decode_payload(args)
-    except UnicodeDecodeError:
-        payload = None
+router = Router()
 
-    async with db() as session:
-        user = await session.get(User, message.from_id)
+@router.message(CommandStart(deep_link_encoded=True))
+@router.message(CommandStart())
+async def command_start(message: Message, db: async_sessionmaker, redis: Redis, command: CommandObject, state: FSMContext,
+                        i18n_middleware: CacheAndDatabaseI18nMiddleware):
+    payload = None
+    if command.args:
+        try:
+            payload = decode_payload(command.args)
+        except UnicodeDecodeError:
+            pass
+
+    async with db.begin() as session:
+        user = await session.get(User, message.from_user.id)
         if not user:
-            redis = message.bot.get('redis')
             roles_dict = await Role.get_roles_dict(db)
-            language = await Language.get_by_code(session, str(message.from_user.locale))
-            user = User(telegram_id=message.from_id, source=payload, roles=[roles_dict[roles.student]],
-                        language=language)
+            locale = message.from_user.language_code
+
+            if locale in i18n_middleware.i18n.available_locales:
+                await i18n_middleware.set_locale(message.from_user.id, locale, redis, db)
+                welcome = _(messages.language_found).format(language=language_autonym(locale))
+            else:
+                welcome = messages.language_not_found
+                locale = i18n_middleware.i18n.default_locale
+                await i18n_middleware.set_locale(message.from_user.id, locale, redis, db)
+
+            user = User(telegram_id=message.from_user.id, source=payload, roles=[roles_dict[roles.student]],
+                        language=locale)
             session.add(user)
             await session.commit()
 
-            if language:
-                _.ctx_locale.set(language.code)
-                await redis.set(name=f'{message.from_id}:lang', value=language.code, ex=3600)
-
-            await redis.set(name=f'{message.from_id}:exists', value='', ex=3600)
-
-            if language:
-                welcome = _(messages.language_found).format(language=language.title)
-            else:
-                welcome = messages.language_not_found
+            await redis.set(name=f'{message.from_user.id}:exists', value='', ex=3600)
 
             await state.update_data(payload='at_start')
             await message.answer(welcome)
-            await send_verification(message, state)
-            logging.info(f'New user: {message.from_user.mention} {message.from_user.full_name} [{message.from_id}]')
+            await send_verification(message, state, db)
+            logging.info(
+                f'New user: {message.from_user.username} {message.from_user.full_name} [{message.from_user.id}] | Payload - {payload}'
+            )
         else:
-            await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
+            await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard())
 
 
+@router.message(Command('menu'))
 async def command_menu(message: Message, state: FSMContext):
-    _ = message.bot.get('_')
-
-    await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard(_))
-    await state.finish()
-
-
-def register_commands(dp: Dispatcher):
-    dp.register_message_handler(command_start, commands=['start'])
-    dp.register_message_handler(command_menu, commands=['menu'], state='*')
+    await message.answer(_(messages.main_menu), reply_markup=reply_keyboards.get_main_keyboard())
+    await state.clear()

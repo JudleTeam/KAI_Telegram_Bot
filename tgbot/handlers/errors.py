@@ -1,10 +1,11 @@
-from aiogram import Dispatcher
-from aiogram.utils.exceptions import MessageNotModified, InvalidQueryID
+from aiogram import Router
+from aiogram.filters import ExceptionTypeFilter
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.types import ErrorEvent
+
+router = Router()
 
 
-async def handle_error(update, error):
-    return True
-
-
-def register_errors(dp: Dispatcher):
-    dp.register_errors_handler(handle_error, exception=InvalidQueryID)
+@router.error(ExceptionTypeFilter(TelegramBadRequest))
+async def handle_error(event: ErrorEvent):
+    pass

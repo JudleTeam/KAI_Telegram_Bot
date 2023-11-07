@@ -5,8 +5,15 @@ schedule_day_template = (
     '————————————————\n\n'
 )
 
+teacher_lesson = (
+    '{start_time} - {end_time}  |  {building} {auditory} | {parity}\n'
+    '{lesson_type} - {lesson_name}\n'
+    '{group_names}'
+)
+
 lesson_template = (
-    '{start_time} - {end_time}  |  {building} {auditory} | {parity}\n{lesson_type} - {lesson_name}{homework}{teacher}'
+    '{start_time} - {end_time}  |  {building} {auditory} | {parity}\n'
+    '{lesson_type} - {lesson_name}{homework}{teacher}'
 )
 
 teacher_in_schedule = '\n{name} | {departament}'

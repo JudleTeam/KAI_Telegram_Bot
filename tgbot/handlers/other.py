@@ -1,42 +1,43 @@
 import logging
 
-from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram import Router, F, Bot
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from aiogram.utils.i18n import gettext as _
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from tgbot.handlers.details import show_lesson_menu
 from tgbot.handlers.education import show_my_group
 from tgbot.handlers.main_menu import show_profile_menu
 from tgbot.handlers.profile import show_verification
-from tgbot.misc import callbacks
+from tgbot.misc.callbacks import Cancel, Details
 from tgbot.misc.texts import messages
 
+router = Router()
 
+
+@router.callback_query(F.data == 'dev')
 async def show_dev(call: CallbackQuery):
-    _ = call.bot.get('_')
     await call.answer(_(messages.in_development), show_alert=True)
 
 
+@router.callback_query(F.data == 'pass')
 async def show_pass(call: CallbackQuery):
+    await call.answer(_(messages.empty_button))
+
+
+@router.callback_query(Cancel.filter())
+async def cancel(call: CallbackQuery, callback_data: Cancel, state: FSMContext, db: async_sessionmaker, bot: Bot):
+    await state.clear()
     await call.answer()
 
-
-async def cancel(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    await state.finish()
-    await call.answer()
-
-    match callback_data['to']:
-        case 'profile': await show_profile_menu(call, callback_data, state)
-        case 'verification':
+    match callback_data.to:
+        case Cancel.To.profile: await show_profile_menu(call, callback_data, state)
+        case Cancel.To.verification:
             logging.info(f'[{call.from_user.id}]: Cancel KAI login')
-            await show_verification(call, callback_data, state)
-        case 'my_group': await show_my_group(call)
-        case 'homework':
-            lesson_id, date, payload = callback_data['payload'].split(';')
-            await show_lesson_menu(call, {'lesson_id': lesson_id, 'date': date, 'payload': payload})
-
-
-def register_other(dp: Dispatcher):
-    dp.register_callback_query_handler(show_dev, text='dev', state='*')
-    dp.register_callback_query_handler(show_pass, text='pass', state='*')
-    dp.register_callback_query_handler(cancel, callbacks.cancel.filter(), state='*')
+            await show_verification(call, callback_data, state, db)
+        case Cancel.To.my_group: await show_my_group(call, db)
+        case Cancel.To.homework:
+            lesson_id, date, payload = callback_data.payload.split(';')
+            callback = Details(action=Details.Action.show, lesson_id=lesson_id, date=date, payload=payload)
+            await show_lesson_menu(call, callback, db, bot)

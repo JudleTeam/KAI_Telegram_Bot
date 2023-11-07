@@ -115,7 +115,10 @@ async def get_schedule_by_week_day(group_id: int, day_of_week: int, parity: int,
         return schedule
 
 
-async def parse_groups(parsed_groups: list[GroupsResult], db):
+async def parse_all_groups(db):
+    logging.info('Start parsing groups')
+    parsed_groups = await KaiParser.get_group_ids()
+    logging.info(f'Got {len(parsed_groups)} from KAI')
     async with db() as session:
         for parsed_group in parsed_groups:
             new_group = Group(
@@ -126,8 +129,13 @@ async def parse_groups(parsed_groups: list[GroupsResult], db):
             try:
                 await session.commit()
             except IntegrityError:
+                # logging.info(f'Group {parsed_group.group} already exists')
                 await session.rollback()
                 await session.flush()
+            else:
+                logging.info(f'New group: {parsed_group.group}')
+
+    logging.info('Groups parsing completed')
 
 
 async def parse_all_groups_schedule(db):

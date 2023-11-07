@@ -1,41 +1,34 @@
-from dataclasses import dataclass
+from os import environ
 from pathlib import Path
 
-from environs import Env
+from dotenv import load_dotenv
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import URL
 
 
-@dataclass
-class DatabaseConfig:
-    host: str
-    password: str
-    user: str
-    database: str
-    port: int
+class DatabaseConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    url: URL
 
 
-@dataclass
-class RedisConfig:
+class RedisConfig(BaseModel):
     db: int
 
 
-@dataclass
-class TelegramBot:
+class TelegramBot(BaseModel):
     token: str
     admin_ids: set[int]
     main_admins_ids: set[int]
-    use_redis: bool
 
 
-@dataclass
-class I18N:
+class I18N(BaseModel):
     domain: str
     base_dir: Path
     locales_dir: Path
 
 
-@dataclass
-class Miscellaneous:
-    rate_limit: float
+class Miscellaneous(BaseModel):
     write_logs: bool
     channel_link: str
     contact_link: str
@@ -43,8 +36,7 @@ class Miscellaneous:
     guide_link: str
 
 
-@dataclass
-class Config:
+class Config(BaseModel):
     bot: TelegramBot
     database: DatabaseConfig
     misc: Miscellaneous
@@ -53,40 +45,42 @@ class Config:
 
 
 def load_config(path: str = None):
-    env = Env()
-    env.read_env(path)
+    load_dotenv(dotenv_path=path)
 
-    main_admins = set(map(int, env.list('MAIN_ADMINS')))
-    admins = set(map(int, env.list('ADMINS'))) | main_admins
+    main_admins = set(map(int, environ.get('MAIN_ADMINS', '').split(',')))
+    admins = set(map(int, environ.get('ADMINS', '').split(','))) | main_admins
+
+    db_url = URL.create(
+        drivername='postgresql+asyncpg',
+        username=environ.get('DB_USER'),
+        password=environ.get('DB_PASS'),
+        host=environ.get('DB_HOST', '127.0.0.1'),
+        port=environ.get('DB_PORT', 5432),
+        database=environ.get('DB_NAME')
+    )
 
     return Config(
         bot=TelegramBot(
-            token=env.str('BOT_TOKEN'),
+            token=environ.get('BOT_TOKEN'),
             admin_ids=admins,
-            main_admins_ids=main_admins,
-            use_redis=env.bool('USE_REDIS')
+            main_admins_ids=main_admins
         ),
         database=DatabaseConfig(
-            host=env.str('DB_HOST'),
-            password=env.str('DB_PASS'),
-            user=env.str('DB_USER'),
-            database=env.str('DB_NAME'),
-            port=env.int('DB_PORT')
+            url=db_url
         ),
         i18n=I18N(
-            domain=env.str('I18N_DOMAIN'),
+            domain=environ.get('I18N_DOMAIN'),
             base_dir=Path(__file__).parent,
             locales_dir=Path(__file__).parent / 'locales'
         ),
         misc=Miscellaneous(
-            rate_limit=env.float('RATE_LIMIT'),
-            write_logs=env.bool('WRITE_LOGS'),
-            channel_link=env.str('CHANNEL_LINK'),
-            contact_link=env.str('CONTACT_LINK'),
-            donate_link=env.str('DONATE_LINK'),
-            guide_link=env.str('GUIDE_LINK')
+            write_logs=environ.get('WRITE_LOGS', True),
+            channel_link=environ.get('CHANNEL_LINK'),
+            contact_link=environ.get('CONTACT_LINK'),
+            donate_link=environ.get('DONATE_LINK'),
+            guide_link=environ.get('GUIDE_LINK')
         ),
         redis=RedisConfig(
-            db=env.int('REDIS_DB')
+            db=environ.get('REDIS_DB', 0)
         )
     )
