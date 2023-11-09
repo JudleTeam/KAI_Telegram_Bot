@@ -139,7 +139,7 @@ async def show_lesson_menu(call: CallbackQuery, callback_data: Details, db: asyn
 
     call.as_(bot)
     call.message.as_(bot)
-    await call.message.edit_text(text, reply_markup=keyboard)
+    await call.message.edit_text(text, reply_markup=keyboard, disable_web_page_preview=True)
     try:
         await call.answer()
     except AiogramError:
@@ -164,7 +164,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details
             callback_data['action'] = 'add'
             text = _(messages.homework_input)
 
-    await call.message.edit_text(text, reply_markup=keyboard)
+    await call.message.edit_text(text, reply_markup=keyboard, disable_web_page_preview=True)
     await state.update_data(main_call=call.model_dump_json(), **callback_data.model_dump())
     await state.set_state(states.Homework.waiting_for_homework)
     await call.answer()
@@ -173,7 +173,7 @@ async def start_homework_edit_or_add(call: CallbackQuery, callback_data: Details
 @router.message(states.Homework.waiting_for_homework)
 async def get_homework(message: Message, state: FSMContext, db: async_sessionmaker, bot: Bot, redis: Redis,
                        i18n_middleware: CacheAndDatabaseI18nMiddleware):
-    homework_description = message.text
+    homework_description = message.html_text
     state_data = await state.get_data()
     lesson_id = int(state_data['lesson_id'])
     date = datetime.date.fromisoformat(state_data['date'])
@@ -214,7 +214,8 @@ async def get_homework(message: Message, state: FSMContext, db: async_sessionmak
             bot=bot,
             db=db,
             redis=redis,
-            i18n=i18n_middleware
+            i18n=i18n_middleware,
+            disable_web_page_preview=True
         )
 
 
