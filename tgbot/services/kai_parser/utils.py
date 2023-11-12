@@ -42,22 +42,26 @@ def lesson_type_to_emoji(lesson_type: str):
         'пр': '📝',
         'л.р.': '🧪',
         'физ': '🏆',
-        'конс': '❓'
+        'конс': '❓',
+        'к.р.': '🎓',
+        'и.з.': '🎯'
     }
 
-    return lessons_emoji[lesson_type]
+    return lessons_emoji.get(lesson_type, lesson_type)
 
 
 def lesson_type_to_text(lesson_type: str):
     lessons_text = {
-        'лек': 'Лекция',
-        'пр': 'Практика',
-        'л.р.': 'Лабораторная',
-        'физ': 'Физра',
-        'конс': 'Консультация'
+        'лек':  'Лекция',
+        'пр':   'Практика',
+        'л.р.': 'Лаб. раб.',
+        'физ':  'Физ-ра',
+        'конс': 'Конс.',
+        'к.р.': 'Курс. раб.',
+        'и.з.': 'Инд. зад.'
     }
 
-    return lessons_text[lesson_type]
+    return lessons_text.get(lesson_type, lesson_type)
 
 
 def get_lesson_end_time(start_time: datetime.time, lesson_type: str) -> datetime.time | None:
@@ -166,7 +170,7 @@ async def parse_all_groups_schedule(db):
                 # Удаленные пары для отслеживания изменений в расписании
 
             except Exception as error:
-                logging.error(f'Error with group {group.group_name}: {error}')
+                logging.error(f'Error with group: {error}')
                 continue
 
             if parsed % 50 == 0:

@@ -1,7 +1,4 @@
-import datetime
-from pprint import pprint
-
-from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete, ForeignKey, or_, text
+from sqlalchemy import Column, Integer, String, BigInteger, Time, select, delete, ForeignKey, or_
 from sqlalchemy.orm import relationship
 
 from tgbot.services.database.base import Base
@@ -30,30 +27,6 @@ class GroupLesson(Base):
 
     def __repr__(self):
         return f'{self.parity_of_week} | {self.start_time.strftime("%H:%M")} | {self.discipline.name}'
-
-    @property
-    def lesson_type_emoji(self):
-        lessons_emoji = {
-            'лек': '📢',
-            'пр': '📝',
-            'л.р.': '🧪',
-            'физ': '🏆',
-            'конс': '❓'
-        }
-
-        return lessons_emoji[self.lesson_type]
-
-    @property
-    def lesson_type_text(self):
-        lessons_text = {
-            'лек': 'Лекция',
-            'пр': 'Практика',
-            'л.р.': 'Лабораторная',
-            'физ': 'Физра',
-            'конс': 'Консультация'
-        }
-
-        return lessons_text[self.lesson_type]
 
     @classmethod
     async def get_group_day_schedule(cls, session, group_id, day, int_parity: int = 0):
