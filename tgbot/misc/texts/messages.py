@@ -34,7 +34,9 @@ emoji_hint = _(
     '🧪 - Laboratory work\n'
     '📝 - Seminar\n'
     '📢 - Lecture\n'
-    '❓ - Consultation'
+    '❓ - Consultation\n'
+    '🎓 - Coursework\n'
+    '🎯 - Individual task'
 )
 profile_menu = _(
     'Profile menu\n\n'
