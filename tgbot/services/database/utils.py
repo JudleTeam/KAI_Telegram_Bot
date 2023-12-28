@@ -8,6 +8,19 @@ from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Dep
 
 
 async def get_group_teachers(session, group_id: int):
+    stmt = (
+        select(Teacher)
+        .join(GroupLesson.teacher)
+        .where(GroupLesson.group_id == group_id)
+        .distinct()
+    )
+
+    records = await session.execute(stmt)
+
+    return records.scalars().all()
+
+
+async def get_group_teachers_dict(session, group_id: int):
     """
     Возвращает всех преподавателей для группы, кроме преподавателей кафедры
 
