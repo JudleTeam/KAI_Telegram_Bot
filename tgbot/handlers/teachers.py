@@ -143,20 +143,25 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
         for teacher in teachers:
             teacher_lessons: list[GroupLesson] = await GroupLesson.get_teacher_schedule(session, teacher.login)
 
+            schedule_text = _(messages.teacher_schedule).format(
+                name=teacher.name,
+                departament=teacher.departament.name,
+                schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity),
+                parity=week_parity
+            )
+
+            if len(schedule_text) >= 4096:
+                too_long_schedule_text = '...\n\n' + _(messages.schedule_too_long)
+                short_schedule_text = schedule_text[:4096 - len(too_long_schedule_text) - 10]
+                schedule_text = short_schedule_text + '...\n\n' + _(messages.schedule_too_long)
+
             result.append(
                 InlineQueryResultArticle(
                     id=teacher.login,
                     title=teacher.name,
-                    input_message_content=InputTextMessageContent(
-                        message_text=_(messages.teacher_schedule).format(
-                            name=teacher.name,
-                            departament=teacher.departament.name,
-                            schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity),
-                            parity=week_parity
-                        )
-                    ),
+                    input_message_content=InputTextMessageContent(message_text=schedule_text),
                     description=teacher.departament.name
                 )
             )
 
-    await inline_query.answer(result, next_offset=str(offset + limit), cache_time=3600, is_personal=True)
+    await inline_query.answer(result, cache_time=5, is_personal=True)
