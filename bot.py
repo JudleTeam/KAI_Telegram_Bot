@@ -38,6 +38,7 @@ def register_all_filters(dp):
     for aiogram_filter in filters.filters:
         dp.filters_factory.bind(aiogram_filter)
 
+
 def start_jobs(db):
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
 
