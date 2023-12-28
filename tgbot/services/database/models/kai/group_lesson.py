@@ -82,6 +82,8 @@ class GroupLesson(Base):
         for old_lesson in current_schedule:
             if old_lesson not in new_schedule:
                 deleted_lessons.append(old_lesson)
+                await session.refresh(old_lesson, ['homework'])
+                old_lesson.homework = []
                 await session.delete(old_lesson)
 
         return deleted_lessons
