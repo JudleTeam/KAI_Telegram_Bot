@@ -10,6 +10,8 @@ week_days = (
     _('Sunday'),
 )
 
+schedule_too_long = _('Schedule too long...')
+
 welcome = _('Welcome to KAI bot! Tap button below to choose your language')
 main_menu = _('Main menu')
 

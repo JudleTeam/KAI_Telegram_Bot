@@ -11,7 +11,7 @@ import tgbot.keyboards.inline_keyboards as inline
 from tgbot.misc.callbacks import Navigation
 from tgbot.misc.texts import messages, templates, buttons
 from tgbot.services.database.models import User, Teacher, GroupLesson
-from tgbot.services.database.utils import get_group_teachers
+from tgbot.services.database.utils import get_group_teachers_dict, get_group_teachers
 from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to_text
 
 router = Router()
@@ -99,7 +99,7 @@ async def show_teachers(call: CallbackQuery, state: FSMContext, db: async_sessio
             await call.answer(_(messages.no_selected_group), show_alert=True)
             return
 
-        teachers = await get_group_teachers(session, user.group_id)
+        teachers = await get_group_teachers_dict(session, user.group_id)
         if not teachers:
             await call.answer(_(messages.kai_error), show_alert=True)
             return
@@ -109,9 +109,66 @@ async def show_teachers(call: CallbackQuery, state: FSMContext, db: async_sessio
     await call.message.edit_text(msg, reply_markup=inline.get_teachers_keyboard(user.group.group_name))
 
 
+async def create_teachers_inline_result(session, teachers: list[Teacher], use_emoji):
+    int_week_parity = int(datetime.datetime.now().strftime("%V")) % 2
+    week_parity = _(buttons.odd_week) if int_week_parity else _(buttons.even_week)
+    int_week_parity = 1 if int_week_parity else 2
+
+    result = list()
+    for teacher in teachers:
+        teacher_lessons: list[GroupLesson] = await GroupLesson.get_teacher_schedule(session, teacher.login)
+
+        schedule_text = _(messages.teacher_schedule).format(
+            name=teacher.name,
+            departament=teacher.departament.name,
+            schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity),
+            parity=week_parity
+        )
+
+        max_length = 3900
+        if len(schedule_text) >= max_length:
+            too_long_schedule_text = '...\n\n' + _(messages.schedule_too_long)
+            short_schedule_text = schedule_text[:max_length - len(too_long_schedule_text)]
+            schedule_text = short_schedule_text + _(messages.schedule_too_long)
+
+        schedule_text = schedule_text
+        result.append(
+            InlineQueryResultArticle(
+                id=teacher.login,
+                title=teacher.name,
+                input_message_content=InputTextMessageContent(message_text=schedule_text),
+                description=teacher.departament.name
+            )
+        )
+
+    return result
+
+
+@router.inline_query(F.query == '')
+async def search_group_teachers(inline_query: InlineQuery, db: async_sessionmaker):
+    limit = 10
+    if inline_query.offset:
+        offset = int(inline_query.offset)
+    else:
+        offset = 0
+
+    async with db() as session:
+        tg_user = await session.get(User, inline_query.from_user.id)
+        if tg_user:
+            use_emoji = tg_user.use_emoji
+        else:
+            use_emoji = True
+
+        group_teachers = await get_group_teachers(session, tg_user.group_id, limit=limit, offset=offset)
+
+        result = await create_teachers_inline_result(session, group_teachers, use_emoji)
+
+    await inline_query.answer(result, next_offset=str(offset + limit), cache_time=3600, is_personal=True)
+
+
 @router.inline_query(F.query != '')
 async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
-    limit = 20
+    limit = 10
     if inline_query.offset:
         offset = int(inline_query.offset)
     else:
@@ -134,29 +191,15 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
 
         teachers = await Teacher.search_by_name(session, inline_query.query.replace('ё', 'е'),
                                                 similarity=similarity, limit=limit, offset=offset)
+        group_teachers = await get_group_teachers(session, tg_user.group_id)
 
-        int_week_parity = int(datetime.datetime.now().strftime("%V")) % 2
-        week_parity = _(buttons.odd_week) if int_week_parity else _(buttons.even_week)
-        int_week_parity = 1 if int_week_parity else 2
-
-        result = list()
+        sorted_teachers = list()
         for teacher in teachers:
-            teacher_lessons: list[GroupLesson] = await GroupLesson.get_teacher_schedule(session, teacher.login)
+            if teacher in group_teachers:
+                sorted_teachers.insert(0, teacher)
+            else:
+                sorted_teachers.append(teacher)
 
-            result.append(
-                InlineQueryResultArticle(
-                    id=teacher.login,
-                    title=teacher.name,
-                    input_message_content=InputTextMessageContent(
-                        message_text=_(messages.teacher_schedule).format(
-                            name=teacher.name,
-                            departament=teacher.departament.name,
-                            schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity),
-                            parity=week_parity
-                        )
-                    ),
-                    description=teacher.departament.name
-                )
-            )
+        result = await create_teachers_inline_result(session, sorted_teachers, use_emoji)
 
     await inline_query.answer(result, next_offset=str(offset + limit), cache_time=3600, is_personal=True)

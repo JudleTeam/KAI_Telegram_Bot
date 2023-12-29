@@ -7,7 +7,23 @@ from sqlalchemy.orm import selectinload, joinedload
 from tgbot.services.database.models import GroupLesson, Teacher, Discipline, Departament, Homework, User, KAIUser
 
 
-async def get_group_teachers(session, group_id: int):
+async def get_group_teachers(session, group_id: int, offset: int = 0, limit: int = 100):
+    stmt = (
+        select(Teacher)
+        .join(GroupLesson.teacher)
+        .where(GroupLesson.group_id == group_id)
+        .limit(limit)
+        .offset(offset)
+        .order_by(Teacher.name)
+        .distinct()
+    )
+
+    records = await session.execute(stmt)
+
+    return records.scalars().all()
+
+
+async def get_group_teachers_dict(session, group_id: int):
     """
     Возвращает всех преподавателей для группы, кроме преподавателей кафедры
 
