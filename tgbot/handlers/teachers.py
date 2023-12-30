@@ -16,6 +16,10 @@ from tgbot.services.kai_parser.utils import lesson_type_to_emoji, lesson_type_to
 
 router = Router()
 
+MAX_TEACHER_SCHEDULE_LENGTH = 4000
+TEACHERS_SEARCH_RESULTS_LIMIT = 20
+CACHE_TIME = 1800
+
 
 def form_teachers_str(teachers: dict):
     teachers_str = ''
@@ -36,7 +40,7 @@ def form_teachers_str(teachers: dict):
     return teachers_str
 
 
-def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool, week_parity: int):
+def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool, week_parity: int, cut_after: None | int = None):
     convert_lesson_type = lesson_type_to_emoji if use_emoji else lesson_type_to_text
     result_str = ''
     for day in range(1, 6 + 1):
@@ -79,12 +83,18 @@ def form_teachers_lessons(teacher_lessons: list[GroupLesson], use_emoji: bool, w
                 lesson_str = '→ ' + lesson_str
 
             day_lessons_parts.append(lesson_str)
+
         day_lessons_str = '\n\n'.join(day_lessons_parts) if day_lessons_parts else _(messages.day_off)
         day_str = templates.schedule_day_template.format(
             day_of_week=_(messages.week_days[day - 1]),
             lessons=day_lessons_str + '\n'
         )
-        result_str += day_str
+
+        if cut_after is not None and len(result_str + day_str) > cut_after:
+            result_str += _(messages.schedule_too_long) + '\n'
+            break
+        else:
+            result_str += day_str
 
     return result_str
 
@@ -121,17 +131,10 @@ async def create_teachers_inline_result(session, teachers: list[Teacher], use_em
         schedule_text = _(messages.teacher_schedule).format(
             name=teacher.name,
             departament=teacher.departament.name,
-            schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity),
+            schedule=form_teachers_lessons(teacher_lessons, use_emoji, int_week_parity, cut_after=MAX_TEACHER_SCHEDULE_LENGTH),
             parity=week_parity
         )
 
-        max_length = 3900
-        if len(schedule_text) >= max_length:
-            too_long_schedule_text = '...\n\n' + _(messages.schedule_too_long)
-            short_schedule_text = schedule_text[:max_length - len(too_long_schedule_text)]
-            schedule_text = short_schedule_text + _(messages.schedule_too_long)
-
-        schedule_text = schedule_text
         result.append(
             InlineQueryResultArticle(
                 id=teacher.login,
@@ -146,7 +149,6 @@ async def create_teachers_inline_result(session, teachers: list[Teacher], use_em
 
 @router.inline_query(F.query == '')
 async def search_group_teachers(inline_query: InlineQuery, db: async_sessionmaker):
-    limit = 10
     if inline_query.offset:
         offset = int(inline_query.offset)
     else:
@@ -159,11 +161,16 @@ async def search_group_teachers(inline_query: InlineQuery, db: async_sessionmake
         else:
             use_emoji = True
 
-        group_teachers = await get_group_teachers(session, tg_user.group_id, limit=limit, offset=offset)
+        group_teachers = await get_group_teachers(session, tg_user.group_id, limit=TEACHERS_SEARCH_RESULTS_LIMIT, offset=offset)
 
         result = await create_teachers_inline_result(session, group_teachers, use_emoji)
 
-    await inline_query.answer(result, next_offset=str(offset + limit), cache_time=3600, is_personal=True)
+    if len(group_teachers) < TEACHERS_SEARCH_RESULTS_LIMIT:
+        next_offset = None
+    else:
+        next_offset = str(offset + TEACHERS_SEARCH_RESULTS_LIMIT)
+
+    await inline_query.answer(result, next_offset=next_offset, cache_time=CACHE_TIME, is_personal=True)
 
 
 @router.inline_query(F.query != '')
@@ -202,4 +209,9 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
 
         result = await create_teachers_inline_result(session, sorted_teachers, use_emoji)
 
-    await inline_query.answer(result, next_offset=str(offset + limit), cache_time=3600, is_personal=True)
+    if len(sorted_teachers) < TEACHERS_SEARCH_RESULTS_LIMIT:
+        next_offset = None
+    else:
+        next_offset = str(offset + TEACHERS_SEARCH_RESULTS_LIMIT)
+
+    await inline_query.answer(result, next_offset=next_offset, cache_time=CACHE_TIME, is_personal=True)
