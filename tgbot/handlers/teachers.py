@@ -18,7 +18,7 @@ router = Router()
 
 MAX_TEACHER_SCHEDULE_LENGTH = 4000
 TEACHERS_SEARCH_RESULTS_LIMIT = 20
-CACHE_TIME = 1800
+CACHE_TIME = 900
 
 
 def form_teachers_str(teachers: dict):
@@ -149,6 +149,10 @@ async def create_teachers_inline_result(session, teachers: list[Teacher], use_em
 
 @router.inline_query(F.query == '')
 async def search_group_teachers(inline_query: InlineQuery, db: async_sessionmaker):
+    """
+    При пустом поисковом запросе выводятся преподаватели выбранной (не родной) группы
+    """
+
     if inline_query.offset:
         offset = int(inline_query.offset)
     else:
@@ -156,17 +160,16 @@ async def search_group_teachers(inline_query: InlineQuery, db: async_sessionmake
 
     async with db() as session:
         tg_user = await session.get(User, inline_query.from_user.id)
-        if tg_user:
-            use_emoji = tg_user.use_emoji
-        else:
-            use_emoji = True
+        if tg_user is None:
+            # Если пользователь не зарегистрирован, то для него нельзя вывести преподавателей
+            return
 
         group_teachers = await get_group_teachers(session, tg_user.group_id, limit=TEACHERS_SEARCH_RESULTS_LIMIT, offset=offset)
 
-        result = await create_teachers_inline_result(session, group_teachers, use_emoji)
+        result = await create_teachers_inline_result(session, group_teachers, tg_user.use_emoji)
 
     if len(group_teachers) < TEACHERS_SEARCH_RESULTS_LIMIT:
-        next_offset = None
+        next_offset = ''
     else:
         next_offset = str(offset + TEACHERS_SEARCH_RESULTS_LIMIT)
 
@@ -175,7 +178,6 @@ async def search_group_teachers(inline_query: InlineQuery, db: async_sessionmake
 
 @router.inline_query(F.query != '')
 async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
-    limit = 10
     if inline_query.offset:
         offset = int(inline_query.offset)
     else:
@@ -183,7 +185,7 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
 
     async with db() as session:
         tg_user = await session.get(User, inline_query.from_user.id)
-        if tg_user:
+        if tg_user is not None:
             use_emoji = tg_user.use_emoji
         else:
             use_emoji = True
@@ -197,15 +199,18 @@ async def search_teachers(inline_query: InlineQuery, db: async_sessionmaker):
                 similarity = 0.6
 
         teachers = await Teacher.search_by_name(session, inline_query.query.replace('ё', 'е'),
-                                                similarity=similarity, limit=limit, offset=offset)
-        group_teachers = await get_group_teachers(session, tg_user.group_id)
+                                                similarity=similarity, limit=TEACHERS_SEARCH_RESULTS_LIMIT, offset=offset)
+        if tg_user is not None and tg_user.group_id is not None:
+            group_teachers = await get_group_teachers(session, tg_user.group_id)
 
-        sorted_teachers = list()
-        for teacher in teachers:
-            if teacher in group_teachers:
-                sorted_teachers.insert(0, teacher)
-            else:
-                sorted_teachers.append(teacher)
+            sorted_teachers = list()
+            for teacher in teachers:
+                if teacher in group_teachers:
+                    sorted_teachers.insert(0, teacher)
+                else:
+                    sorted_teachers.append(teacher)
+        else:
+            sorted_teachers = teachers
 
         result = await create_teachers_inline_result(session, sorted_teachers, use_emoji)
 
