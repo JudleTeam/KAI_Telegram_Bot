@@ -1,0 +1,7 @@
+services:
+  bot:
+    build:
+      context: ..
+      dockerfile: stub/Dockerfile
+    restart: unless-stopped
+    env_file: .env
